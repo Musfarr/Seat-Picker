@@ -1,0 +1,287 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #07091a;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  max-width: none;
+}
+
+/* ── Layout ── */
+.app-bg {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.venue-card {
+  background: linear-gradient(160deg, #111827 0%, #1a2440 60%, #0f1a35 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 28px;
+  padding: 2.25rem 2.5rem 2rem;
+  width: 100%;
+  max-width: 980px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 40px 80px rgba(0,0,0,0.65),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ── Header ── */
+.venue-header { text-align: center; margin-bottom: 1.5rem; }
+
+.venue-title {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(90deg, #f97316, #facc15, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.venue-sub {
+  color: rgba(255,255,255,0.35);
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+  letter-spacing: 0.4px;
+}
+
+/* ── Stage ── */
+.stage-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.stage-bar {
+  background: linear-gradient(90deg,
+    rgba(249,115,22,0.08),
+    rgba(249,115,22,0.55) 30%,
+    rgba(250,204,21,0.55) 70%,
+    rgba(249,115,22,0.08));
+  border: 1px solid rgba(250,204,21,0.28);
+  border-radius: 4px;
+  padding: 0.5rem 3.5rem;
+  box-shadow: 0 0 32px rgba(249,115,22,0.22), 0 0 80px rgba(249,115,22,0.08);
+}
+
+.stage-text {
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 9px;
+  color: #facc15;
+  text-shadow: 0 0 14px rgba(250,204,21,0.9);
+}
+
+/* ── Seat Area ── */
+.seat-area {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.seat-row--center { justify-content: center; }
+
+.row-lbl {
+  color: rgba(255,255,255,0.22);
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 14px;
+  text-align: right;
+  margin-right: 4px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* ── Divider ── */
+.vip-divider {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(to bottom, transparent, rgba(255,200,50,0.18), transparent);
+  margin: 0 0.4rem;
+  flex-shrink: 0;
+}
+
+/* ── VIP Section ── */
+.vip-section {
+  flex-shrink: 0;
+  background: rgba(251,191,36,0.04);
+  border: 1px solid rgba(251,191,36,0.14);
+  border-radius: 16px;
+  padding: 0.75rem 0.6rem 0.6rem;
+}
+
+.vip-badge {
+  text-align: center;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #fbbf24;
+  text-shadow: 0 0 10px rgba(251,191,36,0.7);
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(251,191,36,0.14);
+}
+
+/* ── Seat Button ── */
+.seat-btn {
+  background: none;
+  border: none;
+  padding: 3px;
+  cursor: pointer;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.seat-btn:hover:not(.seat-btn--off) { transform: scale(1.15); }
+.seat-btn:active:not(.seat-btn--off) { transform: scale(0.92); }
+.seat-btn--off { cursor: not-allowed; }
+
+/* ── Seat Ring (dashed outer) ── */
+.seat-ring {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: all 0.22s ease;
+}
+
+.ring-normal  { border: 2px dashed rgba(249,115,22,0.45); }
+.ring-vip     { border: 2px dashed rgba(251,191,36,0.6); }
+.ring-selected { border: 2px solid rgba(99,202,255,0.9); box-shadow: 0 0 10px rgba(99,202,255,0.35); }
+.ring-unavail  { border: 2px dashed rgba(255,255,255,0.1); }
+
+/* ── Seat Inner Circle ── */
+.seat-inner {
+  width: 37px;
+  height: 37px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s cubic-bezier(.34,1.56,.64,1);
+  flex-shrink: 0;
+}
+
+.inner-normal  { background: linear-gradient(135deg, #facc15 0%, #f97316 100%); }
+.inner-vip     { background: linear-gradient(135deg, #fde68a 0%, #f59e0b 40%, #dc2626 100%); }
+.inner-selected {
+  background: linear-gradient(135deg, #67e8f9 0%, #3b82f6 100%);
+  box-shadow: 0 0 14px rgba(59,130,246,0.7), 0 0 28px rgba(59,130,246,0.3);
+  transform: scale(1.08);
+}
+.inner-unavail {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.seat-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #000;
+  user-select: none;
+  letter-spacing: -0.3px;
+}
+
+.inner-selected .seat-label { color: #fff; }
+.inner-unavail  .seat-label { color: rgba(255,255,255,0.25); font-size: 0.5rem; }
+
+/* ── Legend ── */
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ── Payload Panel ── */
+.payload-box {
+  margin-top: 1.5rem;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(99,202,255,0.18);
+  border-radius: 14px;
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.payload-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.payload-count {
+  color: #67e8f9;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.clear-btn {
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #fca5a5;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.clear-btn:hover { background: rgba(239,68,68,0.28); }
+
+.payload-pre {
+  color: #a5f3fc;
+  font-size: 0.75rem;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.6;
+  max-height: 240px;
+  overflow-y: auto;
+  text-align: left;
+}
