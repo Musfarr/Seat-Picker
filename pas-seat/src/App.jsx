@@ -13,7 +13,7 @@ function buildSeats() {
     }
   }
   const vip = []
-  for (let r = 0; r < 7; r++) {
+  for (let r = 0; r < 5; r++) {
     for (let c = 0; c < 2; c++) {
       const n = r * 2 + c + 1
       vip.push({ id: `V${n}`, num: `V${n}`, type: 'vip', row: r, col: c, available: !UNAVAILABLE_VIP.has(n), selected: false })
@@ -97,6 +97,17 @@ export default function App() {
           <div className="stage-bar"><span className="stage-text">◆ &nbsp; STAGE &nbsp; ◆</span></div>
         </div>
 
+        <div className='vip-section  ' style={{marginBottom:'20px'}}>
+          <div className="vip-badge ">V I P</div>
+          <div className="" style={{ display: 'flex', justifyContent: 'center' }}>
+            {vipRows.map((row, ri) => (
+              <div key={ri} className="">
+                {row.map(s => <SeatBtn key={s.id} seat={s} onToggle={toggle} />)}
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="seat-area">
           <div className="normal-section">
             {normalRows.map((row, ri) => (
@@ -107,7 +118,7 @@ export default function App() {
             ))}
           </div>
 
-          <div className="vip-divider" />
+          {/* <div className="vip-divider" />
 
           <div className="vip-section">
             <div className="vip-badge">V I P</div>
@@ -116,7 +127,7 @@ export default function App() {
                 {row.map(s => <SeatBtn key={s.id} seat={s} onToggle={toggle} />)}
               </div>
             ))}
-          </div>
+          </div> */}
         </div>
 
         <div className="legend">
