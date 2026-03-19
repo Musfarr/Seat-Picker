@@ -21,7 +21,7 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-export async function generateLanyard({ name, email, cnic, phone_number, seats }) {
+export async function generateLanyard({ name, email, cnic, phone_number, seats, imageFile: _unused }) {
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
@@ -78,20 +78,40 @@ export async function generateLanyard({ name, email, cnic, phone_number, seats }
   ctx.textAlign = 'center'
   ctx.fillText(name, W / 2, 165)
 
-  // Photo circle (placeholder or actual)
+  // Photo circle — static placeholder silhouette
   const cx = W / 2
   const cy = 245
   const r = 58
 
+  // Circle background
+  ctx.fillStyle = '#1e293b'
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Head
+  ctx.fillStyle = '#334155'
+  ctx.beginPath()
+  ctx.arc(cx, cy - 16, 20, 0, Math.PI * 2)
+  ctx.fill()
+
+  // Body / shoulders
+  ctx.beginPath()
+  ctx.ellipse(cx, cy + 34, 28, 20, 0, Math.PI, 0, true)
+  ctx.fill()
+
+  // Clip to circle so body doesn't overflow
   ctx.save()
   ctx.beginPath()
   ctx.arc(cx, cy, r, 0, Math.PI * 2)
   ctx.clip()
-  ctx.fillStyle = '#1e293b'
-  ctx.fillRect(cx - r, cy - r, r * 2, r * 2)
+  ctx.fillStyle = '#334155'
+  ctx.beginPath()
+  ctx.ellipse(cx, cy + 34, 28, 20, 0, Math.PI, 0, true)
+  ctx.fill()
   ctx.restore()
 
-  // Photo circle border
+  // Circle border
   ctx.strokeStyle = ACCENT
   ctx.lineWidth = 3
   ctx.beginPath()

@@ -7,6 +7,8 @@ const TEMPLATE_ID = '4184359858374924'
 const LOGIN_EMAIL = 'jazz853@yopmail.com'
 const LOGIN_PASSWORD = 'Admin@098'
 
+const PLACEHOLDER_IMAGE_URL = 'https://placehold.co/420x620/0f1120/f97316/png?text=PAS+AWARDS'
+
 export async function sendLanyardWhatsapp(imageUrl, contactNumber) {
   const loginRes = await axios.post(LOGIN_URL, {
     email: LOGIN_EMAIL,
@@ -25,7 +27,7 @@ export async function sendLanyardWhatsapp(imageUrl, contactNumber) {
         {
           parameters: [
             {
-              value: imageUrl,
+              value: PLACEHOLDER_IMAGE_URL,
               type: 'image',
             },
           ],
