@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
 import './App.css'
 import NotFound from './NotFound'
+import { generateLanyard } from './generateLanyard'
+import { sendLanyardWhatsapp } from './api'
 
 const CHAIR_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 
@@ -136,9 +138,10 @@ function ChairCircle({ table, onToggleChair, canSelectMore }) {
 }
 
 /* ─── User Info Form ─────────────────────────────────────────── */
-function UserForm({ onSubmit }) {
+function UserForm({ onSubmit, phone_number }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [cnic, setCnic] = useState('')
   const [image, setImage] = useState(null)
   const [preview, setPreview] = useState(null)
   const [errors, setErrors] = useState({})
@@ -155,6 +158,7 @@ function UserForm({ onSubmit }) {
     const e = {}
     if (!name.trim()) e.name = 'Name is required'
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) e.email = 'Valid email is required'
+    if (!cnic.trim()) e.cnic = 'CNIC is required'
     if (!image) e.image = 'Profile image is required'
     return e
   }
@@ -163,7 +167,7 @@ function UserForm({ onSubmit }) {
     ev.preventDefault()
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); return }
-    onSubmit({ name: name.trim(), email: email.trim(), image })
+    onSubmit({ name: name.trim(), email: email.trim(), cnic: cnic.trim(), image })
   }
 
   return (
@@ -204,6 +208,23 @@ function UserForm({ onSubmit }) {
             {errors.email && <p className="form-error">{errors.email}</p>}
           </div>
 
+          <div className="form-field">
+            <label className="form-label">CNIC</label>
+            <input
+              className={`form-input${errors.cnic ? ' form-input--err' : ''}`}
+              type="text" placeholder="12345-1234567-8"
+              value={cnic} onChange={e => setCnic(e.target.value)}
+            />
+            {errors.cnic && <p className="form-error">{errors.cnic}</p>}
+          </div>
+          <div className="form-field">
+            <label className="form-label">Phone Number</label>
+            <input
+              className="form-input"
+              type="text" value={phone_number || ''} disabled placeholder="0300-1234567"
+            />
+          </div>
+
           <button type="submit" className="book-btn" style={{ width: '100%', marginTop: '1.25rem' }}>
             Continue to Seat Selection
           </button>
@@ -221,6 +242,10 @@ export default function App() {
   const [vip, setVip] = useState(INIT.vip)
   const [modalTable, setModalTable] = useState(null)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [processing, setProcessing] = useState(false)
+  const [processStep, setProcessStep] = useState('')
+  const [done, setDone] = useState(false)
+  const [lanyardUrl, setLanyardUrl] = useState(null)
 
   const openModal = useCallback((table) => {
     setModalTable(table)
@@ -258,6 +283,9 @@ export default function App() {
   const totalSelected = allSelections.length
   const atLimit = totalSelected >= allowedSeats
 
+
+  console.log(paramData , "ParamData")
+
   const canSelectMore = (table) => {
     if (!allowedTypes.includes(table.type)) return false
     if (atLimit) return false
@@ -274,28 +302,49 @@ export default function App() {
     setVip(p => p.map(t => ({ ...t, chairs: t.chairs.map(c => ({ ...c, selected: false })) })))
   }
 
-  const confirmBooking = () => {
-    const payload = {
-      type: paramData?.type,
-      phone_number: paramData?.phone_number,
-      user: {
+  const confirmBooking = async () => {
+    const seats = allSelections.map(s => `${s.tableId}-${s.chair}`)
+    setShowConfirm(false)
+    setProcessing(true)
+
+    try {
+      setProcessStep('Generating your pass...')
+      const { dataUrl, blob } = await generateLanyard({
         name: userData.name,
         email: userData.email,
-        imageFileName: userData.image?.name,
-      },
-      totalSeats: allSelections.length,
-      bookings: allSelections.map(s => ({
-        table: s.tableId,
-        chair: s.chair,
-        seat: `${s.tableId}-${s.chair}`,
-        type: s.type,
-      }))
+        cnic: userData.cnic,
+        phone_number: paramData.phone_number,
+        seats,
+        imageFile: userData.image,
+      })
+      setLanyardUrl(dataUrl)
+
+      setProcessStep('Sending via WhatsApp...')
+      await sendLanyardWhatsapp(dataUrl, paramData.phone_number)
+
+      const payload = {
+        type: paramData?.type,
+        phone_number: paramData?.phone_number,
+        user: { name: userData.name, email: userData.email, cnic: userData.cnic },
+        totalSeats: allSelections.length,
+        bookings: allSelections.map(s => ({
+          table: s.tableId,
+          chair: s.chair,
+          seat: `${s.tableId}-${s.chair}`,
+          type: s.type,
+        }))
+      }
+      console.log('=== BOOKING PAYLOAD ===')
+      console.log(JSON.stringify(payload, null, 2))
+
+      setProcessStep('')
+      setDone(true)
+    } catch (err) {
+      console.error('Booking error:', err)
+      setProcessStep('Error: ' + (err?.response?.data?.message || err.message || 'Something went wrong'))
+    } finally {
+      setProcessing(false)
     }
-    console.log('=== BOOKING PAYLOAD ===')
-    console.log(JSON.stringify(payload, null, 2))
-    console.log(payload)
-    setShowConfirm(false)
-    alert('Booking confirmed! Check console for payload.')
   }
 
   const normalRows = useMemo(() => {
@@ -313,7 +362,7 @@ export default function App() {
   const rowLetters = 'ABCDEFG'
 
   if (!paramData) return <NotFound />
-  if (!userData) return <UserForm onSubmit={setUserData} />
+  if (!userData) return <UserForm onSubmit={setUserData} phone_number={paramData.phone_number} />
 
   const showVip = allowedTypes.includes('vip')
   const showNormal = allowedTypes.includes('normal')
@@ -326,14 +375,14 @@ export default function App() {
             {userData.image && <img src={URL.createObjectURL(userData.image)} className="header-avatar" alt="avatar" />}
           <div className="header-user-row">
             <div>
-              <h1 className="venue-title">PAS</h1>
+              <h1 className="venue-title">PAS AWARDS</h1>
               <p className="venue-sub">Hi {userData.name} · Select up to <strong>{allowedSeats}</strong> chair{allowedSeats > 1 ? 's' : ''}</p>
             </div>
           </div>
           <div className="seat-counter">
-            <span className={`counter-pill${atLimit ? ' counter-full' : ''}`}>
+            {/* <span className={`counter-pill${atLimit ? ' counter-full' : ''}`}>
               {totalSelected} / {allowedSeats} selected
-            </span>
+            </span> */}
           </div>
         </div>
 
@@ -449,6 +498,41 @@ export default function App() {
               <button className="confirm-cancel" onClick={() => setShowConfirm(false)}>Cancel</button>
               <button className="confirm-ok" onClick={confirmBooking}>Confirm & Book</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {processing && (
+        <div className="modal-overlay">
+          <div className="spinner-card">
+            <div className="spinner" />
+            <p className="spinner-step">{processStep}</p>
+          </div>
+        </div>
+      )}
+
+      {!processing && processStep.startsWith('Error') && (
+        <div className="modal-overlay" onClick={() => setProcessStep('')}>
+          <div className="confirm-content" onClick={e => e.stopPropagation()}>
+            <h2 className="confirm-title" style={{ color: '#fca5a5' }}>Something went wrong</h2>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', margin: '0.75rem 0 1.25rem' }}>{processStep.replace('Error: ', '')}</p>
+            <button className="confirm-ok" style={{ width: '100%' }} onClick={() => setProcessStep('')}>Dismiss</button>
+          </div>
+        </div>
+      )}
+
+      {done && (
+        <div className="modal-overlay">
+          <div className="done-card">
+            <div className="done-check">✓</div>
+            <h2 className="done-title">Booking Confirmed!</h2>
+            <p className="done-sub">Your pass has been sent via WhatsApp to<br /><strong>{paramData.phone_number}</strong></p>
+            {lanyardUrl && (
+              <div className="done-lanyard-wrap">
+                <img src={lanyardUrl} alt="Your Pass" className="done-lanyard-img" />
+                <a href={lanyardUrl} download="pas-pass.png" className="done-download-btn">Download Pass</a>
+              </div>
+            )}
           </div>
         </div>
       )}
