@@ -6,7 +6,7 @@ export default function ChairCircle({ table, onToggleChair, canSelectMore }) {
       <div className="chair-circle-container" style={{ width: radius * 2 + chairSize + 20, height: radius * 2 + chairSize + 20 }}>
         <div className="chair-center-table">
           <span className="chair-center-label">{table.displayNum || table.num}</span>
-          <span className="chair-center-type">{table.type.toUpperCase()}</span>
+          {/* <span className="chair-center-type">{table.type.toUpperCase()}</span> */}
         </div>
         {table.chairs.map((chair, i) => {
           const angle = (i / 8) * Math.PI * 2 - Math.PI / 2

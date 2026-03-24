@@ -4,8 +4,12 @@ const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
 const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '4184359858374924'
 
-const SEATS_URL = 'http://localhost:9000/api/seats-data'
-const BOOK_URL  = 'http://localhost:9000/api/book-seat'
+const SEATS_URL           = 'http://localhost:9000/api/seats-data'
+const BOOK_URL            = 'http://localhost:9000/api/book-seat'
+const BOOK_CORPORATE_URL  = 'http://localhost:9000/api/book-corporate'
+const ALLOCATE_URL        = 'http://localhost:9000/api/book-corporate/allocate'
+
+const LINK_TEMPLATE_ID = '4184359858374924'  // update to your text/link template ID
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
@@ -21,13 +25,81 @@ export async function fetchSeatsData() {
   return Array.isArray(data) ? data : data.seats
 }
 
-/* Individual booking payload: { SeatNumber, phone_number, flow_token }
-   Corporate booking payload:  { seats, phone_number, flow_token }      */
+/* Individual booking: { seatNumber, phone, flow_token } */
 export async function bookSeats(payload) {
   const res = await axios.post(BOOK_URL, payload, {
     headers: { 'Content-Type': 'application/json' },
   })
   return res.data
+}
+
+/* Corporate phase-1: reserve seats block.
+   payload: { bookings: [{seatNumber, seatStatus}], phone_number, flow_token, ... }
+   Returns: { key: mongoId, bookingsLeft } */
+export async function bookCorporate(payload) {
+  const res = await axios.post(BOOK_CORPORATE_URL, payload, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
+/* Corporate phase-2: allocate one seat to a form filler.
+   payload: { corporateId }
+   Returns: { seatNumber } */
+export async function allocateCorporateSeat(corporateId) {
+  const res = await axios.post(ALLOCATE_URL, { corporateId }, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
+async function getAccessToken() {
+  const res = await axios.post(LOGIN_URL, { email: LOGIN_EMAIL, password: LOGIN_PASSWORD })
+  const token = res.data?.data?.accessToken
+  if (!token) throw new Error('Login failed: no accessToken in response')
+  return token
+}
+
+/* Send lanyard image via WhatsApp */
+export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
+  const accessToken = await getAccessToken()
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: TEMPLATE_ID,
+      param: [
+        {
+          parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image' }],
+          componentType: 'header',
+          buttonType: null,
+          index: null,
+        },
+      ],
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
+}
+
+/* Send a form link via WhatsApp (corporate phase-1) */
+export async function sendLinkWhatsapp({ contactNumber, link }) {
+  const accessToken = await getAccessToken()
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: LINK_TEMPLATE_ID,
+      param: [
+        {
+          parameters: [{ value: link, type: 'text' }],
+          componentType: 'body',
+          buttonType: null,
+          index: null,
+        },
+      ],
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
 }
 
 export async function uploadFile(blob, fileName = 'lanyard.png') {
@@ -59,39 +131,3 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
   }
 }
 
-export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
-  const loginRes = await axios.post(LOGIN_URL, {
-    email: LOGIN_EMAIL,
-    password: LOGIN_PASSWORD,
-  })
-
-  const accessToken = loginRes.data?.data?.accessToken
-  if (!accessToken) throw new Error('Login failed: no accessToken in response')
-
-  await axios.post(
-    BROADCAST_URL,
-    {
-      to: contactNumber,
-      templateId: TEMPLATE_ID,
-      param: [
-        {
-          parameters: [
-            {
-              value: lanyardUrl || TEMPLATE_IMAGE_URL,
-              type: 'image',
-            },
-          ],
-          componentType: 'header',
-          buttonType: null,
-          index: null,
-        },
-      ],
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  )
-}

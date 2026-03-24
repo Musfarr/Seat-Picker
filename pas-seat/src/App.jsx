@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import './App.css'
 import NotFound from './NotFound'
 import { generateLanyard } from './generateLanyard'
-import { sendLanyardWhatsapp, fetchSeatsData, bookSeats, uploadFile } from './api'
+import { sendLanyardWhatsapp, sendLinkWhatsapp, fetchSeatsData, bookSeats, bookCorporate, uploadFile } from './api'
 import { INIT, applySeatsData } from './utils/seatLayout'
 import { parseParams } from './utils/parseParams'
 import VenueFloor from './components/VenueFloor'
@@ -112,29 +112,26 @@ export default function App() {
         setDone(true)
 
       } else {
-        const seats = allSelections.map(s => `${s.tableId}-${s.chair}`)
+        const bookings = allSelections.map(s => ({
+          seatNumber: `${s.tableId}-${s.chair}`,
+          seatStatus: true,
+        }))
 
-        setProcessStep('Generating your pass...')
-        const { blob } = await generateLanyard({
-          name: paramData.Full_Name,
-          seatNumbers: seats,
-          imageUrl: null,
-        })
-
-        setProcessStep('Uploading your pass...')
-        const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${paramData.phone_number}.png`)
-        console.log(lanyardUrl, ' lanyardUrl')
-        setLanyardUrl(lanyardUrl)
-
-        setProcessStep('Reserving your seats...')
-        await bookSeats({
-          seats,
+        setProcessStep('Reserving seats block...')
+        const { key } = await bookCorporate({
+          bookings,
           phone_number: paramData.phone_number,
           flow_token: paramData.flow_token,
+          Company_Name: paramData.Company_Name,
+          Full_Name: paramData.Full_Name,
+          Email_Address: paramData.Email_Address,
+          Designation: paramData.Designation,
         })
 
-        setProcessStep('Sending confirmation via WhatsApp...')
-        await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+        const formLink = `${window.location.origin}/form/${key}`
+
+        setProcessStep('Sending form link via WhatsApp...')
+        await sendLinkWhatsapp({ contactNumber: paramData.phone_number, link: formLink })
         setDone(true)
       }
     } catch (err) {

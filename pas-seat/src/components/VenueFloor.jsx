@@ -20,7 +20,7 @@ export default function VenueFloor({ tables, allowedTypes, onTableClick }) {
     <>
       <div className="venue-floor">
         {/* Side column LEFT */}
-        <div className="side-col side-col--left">
+        <div className="side-col side-col--left"style={{ marginTop: '30px' }} >
           {LAYOUT.sideLeft.map((pair, i) => (
             <div key={i} className="side-pair">
               {pair.map((n, j) => TB(n, `sl-${i}-${j}`))}
@@ -61,10 +61,10 @@ export default function VenueFloor({ tables, allowedTypes, onTableClick }) {
 
       {/* Bottom row */}
       <div className="bottom-area">
-        <div className="bottom-left">
+        <div className="bottom-left" style={{ marginRight: '30px' }}>
           {LAYOUT.bottomLeft.map((n, i) => TB(n, `bl-${i}`))}
         </div>
-        <div className="bottom-right">
+        <div className="bottom-right" >
           {LAYOUT.bottomRight.map((n, i) => TB(n, `br-${i}`))}
         </div>
       </div>

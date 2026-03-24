@@ -7,7 +7,7 @@ export default function ChairPickerModal({ table, totalSelected, allowedSeats, a
         <div className="modal-header">
           <h2 className="modal-title">
             Table {table.num}
-            <span className={`modal-type-tag modal-type-${table.type}`}>{table.type.toUpperCase()}</span>
+            {/* <span className={`modal-type-tag modal-type-${table.type}`}>{table.type.toUpperCase()}</span> */}
           </h2>
           <button className="modal-close" onClick={onClose}>&times;</button>
         </div>
