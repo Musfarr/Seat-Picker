@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import './App.css'
 import NotFound from './NotFound'
 import { generateLanyard } from './generateLanyard'
@@ -6,13 +6,38 @@ import { sendLanyardWhatsapp } from './api'
 
 const CHAIR_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 
-const UNAVAILABLE_NORMAL = new Set([3, 11, 19, 28, 35, 42, 57, 63])
-const UNAVAILABLE_VIP = new Set([2, 7])
+/* ─── VIP table numbers (shown in red in the image) ─── */
+const VIP_TABLES = new Set([2, 4, 8, 10, 14, 16, 1, 3, 7, 9, 13, 15])
 
-const UNAVAILABLE_CHAIRS = {
-  'N5': ['C', 'D'],
-  'N22': ['A'],
-  'V3': ['E', 'F'],
+/* ─── Tables that are reserved/unavailable ─── */
+const UNAVAILABLE_TABLES = new Set([])
+
+/*
+  applySeatsData — takes API response array:
+  [{ seatNumber: "1-A", seatStatus: true/false }, ...]
+  and returns updated tables map with booked chairs applied.
+  A table becomes unavailable (disabled) when ALL 8 chairs are booked.
+*/
+function applySeatsData(tables, seatsData) {
+  // Build a map: tableNum -> Set of booked chair labels
+  const bookedMap = {}
+  seatsData.forEach(({ seatNumber, seatStatus }) => {
+    if (seatStatus) return  // still available, skip
+    const [tableStr, chair] = seatNumber.split('-')
+    const tableNum = parseInt(tableStr, 10)
+    if (!bookedMap[tableNum]) bookedMap[tableNum] = new Set()
+    bookedMap[tableNum].add(chair)
+  })
+
+  // Apply to tables
+  const updated = {}
+  Object.entries(tables).forEach(([key, table]) => {
+    const bookedChairs = bookedMap[table.num] || new Set()
+    const chairs = table.chairs.map(c => ({ ...c, booked: bookedMap[table.num]?.has(c.label) ?? false }))
+    const allBooked = chairs.every(c => c.booked)
+    updated[key] = { ...table, chairs, available: allBooked ? false : table.available }
+  })
+  return updated
 }
 
 function parseParams() {
@@ -20,46 +45,84 @@ function parseParams() {
   const type = p.get('type')
   const number = parseInt(p.get('number'), 10)
   const phone_number = p.get('phone_number')
+  const name = p.get('name') || ''
+  const email = p.get('email') || ''
+  const cnic = p.get('cnic') || ''
   if (!type || !number || isNaN(number) || !phone_number) return null
   const allowedTypes = type === 'vip' ? ['vip'] : type === 'normal' ? ['normal'] : ['normal', 'vip']
-  return { type, allowedSeats: number, allowedTypes, phone_number }
+  const seats_api_url = p.get('seats_api_url') || null
+  return { type, allowedSeats: number, allowedTypes, phone_number, name, email, cnic, seats_api_url }
 }
 
-function buildTables() {
-  const normal = []
-  for (let r = 0; r < 7; r++) {
-    for (let c = 0; c < 10; c++) {
-      const n = r * 10 + c + 1
-      const chairs = CHAIR_LABELS.map(label => ({
-        label,
-        booked: (UNAVAILABLE_CHAIRS[`N${n}`] || []).includes(label),
-        selected: false,
-      }))
-      normal.push({
-        id: `N${n}`, num: n, type: 'normal', row: r, col: c,
-        available: !UNAVAILABLE_NORMAL.has(n), chairs,
-      })
-    }
-  }
-  const vip = []
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 2; c++) {
-      const n = r * 2 + c + 1
-      const chairs = CHAIR_LABELS.map(label => ({
-        label,
-        booked: (UNAVAILABLE_CHAIRS[`V${n}`] || []).includes(label),
-        selected: false,
-      }))
-      vip.push({
-        id: `V${n}`, num: n, displayNum: `V${n}`, type: 'vip', row: r, col: c,
-        available: !UNAVAILABLE_VIP.has(n), chairs,
-      })
-    }
-  }
-  return { normal, vip }
+function makeTable(num) {
+  const type = VIP_TABLES.has(num) ? 'vip' : 'normal'
+  const chairs = CHAIR_LABELS.map(label => ({ label, booked: false, selected: false }))
+  return { id: num, num, type, available: !UNAVAILABLE_TABLES.has(num), chairs }
 }
 
-const INIT = buildTables()
+/*
+  Layout — null = Reserved (R) slot, disabled red, no number
+
+  SIDE_LEFT  : pairs stacked [62,64] [66,68] [70,72] [74,76] [78,80]
+  SIDE_RIGHT : pairs stacked [63,61] [65,67] [69,71] [73,75] [77,79]
+
+  LEFT_BLOCK (rows read right→left, aisle on right side):
+    row0: [6, 4, 2, null]                      — 3 normal + 1 R
+    row1: [12,10, 8, null, null]               — 3 normal + 2 R
+    row2: [18,16,14, null, null, null]         — 3 normal + 3 R
+    row3: [32,30,28,26,24,22,20]               — 7 normal
+    row4: [46,44,42,40,38,36,34]               — 7 normal
+    row5: [60,58,56,54,52,50,48]               — 7 normal
+
+  RIGHT_BLOCK (rows read left→right, aisle on left side):
+    row0: [null, 1, 3, 5]                      — 1 R + 3 normal
+    row1: [null, null, 7, 9,11]                — 2 R + 3 normal
+    row2: [null, null, null,13,15,17]          — 3 R + 3 normal
+    row3: [19,21,23,25,27,29,31]               — 7 normal
+    row4: [33,35,37,39,41,43,45]               — 7 normal
+    row5: [47,49,51,53,55,57,59]               — 7 normal
+
+  BOTTOM_LEFT  : [82,83,84,85,86,87,88]
+  BOTTOM_RIGHT : [81]
+*/
+const LAYOUT = {
+  sideLeft:  [[62,64],[66,68],[70,72],[74,76],[78,80]],
+  sideRight: [[63,61],[65,67],[69,71],[73,75],[77,79]],
+  leftBlock: [
+    [6, 4, 2, null],
+    [12, 10, 8, null, null],
+    [18, 16, 14, null, null, null],
+    [32, 30, 28, 26, 24, 22, 20],
+    [46, 44, 42, 40, 38, 36, 34],
+    [60, 58, 56, 54, 52, 50, 48],
+  ],
+  rightBlock: [
+    [null, 1, 3, 5],
+    [null, null, 7, 9, 11],
+    [null, null, null, 13, 15, 17],
+    [19, 21, 23, 25, 27, 29, 31],
+    [33, 35, 37, 39, 41, 43, 45],
+    [47, 49, 51, 53, 55, 57, 59],
+  ],
+  bottomLeft:  [82, 83, 84, 85, 86, 87, 88],
+  bottomRight: [81],
+}
+
+function buildAllTables() {
+  const all = {}
+  const allNums = [
+    ...LAYOUT.sideLeft.flat(),
+    ...LAYOUT.sideRight.flat(),
+    ...LAYOUT.leftBlock.flat(),
+    ...LAYOUT.rightBlock.flat(),
+    ...LAYOUT.bottomLeft,
+    ...LAYOUT.bottomRight,
+  ].filter(n => n !== null)
+  allNums.forEach(n => { all[n] = makeTable(n) })
+  return all
+}
+
+const INIT = buildAllTables()
 
 function getSelectedCount(table) {
   return table.chairs.filter(c => c.selected).length
@@ -137,109 +200,11 @@ function ChairCircle({ table, onToggleChair, canSelectMore }) {
   )
 }
 
-/* ─── User Info Form ─────────────────────────────────────────── */
-function UserForm({ onSubmit, phone_number }) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [cnic, setCnic] = useState('')
-  const [image, setImage] = useState(null)
-  const [preview, setPreview] = useState(null)
-  const [errors, setErrors] = useState({})
-  const fileRef = useRef()
-
-  const handleImage = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    setImage(file)
-    setPreview(URL.createObjectURL(file))
-  }
-
-  const validate = () => {
-    const e = {}
-    if (!name.trim()) e.name = 'Name is required'
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) e.email = 'Valid email is required'
-    if (!cnic.trim()) e.cnic = 'CNIC is required'
-    if (!image) e.image = 'Profile image is required'
-    return e
-  }
-
-  const handleSubmit = (ev) => {
-    ev.preventDefault()
-    const e = validate()
-    if (Object.keys(e).length) { setErrors(e); return }
-    onSubmit({ name: name.trim(), email: email.trim(), cnic: cnic.trim(), image })
-  }
-
-  return (
-    <div className="app-bg">
-      <div className="form-card">
-        <h1 className="venue-title" style={{ textAlign: 'center', marginBottom: '0.3rem' }}>PAS</h1>
-        <p className="venue-sub" style={{ textAlign: 'center', marginBottom: '2rem' }}>Please fill in your details to continue</p>
-
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="form-avatar-row">
-            <div className="form-avatar" onClick={() => fileRef.current.click()}>
-              {preview
-                ? <img src={preview} alt="preview" className="form-avatar-img" />
-                : <span className="form-avatar-placeholder">&#43;<br /><span>Photo</span></span>
-              }
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImage} />
-            {errors.image && <p className="form-error">{errors.image}</p>}
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Full Name</label>
-            <input
-              className={`form-input${errors.name ? ' form-input--err' : ''}`}
-              type="text" placeholder="John Doe"
-              value={name} onChange={e => setName(e.target.value)}
-            />
-            {errors.name && <p className="form-error">{errors.name}</p>}
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Email Address</label>
-            <input
-              className={`form-input${errors.email ? ' form-input--err' : ''}`}
-              type="email" placeholder="john@example.com"
-              value={email} onChange={e => setEmail(e.target.value)}
-            />
-            {errors.email && <p className="form-error">{errors.email}</p>}
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">CNIC</label>
-            <input
-              className={`form-input${errors.cnic ? ' form-input--err' : ''}`}
-              type="text" placeholder="12345-1234567-8"
-              value={cnic} onChange={e => setCnic(e.target.value)}
-            />
-            {errors.cnic && <p className="form-error">{errors.cnic}</p>}
-          </div>
-          <div className="form-field">
-            <label className="form-label">Phone Number</label>
-            <input
-              className="form-input"
-              type="text" value={phone_number || ''} disabled placeholder="0300-1234567"
-            />
-          </div>
-
-          <button type="submit" className="book-btn" style={{ width: '100%', marginTop: '1.25rem' }}>
-            Continue to Seat Selection
-          </button>
-        </form>
-      </div>
-    </div>
-  )
-}
-
 /* ─── Main App ───────────────────────────────────────────────── */
 export default function App() {
   const paramData = parseParams()
-  const [userData, setUserData] = useState(null)
-  const [normal, setNormal] = useState(INIT.normal)
-  const [vip, setVip] = useState(INIT.vip)
+  const [tables, setTables] = useState(INIT)
+  const [seatsLoading, setSeatsLoading] = useState(false)
   const [modalTable, setModalTable] = useState(null)
   const [showConfirm, setShowConfirm] = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -247,96 +212,95 @@ export default function App() {
   const [done, setDone] = useState(false)
   const [lanyardUrl, setLanyardUrl] = useState(null)
 
-  const openModal = useCallback((table) => {
-    setModalTable(table)
+  // Fetch seat status from API and apply booked state to tables
+  useEffect(() => {
+    if (!paramData?.seats_api_url) return
+    setSeatsLoading(true)
+    fetch(paramData.seats_api_url)
+      .then(r => r.json())
+      .then(data => {
+        const seatsArray = Array.isArray(data) ? data : data.seats
+        if (seatsArray) setTables(prev => applySeatsData(prev, seatsArray))
+      })
+      .catch(err => console.error('Failed to load seat status:', err))
+      .finally(() => setSeatsLoading(false))
   }, [])
 
-  const closeModal = useCallback(() => {
-    setModalTable(null)
-  }, [])
+  const t = (num) => tables[num]
+
+  const openModal = useCallback((table) => setModalTable(table), [])
+  const closeModal = useCallback(() => setModalTable(null), [])
 
   const toggleChair = useCallback((chairLabel) => {
     if (!modalTable) return
-    const setter = modalTable.type === 'vip' ? setVip : setNormal
-    setter(prev => {
-      const updated = prev.map(t => {
-        if (t.id !== modalTable.id) return t
-        return { ...t, chairs: t.chairs.map(c => c.label === chairLabel ? { ...c, selected: !c.selected } : c) }
-      })
-      setModalTable(updated.find(t => t.id === modalTable.id))
+    setTables(prev => {
+      const updated = { ...prev, [modalTable.id]: {
+        ...prev[modalTable.id],
+        chairs: prev[modalTable.id].chairs.map(c =>
+          c.label === chairLabel ? { ...c, selected: !c.selected } : c
+        )
+      }}
+      setModalTable(updated[modalTable.id])
       return updated
     })
   }, [modalTable])
 
-  const allSelections = useMemo(() => {
-    const sel = []
-    ;[...normal, ...vip].forEach(table => {
-      table.chairs.forEach(c => {
-        if (c.selected) sel.push({ tableId: table.id, tableNum: table.displayNum || table.num, type: table.type, chair: c.label })
-      })
-    })
-    return sel
-  }, [normal, vip])
+  const allSelections = Object.values(tables).flatMap(table =>
+    table.chairs
+      .filter(c => c.selected)
+      .map(c => ({ tableId: table.id, type: table.type, chair: c.label }))
+  )
 
   const allowedSeats = paramData?.allowedSeats ?? 0
   const allowedTypes = paramData?.allowedTypes ?? []
   const totalSelected = allSelections.length
   const atLimit = totalSelected >= allowedSeats
 
-
-  console.log(paramData , "ParamData")
-
-  const canSelectMore = (table) => {
-    if (!allowedTypes.includes(table.type)) return false
-    if (atLimit) return false
-    return true
-  }
+  const canSelectMore = (table) => allowedTypes.includes(table.type) && !atLimit
 
   const handleTableClick = (table) => {
-    if (!allowedTypes.includes(table.type)) return
+    if (!table.available || !allowedTypes.includes(table.type)) return
     openModal(table)
   }
 
   const clearAll = () => {
-    setNormal(p => p.map(t => ({ ...t, chairs: t.chairs.map(c => ({ ...c, selected: false })) })))
-    setVip(p => p.map(t => ({ ...t, chairs: t.chairs.map(c => ({ ...c, selected: false })) })))
+    setTables(prev => {
+      const next = {}
+      Object.entries(prev).forEach(([k, tbl]) => {
+        next[k] = { ...tbl, chairs: tbl.chairs.map(c => ({ ...c, selected: false })) }
+      })
+      return next
+    })
   }
 
   const confirmBooking = async () => {
     const seats = allSelections.map(s => `${s.tableId}-${s.chair}`)
     setShowConfirm(false)
     setProcessing(true)
-
     try {
       setProcessStep('Generating your pass...')
-      const { dataUrl, blob } = await generateLanyard({
-        name: userData.name,
-        email: userData.email,
-        cnic: userData.cnic,
+      const { dataUrl } = await generateLanyard({
+        name: paramData.name,
+        email: paramData.email,
+        cnic: paramData.cnic,
         phone_number: paramData.phone_number,
         seats,
-        imageFile: userData.image,
       })
       setLanyardUrl(dataUrl)
-
       setProcessStep('Sending via WhatsApp...')
       await sendLanyardWhatsapp(dataUrl, paramData.phone_number)
-
       const payload = {
-        type: paramData?.type,
-        phone_number: paramData?.phone_number,
-        user: { name: userData.name, email: userData.email, cnic: userData.cnic },
+        type: paramData.type,
+        phone_number: paramData.phone_number,
+        user: { name: paramData.name, email: paramData.email, cnic: paramData.cnic },
         totalSeats: allSelections.length,
         bookings: allSelections.map(s => ({
-          table: s.tableId,
-          chair: s.chair,
-          seat: `${s.tableId}-${s.chair}`,
-          type: s.type,
+          table: s.tableId, chair: s.chair,
+          seat: `${s.tableId}-${s.chair}`, type: s.type,
         }))
       }
       console.log('=== BOOKING PAYLOAD ===')
       console.log(JSON.stringify(payload, null, 2))
-
       setProcessStep('')
       setDone(true)
     } catch (err) {
@@ -347,90 +311,102 @@ export default function App() {
     }
   }
 
-  const normalRows = useMemo(() => {
-    const m = {}
-    normal.forEach(s => { if (!m[s.row]) m[s.row] = []; m[s.row].push(s) })
-    return Object.values(m)
-  }, [normal])
-
-  const vipRows = useMemo(() => {
-    const m = {}
-    vip.forEach(s => { if (!m[s.row]) m[s.row] = []; m[s.row].push(s) })
-    return Object.values(m)
-  }, [vip])
-
-  const rowLetters = 'ABCDEFG'
-
   if (!paramData) return <NotFound />
-  if (!userData) return <UserForm onSubmit={setUserData} phone_number={paramData.phone_number} />
 
-  const showVip = allowedTypes.includes('vip')
-  const showNormal = allowedTypes.includes('normal')
+  const TB = (num, idx) => {
+    if (num === null) return <div key={`r-${idx}`} className="reserved-slot"><span className="reserved-label">R</span></div>
+    const tbl = t(num)
+    if (!tbl) return null
+    return (
+      <TableBtn
+        key={num} table={tbl}
+        onClick={handleTableClick}
+        dimmed={!allowedTypes.includes(tbl.type)}
+      />
+    )
+  }
 
   return (
     <div className="app-bg">
       <div className="venue-card">
 
         <div className="venue-header">
-            {userData.image && <img src={URL.createObjectURL(userData.image)} className="header-avatar" alt="avatar" />}
           <div className="header-user-row">
             <div>
               <h1 className="venue-title">PAS AWARDS</h1>
-              <p className="venue-sub">Hi {userData.name} · Select up to <strong>{allowedSeats}</strong> chair{allowedSeats > 1 ? 's' : ''}</p>
+              {paramData.name && (
+                <p className="venue-sub">Hi <strong>{paramData.name}</strong> · Select up to <strong>{allowedSeats}</strong> chair{allowedSeats > 1 ? 's' : ''}</p>
+              )}
             </div>
           </div>
-          <div className="seat-counter">
-            {/* <span className={`counter-pill${atLimit ? ' counter-full' : ''}`}>
-              {totalSelected} / {allowedSeats} selected
-            </span> */}
-          </div>
+          <span className={`counter-pill${atLimit ? ' counter-full' : ''}`}>
+            {totalSelected} / {allowedSeats} selected
+          </span>
         </div>
 
         <div className="stage-wrap">
           <div className="stage-bar"><span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span></div>
         </div>
 
-        {showVip && (
-          <div className="vip-section" style={{ marginBottom: '20px' }}>
-            <div className="vip-badge">V I P</div>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              {vipRows.map((row, ri) => (
-                <div key={ri}>
-                  {row.map(t => (
-                    <TableBtn
-                      key={t.id} table={t}
-                      onClick={handleTableClick}
-                      dimmed={!allowedTypes.includes(t.type)}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ── Main seating area ── */}
+        <div className="venue-floor">
 
-        {showNormal && (
-          <div className="seat-area">
-            <div className="normal-section">
-              {normalRows.map((row, ri) => (
-                <div key={ri} className="seat-row">
-                  <span className="row-lbl">{rowLetters[ri]}</span>
-                  {row.map(t => (
-                    <TableBtn
-                      key={t.id} table={t}
-                      onClick={handleTableClick}
-                      dimmed={!allowedTypes.includes(t.type)}
-                    />
-                  ))}
+          {/* Side column LEFT */}
+          <div className="side-col side-col--left">
+            {LAYOUT.sideLeft.map((pair, i) => (
+              <div key={i} className="side-pair">
+                {pair.map((n, j) => TB(n, `sl-${i}-${j}`))}
+              </div>
+            ))}
+          </div>
+
+          {/* Centre: left block + aisle + right block */}
+          <div className="centre-area">
+            {/* Left block */}
+            <div className="block block--left">
+              {LAYOUT.leftBlock.map((row, ri) => (
+                <div key={ri} className="floor-row floor-row--left">
+                  {row.map((n, ci) => TB(n, `lb-${ri}-${ci}`))}
+                </div>
+              ))}
+            </div>
+
+            {/* Aisle gap */}
+            <div className="aisle" />
+
+            {/* Right block */}
+            <div className="block block--right">
+              {LAYOUT.rightBlock.map((row, ri) => (
+                <div key={ri} className="floor-row floor-row--right">
+                  {row.map((n, ci) => TB(n, `rb-${ri}-${ci}`))}
                 </div>
               ))}
             </div>
           </div>
-        )}
+
+          {/* Side column RIGHT */}
+          <div className="side-col side-col--right " style={{marginTop:'30px'}}>
+            {LAYOUT.sideRight.map((pair, i) => (
+              <div key={i} className="side-pair">
+                {pair.map((n, j) => TB(n, `sr-${i}-${j}`))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Bottom row ── */}
+        <div className="bottom-area">
+          <div className="bottom-left">
+            {LAYOUT.bottomLeft.map((n, i) => TB(n, `bl-${i}`))}
+          </div>
+          <div className="bottom-right">
+            {LAYOUT.bottomRight.map((n, i) => TB(n, `br-${i}`))}
+          </div>
+        </div>
 
         <div className="legend">
-          {showNormal && <LegendDot cls="inner-normal" label="Normal" />}
-          {showVip && <LegendDot cls="inner-vip" label="VIP" />}
+          <LegendDot cls="inner-normal" label="Normal" />
+          <LegendDot cls="inner-vip" label="VIP" />
           <LegendDot cls="inner-selected" label="Has Selection" />
           <LegendDot cls="inner-unavail" label="Unavailable" />
         </div>
@@ -451,7 +427,7 @@ export default function App() {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">
-                Table {modalTable.displayNum || modalTable.num}
+                Table {modalTable.num}
                 <span className={`modal-type-tag modal-type-${modalTable.type}`}>{modalTable.type.toUpperCase()}</span>
               </h2>
               <button className="modal-close" onClick={closeModal}>&times;</button>
@@ -480,10 +456,9 @@ export default function App() {
           <div className="confirm-content" onClick={e => e.stopPropagation()}>
             <h2 className="confirm-title">Confirm Your Booking</h2>
             <div className="confirm-user-row">
-              {userData.image && <img src={URL.createObjectURL(userData.image)} className="confirm-avatar" alt="avatar" />}
               <div>
-                <p className="confirm-user-name">{userData.name}</p>
-                <p className="confirm-user-email">{userData.email}</p>
+                <p className="confirm-user-name">{paramData.name}</p>
+                <p className="confirm-user-email">{paramData.email}</p>
               </div>
             </div>
             <div className="confirm-list">
