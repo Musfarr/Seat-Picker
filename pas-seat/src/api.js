@@ -4,10 +4,14 @@ const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
 const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '4184359858374924'
 
-const SEATS_URL           = 'http://localhost:9000/api/seats-data'
-const BOOK_URL            = 'http://localhost:9000/api/book-seat'
-const BOOK_CORPORATE_URL  = 'http://localhost:9000/api/book-corporate'
-const ALLOCATE_URL        = 'http://localhost:9000/api/book-corporate/allocate'
+const SEATS_URL           = 'https://a732-103-197-46-226.ngrok-free.app/api/seats-data'
+const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
+const BOOK_CORPORATE_URL  = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate'
+const ALLOCATE_URL        = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate/allocate'
+// const SEATS_URL           = 'http://localhost:9000/api/seats-data'
+// const BOOK_URL            = 'http://localhost:9000/api/book-seat'
+// const BOOK_CORPORATE_URL  = 'http://localhost:9000/api/book-corporate'
+// const ALLOCATE_URL        = 'http://localhost:9000/api/book-corporate/allocate'
 
 const LINK_TEMPLATE_ID = '1253237689718231'  // update to your text/link template ID
 
