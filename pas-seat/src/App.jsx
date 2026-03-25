@@ -94,21 +94,23 @@ export default function App() {
           cnic: paramData.CNIC_Number,
           seatNumber,
           imageUrl: paramData.Image,
+          designation: paramData.Designation,
+          companyName: paramData.Company_Name,
         })
 
         setProcessStep('Uploading your pass...')
         const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${paramData.phone_number}.png`)
         setLanyardUrl(lanyardUrl)
 
-        setProcessStep('Reserving your seat...')
-        await bookSeats({
-          seatNumber: seatNumber,
-          phone: paramData.phone_number,
-          flow_token: paramData.flow_token,
-        })
+        // setProcessStep('Reserving your seat...')
+        // await bookSeats({
+        //   seatNumber: seatNumber,
+        //   phone: paramData.phone_number,
+        //   flow_token: paramData.flow_token,
+        // })
 
-        setProcessStep('Sending your pass via WhatsApp...')
-        await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+        // setProcessStep('Sending your pass via WhatsApp...')
+        // await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
         setDone(true)
 
       } else {

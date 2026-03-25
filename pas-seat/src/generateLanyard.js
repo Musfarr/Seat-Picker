@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774355532846-597792243.png'
+const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774448199211-521863583.jpg'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -10,7 +10,7 @@ function loadImage(src) {
   })
 }
 
-export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, imageUrl }) {
+export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, imageUrl, designation, companyName }) {
   const template = await loadImage(TEMPLATE_URL)
   const W = template.naturalWidth || 434
   const H = template.naturalHeight || 900
@@ -23,12 +23,32 @@ export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, ima
   // Draw template image as background
   ctx.drawImage(template, 0, 0, W, H)
 
-  // Data overlay area: center horizontally, vertically in the blank middle section
+  ctx.textAlign = 'center'
+  ctx.shadowColor = 'rgba(0,0,0,0.95)'
+  ctx.shadowBlur = 8
+
+  const seats = seatNumbers || (seatNumber ? [seatNumber] : [])
+
+  // ── Photo position (middle of card) ──
   const photoCX = W / 2
-  const photoCY = Math.round(H * 0.43)
+  const photoCY = Math.round(H * 0.50)
   const photoR = Math.round(W * 0.155)
 
-  // Draw profile photo if provided
+  // ── Name above photo ──
+  const nameY = Math.round(H * 0.35)
+  ctx.fillStyle = 'rgb(254, 242, 194)'
+  ctx.font = `bold ${Math.round(W * 0.062)}px Arial`
+  ctx.fillText((name || '').toUpperCase(), W / 2, nameY)
+
+  // ── Designation + Company below name ──
+  const desigParts = [designation, companyName].filter(Boolean).join(', ')
+  if (desigParts) {
+    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.font = ` bold ${Math.round(W * 0.046)}px Arial`
+    ctx.fillText(desigParts, W / 2, nameY + Math.round(H * 0.036))
+  }
+
+  // ── Profile photo ──
   if (imageUrl) {
     try {
       const photo = await loadImage(imageUrl)
@@ -38,9 +58,8 @@ export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, ima
       ctx.clip()
       ctx.drawImage(photo, photoCX - photoR, photoCY - photoR, photoR * 2, photoR * 2)
       ctx.restore()
-      // Gold ring around photo
-      ctx.strokeStyle = 'rgba(218,165,32,0.9)'
-      ctx.lineWidth = 3
+      ctx.strokeStyle = 'rgb(254, 242, 194)'
+      ctx.lineWidth = 2
       ctx.beginPath()
       ctx.arc(photoCX, photoCY, photoR + 3, 0, Math.PI * 2)
       ctx.stroke()
@@ -49,31 +68,12 @@ export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, ima
     }
   }
 
-  // Text shadow for readability over bokeh background
-  ctx.textAlign = 'center'
-  ctx.shadowColor = 'rgba(0,0,0,0.95)'
-  ctx.shadowBlur = 8
-
-  const seats = seatNumbers || (seatNumber ? [seatNumber] : [])
-  const baseY = photoCY + photoR + Math.round(H * 0.038)
-
-  // Name
-  ctx.fillStyle = '#ffffff'
-  ctx.font = `bold ${Math.round(W * 0.058)}px Arial`
-  ctx.fillText(name || '', W / 2, baseY)
-
-  // Seat number(s)
-  ctx.fillStyle = '#facc15'
-  ctx.font = `bold ${Math.round(W * 0.044)}px Arial`
-  const seatLabel = seats.length > 1 ? `Seats: ${seats.join(' · ')}` : `Seat: ${seats[0] || ''}`
-  ctx.fillText(seatLabel, W / 2, baseY + Math.round(H * 0.04))
-
-  // CNIC (individual only)
-  if (cnic) {
-    ctx.fillStyle = 'rgba(255,255,255,0.8)'
-    ctx.font = `${Math.round(W * 0.036)}px Arial`
-    ctx.fillText(`CNIC: ${cnic}`, W / 2, baseY + Math.round(H * 0.076))
-  }
+  // ── Seat number below template's "EXPO CENTER KARACHI" text ──
+  const seatY = Math.round(H * 0.835)
+  ctx.fillStyle = 'rgb(254, 242, 194)'
+  ctx.font = `bold ${Math.round(W * 0.072)}px Arial`
+  const seatLabel = seats.length > 1 ? `SEAT #: ${seats.join(' · ')}` : `SEAT #: ${seats[0] || ''}`
+  ctx.fillText(seatLabel, W / 2, seatY)
 
   ctx.shadowBlur = 0
 

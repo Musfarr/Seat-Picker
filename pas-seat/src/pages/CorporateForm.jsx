@@ -92,6 +92,8 @@ export default function CorporateForm() {
         cnic: form.CNIC_Number,
         seatNumber,
         imageUrl,
+        designation: form.Designation,
+        companyName: form.Company_Name,
       })
 
       setStep('Uploading your pass...')
