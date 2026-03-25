@@ -24,7 +24,9 @@ const LOGIN_PASSWORD = 'Admin@098'
 const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774355532846-597792243.png'
 
 export async function fetchSeatsData() {
-  const res = await axios.get(SEATS_URL)
+  const res = await axios.get(SEATS_URL, {
+    headers: { 'Content-Type': 'application/json' },
+  })
   const data = res.data
   return Array.isArray(data) ? data : data.seats
 }
