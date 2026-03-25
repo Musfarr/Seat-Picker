@@ -9,7 +9,7 @@ const BOOK_URL            = 'http://localhost:9000/api/book-seat'
 const BOOK_CORPORATE_URL  = 'http://localhost:9000/api/book-corporate'
 const ALLOCATE_URL        = 'http://localhost:9000/api/book-corporate/allocate'
 
-const LINK_TEMPLATE_ID = '4184359858374924'  // update to your text/link template ID
+const LINK_TEMPLATE_ID = '1253237689718231'  // update to your text/link template ID
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
@@ -93,6 +93,12 @@ export async function sendLinkWhatsapp({ contactNumber, link }) {
         {
           parameters: [{ value: link, type: 'text' }],
           componentType: 'body',
+          buttonType: null,
+          index: null,
+        },
+        {
+          parameters: [{ value: 'https://mediaupload.convexinteractive.com/api/file/1774434706246-157684823.jpg', type: 'image' }],
+          componentType: 'header',
           buttonType: null,
           index: null,
         },
