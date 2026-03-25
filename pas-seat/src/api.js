@@ -91,7 +91,7 @@ export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
 }
 
 /* Send a form link via WhatsApp (corporate phase-1) */
-export async function sendLinkWhatsapp({ contactNumber, link }) {
+export async function sendLinkWhatsapp({ contactNumber, link, qrImageUrl }) {
   const accessToken = await getAccessToken()
   await axios.post(
     BROADCAST_URL,
@@ -106,7 +106,7 @@ export async function sendLinkWhatsapp({ contactNumber, link }) {
           index: null,
         },
         {
-          parameters: [{ value: 'https://mediaupload.convexinteractive.com/api/file/1774434706246-157684823.jpg', type: 'image' }],
+          parameters: [{ value: qrImageUrl || 'https://mediaupload.convexinteractive.com/api/file/1774434706246-157684823.jpg', type: 'image' }],
           componentType: 'header',
           buttonType: null,
           index: null,

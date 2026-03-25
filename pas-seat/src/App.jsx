@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import './App.css'
 import NotFound from './NotFound'
 import { generateLanyard } from './generateLanyard'
+import QRCode from 'qrcode'
 import { sendLanyardWhatsapp, sendLinkWhatsapp, fetchSeatsData, bookSeats, bookCorporate, uploadFile } from './api'
 import { INIT, applySeatsData } from './utils/seatLayout'
 import { parseParams } from './utils/parseParams'
@@ -102,15 +103,15 @@ export default function App() {
         const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${paramData.phone_number}.png`)
         setLanyardUrl(lanyardUrl)
 
-        // setProcessStep('Reserving your seat...')
-        // await bookSeats({
-        //   seatNumber: seatNumber,
-        //   phone: paramData.phone_number,
-        //   flow_token: paramData.flow_token,
-        // })
+        setProcessStep('Reserving your seat...')
+        await bookSeats({
+          seatNumber: seatNumber,
+          phone: paramData.phone_number,
+          flow_token: paramData.flow_token,
+        })
 
-        // setProcessStep('Sending your pass via WhatsApp...')
-        // await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+        setProcessStep('Sending your pass via WhatsApp...')
+        await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
         setDone(true)
 
       } else {
@@ -132,8 +133,13 @@ export default function App() {
 
         const formLink = `${window.location.origin}/form/${key}`
 
+        setProcessStep('Generating QR code...')
+        const qrDataUrl = await QRCode.toDataURL(formLink, { width: 512, margin: 5 })
+        const qrBlob = await (await fetch(qrDataUrl)).blob()
+        const { url: qrUrl } = await uploadFile(qrBlob, `qr-${key}.png`)
+
         setProcessStep('Sending form link via WhatsApp...')
-        await sendLinkWhatsapp({ contactNumber: paramData.phone_number, link: formLink })
+        await sendLinkWhatsapp({ contactNumber: paramData.phone_number, link: formLink, qrImageUrl: qrUrl })
         setDone(true)
       }
     } catch (err) {
