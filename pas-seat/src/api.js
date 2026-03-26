@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
 const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
-const TEMPLATE_ID = '4184359858374924'
+const TEMPLATE_ID = '80857918321962'
 
 // const SEATS_URL           = 'https://a732-103-197-46-226.ngrok-free.app/api/seats-data'
 // const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
@@ -16,7 +16,7 @@ const BOOKING_DATA_URL    = 'http://localhost:9000/api/booking-data'
 const CHECK_TOKEN_URL     = 'http://localhost:9000/api/check-token'
 const SAVE_TOKEN_URL      = 'http://localhost:9000/api/save-token'
 
-const LINK_TEMPLATE_ID = '1253237689718231'  // update to your text/link template ID
+const LINK_TEMPLATE_ID = '2366687017109523'  // update to your text/link template ID
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
@@ -24,7 +24,7 @@ const BASE_URL = 'https://mediaupload.convexinteractive.com'
 const LOGIN_EMAIL = 'jazz853@yopmail.com'
 const LOGIN_PASSWORD = 'Admin@098'
 
-const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774355532846-597792243.png'
+const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774535504135-226612607.png'
 
 export async function fetchSeatsData() {
   const res = await axios.get(SEATS_URL, {

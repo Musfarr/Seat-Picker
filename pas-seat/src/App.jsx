@@ -193,8 +193,8 @@ export default function App() {
         setLanyardUrl(lanyardUrl)
 
 
-        // setProcessStep('Sending your pass via WhatsApp...')
-        // await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+        setProcessStep('Sending your pass via WhatsApp...')
+        await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
         setDone(true)
 
       }
