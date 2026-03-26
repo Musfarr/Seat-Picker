@@ -89,6 +89,32 @@ export default function App() {
       if (paramData.flow === 'individual') {
         const seatNumber = `${allSelections[0].tableId}-${allSelections[0].chair}`
 
+        
+        
+
+        setProcessStep('Reserving your seat...')
+        const { booking } = await bookSeats({
+          seatNumber: seatNumber,
+          phone: paramData.phone_number,
+          designation: paramData.Designation,
+          companyName: paramData.Company_Name,
+          cnic: paramData.CNIC_Number,
+          type:"Individual",
+          name:paramData.Full_Name,
+          flow_token: paramData.flow_token,
+          image: paramData.Image
+        })
+
+        // create profile url
+        const profile_Url = window.location.origin + "/User-Profile/" + booking;
+
+
+        // create qr of Profile URL for Lanyard
+        const LanyardQrUrl = await QRCode.toDataURL(profile_Url, { width: 512, margin: 2 })
+        const qrBlob = await (await fetch(LanyardQrUrl)).blob()
+        const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${booking}.png`)
+
+
         setProcessStep('Generating your pass...')
         const { blob } = await generateLanyard({
           name: paramData.Full_Name,
@@ -97,24 +123,23 @@ export default function App() {
           imageUrl: paramData.Image,
           designation: paramData.Designation,
           companyName: paramData.Company_Name,
+          lanyardQrUrl,
+          image: paramData.Image,
         })
 
-        setProcessStep('Uploading your pass...')
         const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${paramData.phone_number}.png`)
         setLanyardUrl(lanyardUrl)
 
-        setProcessStep('Reserving your seat...')
-        await bookSeats({
-          seatNumber: seatNumber,
-          phone: paramData.phone_number,
-          flow_token: paramData.flow_token,
-        })
 
-        setProcessStep('Sending your pass via WhatsApp...')
-        await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+        // setProcessStep('Sending your pass via WhatsApp...')
+        // await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
         setDone(true)
 
-      } else {
+      }
+      
+      
+      
+      else {
         const bookings = allSelections.map(s => ({
           seatNumber: `${s.tableId}-${s.chair}`,
           seatStatus: true,

@@ -10,7 +10,7 @@ function loadImage(src) {
   })
 }
 
-export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, imageUrl, designation, companyName }) {
+export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, imageUrl, designation, companyName, lanyardQrUrl }) {
   const template = await loadImage(TEMPLATE_URL)
   const W = template.naturalWidth || 434
   const H = template.naturalHeight || 900
@@ -33,6 +33,10 @@ export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, ima
   const photoCX = W / 2
   const photoCY = Math.round(H * 0.50)
   const photoR = Math.round(W * 0.155)
+  
+  const QRCX = W / 2
+  const QRCY = Math.round(H * 0.88)
+  const QRR = Math.round(W * 0.155)
 
   // ── Name above photo ──
   const nameY = Math.round(H * 0.35)
@@ -44,7 +48,7 @@ export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, ima
   const desigParts = [designation, companyName].filter(Boolean).join(', ')
   if (desigParts) {
     ctx.fillStyle = 'rgba(255,255,255,0.85)'
-    ctx.font = ` bold ${Math.round(W * 0.046)}px Arial`
+    ctx.font = ` bold ${Math.round(W * 0.036)}px Arial`
     ctx.fillText(desigParts, W / 2, nameY + Math.round(H * 0.036))
   }
 
@@ -68,8 +72,21 @@ export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, ima
     }
   }
 
+
+  // #QR
+
+  if (lanyardQrUrl) {
+    try {
+      const qrImg = await loadImage(lanyardQrUrl)
+      const qrSize = QRR * 1.5
+      ctx.drawImage(qrImg, QRCX - qrSize / 2, QRCY - qrSize / 2, qrSize, qrSize)
+    } catch (_) {
+      // QR failed to load — skip
+    }
+  }
+
   // ── Seat number below template's "EXPO CENTER KARACHI" text ──
-  const seatY = Math.round(H * 0.835)
+  const seatY = Math.round(H * 0.79)
   ctx.fillStyle = 'rgb(254, 242, 194)'
   ctx.font = `bold ${Math.round(W * 0.072)}px Arial`
   const seatLabel = seats.length > 1 ? `SEAT #: ${seats.join(' · ')}` : `SEAT #: ${seats[0] || ''}`
