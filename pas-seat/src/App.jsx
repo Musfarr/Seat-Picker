@@ -3,9 +3,9 @@ import './App.css'
 import NotFound from './NotFound'
 import { generateLanyard } from './generateLanyard'
 import QRCode from 'qrcode'
-import { sendLanyardWhatsapp, sendLinkWhatsapp, fetchSeatsData, bookSeats, bookCorporate, uploadFile } from './api'
+import { sendLanyardWhatsapp, sendLinkWhatsapp, fetchSeatsData, bookSeats, bookCorporate, uploadFile, checkToken, saveToken } from './api'
 import { INIT, applySeatsData } from './utils/seatLayout'
-import { parseParams } from './utils/parseParams'
+import { decryptParams } from './utils/Decrypt'
 import VenueFloor from './components/VenueFloor'
 import BookingBar from './components/BookingBar'
 import ChairPickerModal from './components/ChairPickerModal'
@@ -14,7 +14,9 @@ import ProcessingOverlay from './components/ProcessingOverlay'
 import DoneModal from './components/DoneModal'
 
 export default function App() {
-  const paramData = parseParams()
+  const [paramData, setParamData] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [authError, setAuthError] = useState('')
   const [tables, setTables] = useState(INIT)
   const [seatsLoading, setSeatsLoading] = useState(false)
   const [modalTable, setModalTable] = useState(null)
@@ -24,7 +26,58 @@ export default function App() {
   const [done, setDone] = useState(false)
   const [lanyardUrl, setLanyardUrl] = useState(null)
 
+  // Decrypt URL param, validate token, then load seats
   useEffect(() => {
+    async function init() {
+      const p = new URLSearchParams(window.location.search)
+      const encryptedData = p.get('data')
+
+      if (!encryptedData) {
+        setAuthError('invalid')
+        setAuthLoading(false)
+        return
+      }
+
+      let parsed
+      try {
+        parsed = await decryptParams(encryptedData)
+      } catch {
+        setAuthError('invalid')
+        setAuthLoading(false)
+        return
+      }
+
+      if (!parsed?.phone_number) {
+        setAuthError('invalid')
+        setAuthLoading(false)
+        return
+      }
+
+      // Build paramData from decrypted fields
+      const Number_of_ticket = parseInt(parsed.Number_of_ticket, 10)
+      const isCorporate = !isNaN(Number_of_ticket) && Number_of_ticket > 0
+      setParamData({
+        flow: isCorporate ? 'corporate' : 'individual',
+        allowedSeats: isCorporate ? Number_of_ticket : 1,
+        allowedTypes: ['normal', 'vip'],
+        phone_number: parsed.phone_number,
+        Email_Address: parsed.Email_Address || null,
+        flow_token: parsed.flow_token || null,
+        Company_Name: parsed.Company_Name || null,
+        Full_Name: parsed.Full_Name || null,
+        Designation: parsed.Designation || null,
+        CNIC_Number: parsed.CNIC_Number || null,
+        Image: parsed.Image || null,
+        seats_api_url: parsed.seats_api_url || null,
+        _token: encryptedData,
+      })
+      setAuthLoading(false)
+    }
+    init()
+  }, [])
+
+  useEffect(() => {
+    if (!paramData) return
     setSeatsLoading(true)
     fetchSeatsData()
       .then(seatsArray => {
@@ -32,7 +85,7 @@ export default function App() {
       })
       .catch(err => console.error('Failed to load seat status:', err))
       .finally(() => setSeatsLoading(false))
-  }, [])
+  }, [paramData])
 
   const openModal = useCallback((table) => setModalTable(table), [])
   const closeModal = useCallback(() => setModalTable(null), [])
@@ -86,6 +139,15 @@ export default function App() {
     setShowConfirm(false)
     setProcessing(true)
     try {
+      // Validate token before booking
+      setProcessStep('Verifying your invitation...')
+      const { exists } = await checkToken(paramData._token)
+      if (exists) {
+        setProcessStep('Error: This booking link has already been used.')
+        return
+      }
+      await saveToken(paramData._token, paramData.phone_number)
+
       if (paramData.flow === 'individual') {
         const seatNumber = `${allSelections[0].tableId}-${allSelections[0].chair}`
 
@@ -147,7 +209,7 @@ export default function App() {
 
         setProcessStep('Reserving seats block...')
         const { key } = await bookCorporate({
-          bookings,
+          bookings, 
           phone_number: paramData.phone_number,
           flow_token: paramData.flow_token,
           Company_Name: paramData.Company_Name,
@@ -175,7 +237,32 @@ export default function App() {
     }
   }
 
-  if (!paramData) return <NotFound />
+  if (authLoading) {
+    return (
+      <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="spinner-card">
+          <div className="spinner" />
+          <p className="spinner-step">Verifying your invitation...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (authError === 'used') {
+    return (
+      <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div className="confirm-content" style={{ maxWidth: 400, textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
+          <h2 className="confirm-title" style={{ color: '#fca5a5' }}>Already Used</h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: '1rem 0' }}>
+            This booking link has already been used. Each invitation can only be used once.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (authError || !paramData) return <NotFound />
 
   return (
     <div className="app-bg">

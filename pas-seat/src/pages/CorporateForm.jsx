@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import QRCode from 'qrcode'
 import { allocateCorporateSeat, uploadFile, sendLanyardWhatsapp } from '../api'
 import { generateLanyard } from '../generateLanyard'
 
@@ -8,7 +9,7 @@ const FIELDS = [
   { name: 'CNIC_Number',  label: 'CNIC Number',     type: 'text',  required: true,  placeholder: '41323-1393332-4' },
   { name: 'phone_number', label: 'Phone Number',    type: 'tel',   required: true,  placeholder: '923344342234' },
   { name: 'Company_Name', label: 'Company Name',    type: 'text',  required: true,  placeholder: 'Acme Corp' },
-  { name: 'Designation',  label: 'Designation',     type: 'text',  required: false, placeholder: 'Engineer' },
+  { name: 'Designation',  label: 'Designation',     type: 'text',  required: true,  placeholder: 'Engineer' },
 ]
 
 function validateForm(form) {
@@ -34,6 +35,10 @@ function validateForm(form) {
     errors.Company_Name = 'Company Name is required'
   }
 
+  if (!form.Designation || form.Designation.trim() === '') {
+    errors.Designation = 'Designation is required'
+  }
+
   return errors
 }
 
@@ -48,6 +53,7 @@ export default function CorporateForm() {
   const [uploading, setUploading] = useState(false)
   const [step, setStep] = useState('')
   const [done, setDone] = useState(false)
+  const [lanyardUrl, setLanyardUrl] = useState(null)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
 
@@ -81,15 +87,15 @@ export default function CorporateForm() {
     try {
       let imageUrl = null
 
-      // if (imageFile) {
-      //   setStep('Uploading your photo...')
-      //   const { url } = await uploadFile(imageFile, imageFile.name)
-      //   imageUrl = url
-      // }
+      if (imageFile) {
+        setStep('Uploading your photo...')
+        const { url } = await uploadFile(imageFile, imageFile.name)
+        imageUrl = url
+      }
 
       setStep('Allocating your seat...')
       
-      const { seatNumber } = await allocateCorporateSeat({
+      const { seatNumber, bookingId } = await allocateCorporateSeat({
         corporateId,
         phone: form.phone_number,
         image: imageUrl,
@@ -100,6 +106,15 @@ export default function CorporateForm() {
         type: "Corporate"
       })
 
+      // Create profile URL
+      const profileUrl = window.location.origin + "/Profile/" + bookingId
+
+      // Generate QR code for profile URL
+      setStep('Generating QR code...')
+      const lanyardQrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
+      const qrBlob = await (await fetch(lanyardQrDataUrl)).blob()
+      const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${bookingId}.png`)
+
       setStep('Generating your pass...')
       const { blob } = await generateLanyard({
         name: form.Full_Name,
@@ -108,10 +123,12 @@ export default function CorporateForm() {
         imageUrl,
         designation: form.Designation,
         companyName: form.Company_Name,
+        lanyardQrUrl,
       })
 
       setStep('Uploading your pass...')
       const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${form.phone_number}.png`)
+      setLanyardUrl(lanyardUrl)
 
       setStep('Sending your pass via WhatsApp...')
       await sendLanyardWhatsapp({ contactNumber: form.phone_number, lanyardUrl })
@@ -136,6 +153,14 @@ export default function CorporateForm() {
             Your pass has been sent via WhatsApp to<br />
             <strong>{form.phone_number}</strong>
           </p>
+          {lanyardUrl && (
+            <div className="done-lanyard-wrap">
+              <img src={lanyardUrl} alt="Your Pass" className="done-lanyard-img" />
+              <a href={lanyardUrl} download="effie-pass.png" className="done-download-btn">
+                Download Pass
+              </a>
+            </div>
+          )}
         </div>
       </div>
     )

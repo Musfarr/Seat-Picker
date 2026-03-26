@@ -13,6 +13,8 @@ const BOOK_URL            = 'http://localhost:9000/api/book-seat'
 const BOOK_CORPORATE_URL  = 'http://localhost:9000/api/book-corporate'
 const ALLOCATE_URL        = 'http://localhost:9000/api/book-corporate/allocate'
 const BOOKING_DATA_URL    = 'http://localhost:9000/api/booking-data'
+const CHECK_TOKEN_URL     = 'http://localhost:9000/api/check-token'
+const SAVE_TOKEN_URL      = 'http://localhost:9000/api/save-token'
 
 const LINK_TEMPLATE_ID = '1253237689718231'  // update to your text/link template ID
 
@@ -149,6 +151,20 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
 
 export async function getBookingData(userId) {
   const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
+export async function checkToken(token) {
+  const res = await axios.post(CHECK_TOKEN_URL, { token }, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
+export async function saveToken(token, userId) {
+  const res = await axios.post(SAVE_TOKEN_URL, { token, userId }, {
     headers: { 'Content-Type': 'application/json' },
   })
   return res.data
