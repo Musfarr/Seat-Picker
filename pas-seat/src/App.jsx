@@ -327,6 +327,8 @@ export default function App() {
         />
       )}
 
+      {seatsLoading && <ProcessingOverlay step="Loading available seats..." />}
+
       {processing && <ProcessingOverlay step={processStep} />}
 
       {!processing && processStep.startsWith('Error') && (
