@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774448199211-521863583.jpg'
+const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774535504135-226612607.png'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {

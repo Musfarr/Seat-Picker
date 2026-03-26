@@ -56,6 +56,7 @@ export default function App() {
       // Build paramData from decrypted fields
       const Number_of_ticket = parseInt(parsed.Number_of_ticket, 10)
       const isCorporate = !isNaN(Number_of_ticket) && Number_of_ticket > 0
+      // console.log(parsed , " parseddd")
       setParamData({
         flow: isCorporate ? 'corporate' : 'individual',
         allowedSeats: isCorporate ? Number_of_ticket : 1,
