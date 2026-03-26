@@ -106,7 +106,7 @@ export default function App() {
         })
 
         // create profile url
-        const profile_Url = window.location.origin + "/User-Profile/" + booking;
+        const profile_Url = window.location.origin + "/Profile/" + booking;
 
 
         // create qr of Profile URL for Lanyard

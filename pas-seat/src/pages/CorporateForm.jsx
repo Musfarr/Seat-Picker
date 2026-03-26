@@ -7,6 +7,7 @@ const FIELDS = [
   { name: 'Full_Name',    label: 'Full Name',       type: 'text',  required: true,  placeholder: 'John Doe' },
   { name: 'CNIC_Number',  label: 'CNIC Number',     type: 'text',  required: true,  placeholder: '41323-1393332-4' },
   { name: 'phone_number', label: 'Phone Number',    type: 'tel',   required: true,  placeholder: '923344342234' },
+  { name: 'Company_Name', label: 'Company Name',    type: 'text',  required: true,  placeholder: 'Acme Corp' },
   { name: 'Designation',  label: 'Designation',     type: 'text',  required: false, placeholder: 'Engineer' },
 ]
 
@@ -29,6 +30,10 @@ function validateForm(form) {
     errors.phone_number = 'Phone must start with 92 and have 12 digits total'
   }
 
+  if (!form.Company_Name || form.Company_Name.trim() === '') {
+    errors.Company_Name = 'Company Name is required'
+  }
+
   return errors
 }
 
@@ -36,7 +41,7 @@ export default function CorporateForm() {
   const { id: corporateId } = useParams()
 
   const [form, setForm] = useState({
-    Full_Name: '', CNIC_Number: '', phone_number: '', Designation: '',
+    Full_Name: '', CNIC_Number: '', phone_number: '', Company_Name: '', Designation: '',
   })
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
@@ -76,15 +81,24 @@ export default function CorporateForm() {
     try {
       let imageUrl = null
 
-      if (imageFile) {
-        setStep('Uploading your photo...')
-        const { url } = await uploadFile(imageFile, imageFile.name)
-        imageUrl = url
-      }
+      // if (imageFile) {
+      //   setStep('Uploading your photo...')
+      //   const { url } = await uploadFile(imageFile, imageFile.name)
+      //   imageUrl = url
+      // }
 
       setStep('Allocating your seat...')
       
-      const { seatNumber } = await allocateCorporateSeat(corporateId , { phone: form.phone_number })
+      const { seatNumber } = await allocateCorporateSeat({
+        corporateId,
+        phone: form.phone_number,
+        image: imageUrl,
+        name: form.Full_Name,
+        cnic: form.CNIC_Number,
+        designation: form.Designation,
+        companyName: form.Company_Name,
+        type: "Corporate"
+      })
 
       setStep('Generating your pass...')
       const { blob } = await generateLanyard({

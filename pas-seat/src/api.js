@@ -56,8 +56,8 @@ export async function bookCorporate(payload) {
 /* Corporate phase-2: allocate one seat to a form filler.
    payload: { corporateId }
    Returns: { seatNumber } */
-export async function allocateCorporateSeat(corporateId) {
-  const res = await axios.post(ALLOCATE_URL, { corporateId }, {
+export async function allocateCorporateSeat(payload) {
+  const res = await axios.post(ALLOCATE_URL, payload, {
     headers: { 'Content-Type': 'application/json' },
   })
   return res.data
