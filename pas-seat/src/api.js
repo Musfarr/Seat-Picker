@@ -29,9 +29,9 @@ const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1
 export async function fetchSeatsData() {
   const res = await axios.get(SEATS_URL, {
     withCredentials: false,
-    headers: {
-      'ngrok-skip-browser-warning': 'true',
-    },
+    // headers: {
+    //   'ngrok-skip-browser-warning': 'true',
+    // },
   })
   const data = res.data
   return Array.isArray(data) ? data : data.seats
