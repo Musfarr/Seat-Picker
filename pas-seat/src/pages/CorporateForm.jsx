@@ -83,15 +83,15 @@ export default function CorporateForm() {
       return
     }
 
+    if (!imageFile) {
+      setError('Please upload your photo')
+      return
+    }
+
     setUploading(true)
     try {
-      let imageUrl = null
-
-      if (imageFile) {
-        setStep('Uploading your photo...')
-        const { url } = await uploadFile(imageFile, imageFile.name)
-        imageUrl = url
-      }
+      setStep('Uploading your photo...')
+      const { url: imageUrl } = await uploadFile(imageFile, imageFile.name)
 
       setStep('Allocating your seat...')
       
@@ -107,7 +107,7 @@ export default function CorporateForm() {
       })
 
       // Create profile URL
-      const profileUrl = window.location.origin + "/Profile/" + bookingId
+      const profileUrl = "https://effie.convexinteractive.com/Profile/" + bookingId
 
       // Generate QR code for profile URL
       setStep('Generating QR code...')
@@ -131,7 +131,12 @@ export default function CorporateForm() {
       setLanyardUrl(lanyardUrl)
 
       setStep('Sending your pass via WhatsApp...')
-      await sendLanyardWhatsapp({ contactNumber: form.phone_number, lanyardUrl })
+      try {
+        await sendLanyardWhatsapp({ contactNumber: form.phone_number, lanyardUrl })
+      } catch (whatsappErr) {
+        console.error('WhatsApp send failed:', whatsappErr)
+        setError('WhatsApp delivery failed. Please download your pass below.')
+      }
 
       setDone(true)
     } catch (err) {
@@ -148,11 +153,22 @@ export default function CorporateForm() {
       <div className="app-bg">
         <div className="done-card" style={{ margin: 'auto', marginTop: '10vh' }}>
           <div className="done-check">✓</div>
-          <h2 className="done-title">You're all set!</h2>
-          <p className="done-sub">
-            Your pass has been sent via WhatsApp to<br />
-            <strong>{form.phone_number}</strong>
-          </p>
+          <h2 className="done-title">{error ? 'Booking Confirmed!' : 'You\'re all set!'}</h2>
+          {error ? (
+            <div style={{ marginBottom: '1rem' }}>
+              <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: '0.5rem 0' }}>
+                ⚠️ {error}
+              </p>
+              <p className="done-sub" style={{ marginTop: '0.5rem' }}>
+                Your seat has been reserved. Download your pass below.
+              </p>
+            </div>
+          ) : (
+            <p className="done-sub">
+              Your pass has been sent via WhatsApp to<br />
+              <strong>{form.phone_number}</strong>
+            </p>
+          )}
           {lanyardUrl && (
             <div className="done-lanyard-wrap">
               <img src={lanyardUrl} alt="Your Pass" className="done-lanyard-img" />
@@ -179,7 +195,7 @@ export default function CorporateForm() {
           {/* Photo upload */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', letterSpacing: '0.04em' }}>
-              PHOTO (optional)
+              PHOTO <span style={{ color: '#fca5a5' }}>*</span>
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               {imagePreview

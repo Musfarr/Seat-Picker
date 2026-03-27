@@ -25,6 +25,7 @@ export default function App() {
   const [processStep, setProcessStep] = useState('')
   const [done, setDone] = useState(false)
   const [lanyardUrl, setLanyardUrl] = useState(null)
+  const [whatsappError, setWhatsappError] = useState('')
 
   // Decrypt URL param, validate token, then load seats
   useEffect(() => {
@@ -169,7 +170,8 @@ export default function App() {
         })
 
         // create profile url
-        const profile_Url = window.location.origin + "/Profile/" + booking;
+        // const profile_Url = window.location.origin + "/Profile/" + booking;
+        const profile_Url = "https://effie.convexinteractive.com" + "/Profile/" + booking;
 
 
         // create qr of Profile URL for Lanyard
@@ -195,7 +197,13 @@ export default function App() {
 
 
         setProcessStep('Sending your pass via WhatsApp...')
-        await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+
+        try {
+          await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+        } catch (whatsappErr) {
+          console.error('WhatsApp send failed:', whatsappErr)
+          setWhatsappError('WhatsApp delivery failed. Please download your pass below.')
+        }
         setDone(true)
 
       }
@@ -219,7 +227,8 @@ export default function App() {
           Designation: paramData.Designation,
         })
 
-        const formLink = `${window.location.origin}/form/${key}`
+        // const formLink = `${window.location.origin}/form/${key}`
+        const formLink = `https://effie.convexinteractive.com/form/${key}`
 
         setProcessStep('Generating QR code...')
         const qrDataUrl = await QRCode.toDataURL(formLink, { width: 512, margin: 5 })
@@ -227,7 +236,13 @@ export default function App() {
         const { url: qrUrl } = await uploadFile(qrBlob, `qr-${key}.png`)
 
         setProcessStep('Sending form link via WhatsApp...')
-        await sendLinkWhatsapp({ contactNumber: paramData.phone_number, link: formLink, qrImageUrl: qrUrl })
+
+        try {
+          await sendLinkWhatsapp({ contactNumber: paramData.phone_number, link: formLink, qrImageUrl: qrUrl })
+        } catch (whatsappErr) {
+          console.error('WhatsApp send failed:', whatsappErr)
+          setWhatsappError('WhatsApp delivery failed. Form link: ' + formLink)
+        }
         setDone(true)
       }
     } catch (err) {
@@ -347,7 +362,7 @@ export default function App() {
       )}
 
       {done && (
-        <DoneModal phone_number={paramData.phone_number} lanyardUrl={lanyardUrl} />
+        <DoneModal phone_number={paramData.phone_number} lanyardUrl={lanyardUrl} errorMessage={whatsappError} />
       )}
     </div>
   )
