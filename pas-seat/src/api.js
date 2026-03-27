@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const LOGIN_URL = 'https://portal.berrytalks.com/api/auth/client/login'
 const BROADCAST_URL = 'https://portal.berrytalks.com/api/broadcast/send'
-const TEMPLATE_ID = '80857918321962'
+const TEMPLATE_ID = '880857918321962'
 
 // const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
 // const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
