@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const LOGIN_URL = 'https://portal.berrytalks.com/api/auth/client/login'
 const BROADCAST_URL = 'https://portal.berrytalks.com/api/broadcast/send'
-const TEMPLATE_ID = '880857918321962'
+const TEMPLATE_ID = '1963373347598715'
 
 // const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
 // const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
@@ -16,7 +16,7 @@ const BOOKING_DATA_URL    = 'https://effie.convexinteractive.com/api/booking-dat
 const CHECK_TOKEN_URL     = 'https://effie.convexinteractive.com/api/check-token'
 const SAVE_TOKEN_URL      = 'https://effie.convexinteractive.com/api/save-token'
 
-const LINK_TEMPLATE_ID = '2366687017109523'  // update to your text/link template ID
+const LINK_TEMPLATE_ID = '2420728638424994'  // update to your text/link template ID
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
