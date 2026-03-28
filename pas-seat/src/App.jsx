@@ -303,30 +303,34 @@ export default function App() {
           </span>
         </div>
 
-        <div className="stage-wrap">
-          <div className="stage-bar">
-            <div className="stage-sponsors">
-              <div className="sponsor-logo sponsor-logo--pepsi">
-                <img src="PEP.png" alt="Pepsi" className="sponsor-img-pepsi" />
-                <span className="sponsor-text">PRESENTS</span>
-              </div>
-              <div className="sponsor-logo sponsor-logo-main">
-                <img src="Effie_Awardswhite.png" alt="Effie Awards Pakistan" />
-              </div>
-              <div className="sponsor-logo sponsor-logo--assoc">
-                <span className="sponsor-text">IN ASSOCIATION WITH</span>
-                <img src="Unilever.svg" alt="Unilever" className="sponsor-img-unilever" />
+        <div className="venue-scale-outer">
+          <div className="venue-scale-inner">
+            <div className="stage-wrap">
+              <div className="stage-bar">
+                <div className="stage-sponsors">
+                  <div className="sponsor-logo sponsor-logo--pepsi">
+                    <img src="PEP.png" alt="Pepsi" className="sponsor-img-pepsi" />
+                    <span className="sponsor-text">PRESENTS</span>
+                  </div>
+                  <div className="sponsor-logo sponsor-logo-main">
+                    <img src="Effie_Awardswhite.png" alt="Effie Awards Pakistan" />
+                  </div>
+                  <div className="sponsor-logo sponsor-logo--assoc">
+                    <span className="sponsor-text">IN ASSOCIATION WITH</span>
+                    <img src="Unilever.svg" alt="Unilever" className="sponsor-img-unilever" />
+                  </div>
+                </div>
+                <span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span>
               </div>
             </div>
-            <span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span>
+
+            <VenueFloor
+              tables={tables}
+              allowedTypes={allowedTypes}
+              onTableClick={handleTableClick}
+            />
           </div>
         </div>
-
-        <VenueFloor
-          tables={tables}
-          allowedTypes={allowedTypes}
-          onTableClick={handleTableClick}
-        />
 
         <BookingBar
           totalSelected={totalSelected}

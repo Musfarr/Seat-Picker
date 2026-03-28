@@ -33,6 +33,7 @@ body {
     0 40px 80px rgba(0,0,0,0.65),
     inset 0 1px 0 rgba(255,255,255,0.06);
   overflow-x: auto;
+  overflow-y: visible;
 }
 
 /* ── Venue floor (side cols + centre) ── */
@@ -47,8 +48,8 @@ body {
 /* ── Reserved slot (R) ── */
 .reserved-slot {
   margin: 4px;
-    width: 54px;
-    height: 54px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   background: rgba(185, 28, 28, 0.25);
   border: 2px solid rgba(239, 68, 68, 0.55);
@@ -225,7 +226,7 @@ body {
 }
 
 .sponsor-img-pepsi {
-  height: clamp(54px, 7.2vw, 120px);
+  height: clamp(54px, 7.2vw, 100px);
 }
 
 .sponsor-img-unilever {
@@ -249,51 +250,61 @@ body {
   text-shadow: 0 0 14px rgba(250,204,21,0.9);
 }
 
+/* ── Venue scale wrapper – zooms stage + floor as one unit ── */
+.venue-scale-outer {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(249,115,22,0.25) transparent;
+}
+
+.venue-scale-inner {
+  display: inline-block;
+  min-width: max-content;
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .venue-scale-inner { zoom: 0.85; }
+}
 @media (max-width: 900px) {
-  .stage-bar {
-    width: 100%;
-    padding: 0.9rem 1rem;
-    min-height: 168px;
-  }
+  .venue-scale-inner { zoom: 0.72; }
+}
+@media (max-width: 750px) {
+  .venue-scale-inner { zoom: 0.60; }
+}
+@media (max-width: 600px) {
+  .venue-scale-inner { zoom: 0.50; }
+}
+@media (max-width: 480px) {
+  .venue-scale-inner { zoom: 0.40; }
+}
+@media (max-width: 380px) {
+  .venue-scale-inner { zoom: 0.33; }
+}
 
-  .stage-sponsors {
-    gap: 0.9rem;
-  }
-
-  .sponsor-logo--pepsi {
-    gap: 0.3rem;
-  }
-
-  .stage-text {
-    letter-spacing: 6px;
-    font-size: 0.86rem;
-  }
+/* ── Viewport-level overrides (header, card padding only) ── */
+@media (max-width: 900px) {
+  #root { padding: 1.5rem 0.75rem; }
+  .venue-card { padding: 1.75rem 1rem 0.8rem; }
+  .venue-title { font-size: 1.6rem; }
 }
 
 @media (max-width: 640px) {
-  .stage-wrap {
-    margin-bottom: 1.15rem;
-  }
+  #root { padding: 1rem 0.5rem; }
+  .venue-card { padding: 1.25rem 0.6rem 0.6rem; }
+  .venue-header { margin-bottom: 0.85rem; }
+  .venue-title { font-size: 1.35rem; }
+  .venue-sub { font-size: 0.82rem; }
+}
 
-  .stage-bar {
-    min-height: 148px;
-    padding: 0.75rem 0.7rem;
-    border-width: 1px;
-  }
-
-  .stage-sponsors {
-    gap: 0.55rem;
-  }
-
-  .sponsor-text {
-    font-size: 0.5rem;
-    letter-spacing: 0.6px;
-  }
-
-  .stage-text {
-    letter-spacing: 4px;
-    font-size: 0.76rem;
-  }
+@media (max-width: 480px) {
+  #root { padding: 0.75rem 0.25rem; }
+  .venue-card { padding: 1rem 0.4rem 0.5rem; }
+  .venue-title { font-size: 1.2rem; }
+  .venue-sub { font-size: 0.75rem; }
 }
 
 /* ── Seat Area ── */
