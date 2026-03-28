@@ -4,26 +4,30 @@ export const VIP_TABLES = new Set([2, 4, 8, 10, 14, 16, 1, 3, 7, 9, 13, 15])
 export const UNAVAILABLE_TABLES = new Set([])
 
 export const LAYOUT = {
-  sideLeft:  [[62,64],[66,68],[70,72],[74,76],[78,80]],
-  sideRight: [[63,61],[65,67],[69,71],[73,75],[77,79]],
+  sideLeft:  [],
+  sideRight: [],
   leftBlock: [
-    [6, 4, 2, null],
-    [12, 10, 8, null, null],
-    [18, 16, 14, null, null, null],
-    [32, 30, 28, 26, 24, 22, 20],
-    [46, 44, 42, 40, 38, 36, 34],
-    [60, 58, 56, 54, 52, 50, 48],
+    [51, 50, 49, 48, 47, 46, null],
+    [56, 55, 54, 53, 52, null, null, null, null],
+    [63, 62, 61, 60, 59, 58, 57, null, null],
+    [72, 71, 70, 69, 68, 67, 66, 65, 64],
+    // [80, 79, 78, 77, 76, 75, 74, 73],
   ],
   rightBlock: [
-    [null, 1, 3, 5],
-    [null, null, 7, 9, 11],
-    [null, null, null, 13, 15, 17],
-    [19, 21, 23, 25, 27, 29, 31],
-    [33, 35, 37, 39, 41, 43, 45],
-    [47, 49, 51, 53, 55, 57, 59],
+    [null, 1, 2, 3, 4, 5, 6],
+    [null, null, null, null, 7, 8, 9, 10, 11],
+    [null, null, 12, 13, 14, 15, 16, 17, 18],
+    [19, 20, 21, 22, 23, 24, 25, 26, 27],
   ],
-  bottomLeft:  [82, 83, 84, 85, 86, 87, 88],
-  bottomRight: [81],
+  bottomLeft: [
+    [80, 79, 78, 77, 76, 75, 74, 73],
+    [86, 85, 84, 83, 82, 81],
+  ],
+  bottomRight: [
+    [28, 29, 30, 31, 32, 33, 34, 35],
+    [36, 37, 38, 39, 40, 41],
+    [0,0 ,42, 43, 44, 45],
+  ],
 }
 
 export function makeTable(num) {
@@ -39,9 +43,9 @@ export function buildAllTables() {
     ...LAYOUT.sideRight.flat(),
     ...LAYOUT.leftBlock.flat(),
     ...LAYOUT.rightBlock.flat(),
-    ...LAYOUT.bottomLeft,
-    ...LAYOUT.bottomRight,
-  ].filter(n => n !== null)
+    ...LAYOUT.bottomLeft.flat(),
+    ...LAYOUT.bottomRight.flat(),
+  ].filter(n => n !== null && n !== 0)
   allNums.forEach(n => { all[n] = makeTable(n) })
   return all
 }

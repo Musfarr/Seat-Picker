@@ -3,6 +3,7 @@ import { LAYOUT } from '../utils/seatLayout'
 
 export default function VenueFloor({ tables, allowedTypes, onTableClick }) {
   function TB(num, key) {
+    if (num === 0) return <div key={key} className="empty-slot" />
     if (num === null) return <div key={key} className="reserved-slot"><span className="reserved-label">R</span></div>
     const tbl = tables[num]
     if (!tbl) return null
@@ -19,15 +20,6 @@ export default function VenueFloor({ tables, allowedTypes, onTableClick }) {
   return (
     <>
       <div className="venue-floor">
-        {/* Side column LEFT */}
-        <div className="side-col side-col--left"style={{ marginTop: '30px' }} >
-          {LAYOUT.sideLeft.map((pair, i) => (
-            <div key={i} className="side-pair">
-              {pair.map((n, j) => TB(n, `sl-${i}-${j}`))}
-            </div>
-          ))}
-        </div>
-
         {/* Centre: left block + aisle + right block */}
         <div className="centre-area">
           <div className="block block--left">
@@ -48,25 +40,33 @@ export default function VenueFloor({ tables, allowedTypes, onTableClick }) {
             ))}
           </div>
         </div>
-
-        {/* Side column RIGHT */}
-        <div className="side-col side-col--right" style={{ marginTop: '30px' }}>
-          {LAYOUT.sideRight.map((pair, i) => (
-            <div key={i} className="side-pair">
-              {pair.map((n, j) => TB(n, `sr-${i}-${j}`))}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Bottom row */}
       <div className="bottom-area">
-        <div className="bottom-left" style={{ marginRight: '30px' }}>
-          {LAYOUT.bottomLeft.map((n, i) => TB(n, `bl-${i}`))}
+        <div className="bottom-left">
+          <div className="block">
+            {LAYOUT.bottomLeft.map((row, ri) => (
+              <div key={ri} className="floor-row" style={{justifyContent:'end'}}>
+                {row.map((n, ci) => TB(n, `bl-${ri}-${ci}`))}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="bottom-right" >
-          {LAYOUT.bottomRight.map((n, i) => TB(n, `br-${i}`))}
+        <div className="bottom-right">
+          <div className="block">
+            {LAYOUT.bottomRight.map((row, ri) => (
+              <div key={ri} className="floor-row">
+                {row.map((n, ci) => TB(n, `br-${ri}-${ci}`))}
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
+        <div className="powered-by">
+        <a href="https://convexinteractive.com" target="_blank" rel="noopener noreferrer">
+          Powered by Convex Interactive
+        </a>
       </div>
     </>
   )

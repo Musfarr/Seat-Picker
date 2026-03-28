@@ -25,7 +25,7 @@ body {
   background: linear-gradient(160deg, #111827 0%, #1a2440 60%, #0f1a35 100%);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 8px;
-  padding: 2.25rem 1.5rem 2rem;
+  padding: 2.25rem 1.5rem 0.8rem 2rem;
   width: 100%;
   max-width: 1280px;
   box-shadow:
@@ -46,8 +46,9 @@ body {
 
 /* ── Reserved slot (R) ── */
 .reserved-slot {
-  width: 48px;
-  height: 48px;
+  margin: 4px;
+    width: 54px;
+    height: 54px;
   border-radius: 50%;
   background: rgba(185, 28, 28, 0.25);
   border: 2px solid rgba(239, 68, 68, 0.55);
@@ -117,10 +118,15 @@ body {
 /* ── Bottom area ── */
 .bottom-area {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: right;
-  margin-top: 6px;
+  margin-top: 30px;
   padding: 0 4px;
+}
+
+.empty-slot {
+  width: 62px;
+  height: 54px;
 }
 
 .bottom-left {
@@ -163,20 +169,76 @@ body {
 }
 
 .stage-bar {
-  width: 44%;
-    height: 150px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  background: linear-gradient(90deg,
-    rgba(249,115,22,0.08),
-    rgba(249,115,22,0.55) 30%,
-    rgba(250,204,21,0.55) 70%,
-    rgba(249,115,22,0.08));
-  border: 1px solid rgba(250,204,21,0.28);
-  border-radius: 4px;
-  padding: 0.5rem 3.5rem;
-  box-shadow: 0 0 32px rgba(249,115,22,0.22), 0 0 80px rgba(249,115,22,0.08);
+  width: min(860px, 92%);
+  min-height: 190px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  background: linear-gradient(135deg, rgb(120 80 40 / 0%) 0%, rgb(160 100 50 / 97%) 25%, rgb(180 120 60) 50%, rgb(160 100 50) 75%, rgb(120 80 40 / 23%) 100%);
+  border: 2px solid rgba(180, 120, 60, 0.4);
+  border-radius: 6px;
+  padding: 0.95rem 2rem;
+  box-shadow: 
+    0 0 40px rgba(180, 120, 60, 0.15),
+    0 0 80px rgba(160, 100, 50, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.stage-sponsors {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.9rem, 2.5vw, 2.1rem);
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.sponsor-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.sponsor-logo img {
+  /* height: clamp(50px, 7vw, 88px); */
+  width: auto;
+  object-fit: contain;
+  filter: brightness(1.1);
+}
+
+.sponsor-logo-main img {
+  height: clamp(60px, 8vw, 98px);
+}
+
+.sponsor-logo--pepsi {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sponsor-logo--pepsi .sponsor-text {
+  margin-top: 0;
+}
+
+.sponsor-img-pepsi {
+  height: clamp(54px, 7.2vw, 120px);
+}
+
+.sponsor-img-unilever {
+  height: clamp(46px, 6.2vw, 62px);
+}
+
+.sponsor-text {
+  font-size: clamp(0.55rem, 0.95vw, 0.82rem);
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .stage-text {
@@ -185,6 +247,53 @@ body {
   letter-spacing: 9px;
   color: #facc15;
   text-shadow: 0 0 14px rgba(250,204,21,0.9);
+}
+
+@media (max-width: 900px) {
+  .stage-bar {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    min-height: 168px;
+  }
+
+  .stage-sponsors {
+    gap: 0.9rem;
+  }
+
+  .sponsor-logo--pepsi {
+    gap: 0.3rem;
+  }
+
+  .stage-text {
+    letter-spacing: 6px;
+    font-size: 0.86rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .stage-wrap {
+    margin-bottom: 1.15rem;
+  }
+
+  .stage-bar {
+    min-height: 148px;
+    padding: 0.75rem 0.7rem;
+    border-width: 1px;
+  }
+
+  .stage-sponsors {
+    gap: 0.55rem;
+  }
+
+  .sponsor-text {
+    font-size: 0.5rem;
+    letter-spacing: 0.6px;
+  }
+
+  .stage-text {
+    letter-spacing: 4px;
+    font-size: 0.76rem;
+  }
 }
 
 /* ── Seat Area ── */
@@ -1160,4 +1269,24 @@ body {
   font-size: 0.62rem;
   text-shadow: 0 1px 4px rgba(0,0,0,0.95);
   margin: 0;
+}
+
+.powered-by {
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+  align-items: end;
+  margin-top: 20px;
+  padding-top: 10px;
+}
+
+.powered-by a {
+  color: rgba(255,255,255,0.58);
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.powered-by a:hover {
+  color: rgba(255,255,255,0.9);
 }
