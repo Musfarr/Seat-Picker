@@ -320,7 +320,7 @@ export default function App() {
                     <img src="Unilever.svg" alt="Unilever" className="sponsor-img-unilever" />
                   </div>
                 </div>
-                <span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span>
+                {/* <span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span> */}
               </div>
             </div>
 
