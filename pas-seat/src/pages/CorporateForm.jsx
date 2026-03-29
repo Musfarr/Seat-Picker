@@ -4,6 +4,8 @@ import QRCode from 'qrcode'
 import { allocateCorporateSeat, uploadFile, sendLanyardWhatsapp } from '../api'
 import { generateLanyard } from '../generateLanyard'
 
+const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
+
 const FIELDS = [
   { name: 'Full_Name',    label: 'Full Name',       type: 'text',  required: true,  placeholder: 'John Doe' },
   { name: 'CNIC_Number',  label: 'CNIC Number',     type: 'text',  required: true,  placeholder: '41323-1393332-4' },
@@ -68,6 +70,16 @@ export default function CorporateForm() {
   function handleImage(e) {
     const file = e.target.files[0]
     if (!file) return
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setImageFile(null)
+      setImagePreview(null)
+      setError('Image size must not exceed 2MB')
+      e.target.value = ''
+      return
+    }
+
+    setError('')
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
   }
@@ -85,6 +97,11 @@ export default function CorporateForm() {
 
     if (!imageFile) {
       setError('Please upload your photo')
+      return
+    }
+
+    if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
+      setError('Image size must not exceed 2MB')
       return
     }
 
