@@ -321,6 +321,7 @@ export default function App() {
                   </div>
                 </div>
                 {/* <span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span> */}
+                {/* <span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span> */}
               </div>
             </div>
 
