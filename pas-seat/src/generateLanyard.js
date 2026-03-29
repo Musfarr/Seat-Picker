@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774535504135-226612607.png'
+const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774792404230-763482493.jpg'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -56,16 +56,17 @@ export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, ima
   if (imageUrl) {
     try {
       const photo = await loadImage(imageUrl)
+      const enlargedPhotoR = Math.round(photoR * 1.15)
       ctx.save()
       ctx.beginPath()
-      ctx.arc(photoCX, photoCY, photoR, 0, Math.PI * 2)
+      ctx.arc(photoCX, photoCY, enlargedPhotoR, 0, Math.PI * 2)
       ctx.clip()
-      ctx.drawImage(photo, photoCX - photoR, photoCY - photoR, photoR * 2, photoR * 2)
+      ctx.drawImage(photo, photoCX - enlargedPhotoR, photoCY - enlargedPhotoR, enlargedPhotoR * 2, enlargedPhotoR * 2)
       ctx.restore()
       ctx.strokeStyle = 'rgb(254, 242, 194)'
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.arc(photoCX, photoCY, photoR + 3, 0, Math.PI * 2)
+      ctx.arc(photoCX, photoCY, enlargedPhotoR + 3, 0, Math.PI * 2)
       ctx.stroke()
     } catch (_) {
       // photo failed to load — skip
