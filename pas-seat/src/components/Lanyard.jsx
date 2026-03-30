@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774792404230-763482493.jpg'
+const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774854403723-826183668.jpg'
 
 export default function Lanyard({ name, seatNumber, cnic, imageUrl }) {
   return (
