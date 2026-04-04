@@ -15,6 +15,7 @@ const ALLOCATE_URL        = 'https://effie.convexinteractive.com/api/book-corpor
 const BOOKING_DATA_URL    = 'https://effie.convexinteractive.com/api/booking-data'
 const CHECK_TOKEN_URL     = 'https://effie.convexinteractive.com/api/check-token'
 const SAVE_TOKEN_URL      = 'https://effie.convexinteractive.com/api/save-token'
+const RESERVED_EMAIL_URL  = 'https://effie.convexinteractive.com/api/send-reserved-email'
 
 const LINK_TEMPLATE_ID = '2420728638424994'  // update to your text/link template ID
 
@@ -165,6 +166,21 @@ export async function checkToken(token) {
 
 export async function saveToken(token, userId) {
   const res = await axios.post(SAVE_TOKEN_URL, { token, userId }, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
+/* Send reserved-seat lanyard via email (SMTP handled by backend).
+   Backend must implement POST /api/send-reserved-email
+   using secretariat@pas.org.pk SMTP credentials. */
+export async function sendReservedEmail({ toEmail, name, seatNumber, lanyardUrl }) {
+  const res = await axios.post(RESERVED_EMAIL_URL, {
+    toEmail,
+    name,
+    seatNumber,
+    lanyardUrl,
+  }, {
     headers: { 'Content-Type': 'application/json' },
   })
   return res.data
