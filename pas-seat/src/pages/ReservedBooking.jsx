@@ -397,8 +397,8 @@ export default function ReservedBooking() {
 
           {flow === 'individual' && (
             <FormField
-              label="CNIC Number" value={cnic} onChange={setCnic}
-              placeholder="XXXXX-XXXXXXX-X" required error={fieldErrors.cnic}
+              label="CNIC Number (optional)" value={cnic} onChange={setCnic}
+              placeholder="XXXXX-XXXXXXX-X" error={fieldErrors.cnic}
             />
           )}
 
