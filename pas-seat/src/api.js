@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const LOGIN_URL = 'https://portal.berrytalks.com/api/auth/client/login'
-const BROADCAST_URL = 'https://portal.berrytalks.com/api/broadcast/send'
+const BROADCAST_URL = 'https://broadcast.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1963373347598715'
 
 // const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
@@ -25,7 +25,7 @@ const BASE_URL = 'https://mediaupload.convexinteractive.com'
 const LOGIN_EMAIL = 'apipasnew@yopmail.com'
 const LOGIN_PASSWORD = 'Admin@321'
 
-const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774535504135-226612607.png'
+const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1775739824085-99220974.jpg'
 
 export async function fetchSeatsData() {
   const res = await axios.get(SEATS_URL, {
