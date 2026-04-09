@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const LOGIN_URL = 'https://portal.berrytalks.com/api/auth/client/login'
-const BROADCAST_URL = 'https://portal.berrytalks.com/api/broadcast/send'
+const BROADCAST_URL = 'https://broadcast.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1963373347598715'
 
 // const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
