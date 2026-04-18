@@ -25,7 +25,7 @@ const BASE_URL = 'https://mediaupload.convexinteractive.com'
 const LOGIN_EMAIL = 'apipasnew@yopmail.com'
 const LOGIN_PASSWORD = 'Admin@321'
 
-const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1774535504135-226612607.png'
+const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1776253942489-886168050.png'
 
 export async function fetchSeatsData() {
   const res = await axios.get(SEATS_URL, {
