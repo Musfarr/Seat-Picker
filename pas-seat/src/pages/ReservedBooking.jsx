@@ -182,7 +182,7 @@ export default function ReservedBooking() {
     const errs = {}
     if (!fullName.trim()) errs.fullName = 'Required'
     if (!email.trim()) errs.email = 'Required'
-    if (!phone.trim()) errs.phone = 'Required'
+    // if (!phone.trim()) errs.phone = 'Required'
     if (!indTable) errs.indTable = 'Select table'
     if (!indChair) errs.indChair = 'Select chair'
     setFieldErrors(errs)
