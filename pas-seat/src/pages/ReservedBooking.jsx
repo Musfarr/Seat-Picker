@@ -444,7 +444,7 @@ export default function ReservedBooking() {
 
           <FormField
             label="Phone Number" value={phone} onChange={setPhone}
-            placeholder="923XXXXXXXXX" required error={fieldErrors.phone}
+            placeholder="923XXXXXXXXX" 
           />
 
           {flow === 'individual' && (
