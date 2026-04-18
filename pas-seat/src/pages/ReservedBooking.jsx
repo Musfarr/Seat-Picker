@@ -3,8 +3,61 @@ import QRCode from 'qrcode'
 import { bookSeats, bookCorporate, uploadFile, sendLinkWhatsapp, sendReservedEmail } from '../api'
 import { generateLanyard } from '../generateLanyard'
 
-const RESERVED_TABLES = Array.from({ length: 14 }, (_, i) => `R${i + 1}`)
-const CHAIR_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+const FULL_TABLE_SEATS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+
+const RESERVED_SEATS_BY_TABLE = {
+  1: FULL_TABLE_SEATS,
+  3: FULL_TABLE_SEATS,
+  7: FULL_TABLE_SEATS,
+  8: FULL_TABLE_SEATS,
+  9: FULL_TABLE_SEATS,
+  12: ['A', 'B', 'C'],
+  14: FULL_TABLE_SEATS,
+  15: FULL_TABLE_SEATS,
+  16: FULL_TABLE_SEATS,
+  19: ['B', 'C'],
+  20: FULL_TABLE_SEATS,
+  21: ['A', 'B', 'G', 'H'],
+  22: FULL_TABLE_SEATS,
+  23: FULL_TABLE_SEATS,
+  24: FULL_TABLE_SEATS,
+  25: FULL_TABLE_SEATS,
+  28: FULL_TABLE_SEATS,
+  29: FULL_TABLE_SEATS,
+  30: FULL_TABLE_SEATS,
+  31: FULL_TABLE_SEATS,
+  46: FULL_TABLE_SEATS,
+  47: FULL_TABLE_SEATS,
+  48: FULL_TABLE_SEATS,
+  52: FULL_TABLE_SEATS,
+  53: FULL_TABLE_SEATS,
+  57: ['A', 'B', 'C', 'D', 'G', 'H'],
+  58: FULL_TABLE_SEATS,
+  59: FULL_TABLE_SEATS,
+  60: FULL_TABLE_SEATS,
+  66: FULL_TABLE_SEATS,
+  67: FULL_TABLE_SEATS,
+  68: FULL_TABLE_SEATS,
+  69: FULL_TABLE_SEATS,
+  70: FULL_TABLE_SEATS,
+  73: FULL_TABLE_SEATS,
+  74: FULL_TABLE_SEATS,
+  R1: FULL_TABLE_SEATS,
+  R2: FULL_TABLE_SEATS,
+  R3: FULL_TABLE_SEATS,
+  R4: FULL_TABLE_SEATS,
+  R5: FULL_TABLE_SEATS,
+  R6: FULL_TABLE_SEATS,
+  R7: FULL_TABLE_SEATS,
+  R8: FULL_TABLE_SEATS,
+  R9: FULL_TABLE_SEATS,
+  R10: FULL_TABLE_SEATS,
+  R11: FULL_TABLE_SEATS,
+  R12: FULL_TABLE_SEATS,
+  R13: FULL_TABLE_SEATS,
+  R14: FULL_TABLE_SEATS,
+}
+const RESERVED_TABLES = Object.keys(RESERVED_SEATS_BY_TABLE)
 const PAS_LOGO_URL = `${window.location.origin}/test.jpeg`
 
 const INPUT_STYLE = {
@@ -84,7 +137,7 @@ function SeatPicker({ tableVal, chairVal, onTableChange, onChairChange, label, t
             }}
           >
             <option value="" disabled style={{ background: '#0f1829' }}>Select</option>
-            {CHAIR_LABELS.map(c => (
+            {(tableVal ? RESERVED_SEATS_BY_TABLE[tableVal] || [] : []).map(c => (
               <option key={c} value={c} style={{ background: '#0f1829' }}>{c}</option>
             ))}
           </select>
