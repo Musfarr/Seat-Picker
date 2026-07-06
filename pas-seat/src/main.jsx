@@ -14,10 +14,10 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/form/:id" element={<CorporateForm />} />
-        <Route path="/Profile/:id" element={<Profile />} />
-        <Route path="/reserved" element={<ReservedBooking />} />
-        <Route path="/qr-broadcast" element={<QrBroadcast />} />
-        <Route path="/bulk-invite" element={<BulkInviteGenerator />} />
+        {/* <Route path="/Profile/:id" element={<Profile />} /> */}
+        {/* <Route path="/reserved" element={<ReservedBooking />} /> */}
+        {/* <Route path="/qr-broadcast" element={<QrBroadcast />} /> */}
+        {/* <Route path="/bulk-invite" element={<BulkInviteGenerator />} /> */}
       </Routes>
     </BrowserRouter>
   </StrictMode>,

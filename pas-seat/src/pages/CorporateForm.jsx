@@ -4,6 +4,7 @@ import QRCode from 'qrcode'
 import { allocateCorporateSeat, uploadFile, sendLanyardWhatsapp } from '../api'
 import { generateLanyard } from '../generateLanyard'
 
+
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
 
 const FIELDS = [
@@ -167,29 +168,27 @@ export default function CorporateForm() {
 
   if (done) {
     return (
-      <div className="app-bg">
-        <div className="done-card" style={{ margin: 'auto', marginTop: '10vh' }}>
-          <div className="done-check">✓</div>
-          <h2 className="done-title">{error ? 'Booking Confirmed!' : 'You\'re all set!'}</h2>
+      <div className="corp-page">
+        <div className="corp-done-card">
+          <div className="corp-done-check">✓</div>
+          <h2 className="corp-done-title">{error ? 'Booking Confirmed!' : 'You\'re all set!'}</h2>
           {error ? (
             <div style={{ marginBottom: '1rem' }}>
-              <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: '0.5rem 0' }}>
-                ⚠️ {error}
-              </p>
-              <p className="done-sub" style={{ marginTop: '0.5rem' }}>
+              <p className="corp-done-warn">⚠️ {error}</p>
+              <p className="corp-done-sub" style={{ marginTop: '0.5rem' }}>
                 Your seat has been reserved. Download your pass below.
               </p>
             </div>
           ) : (
-            <p className="done-sub">
+            <p className="corp-done-sub">
               Your pass has been sent via WhatsApp to<br />
               <strong>{form.phone_number}</strong>
             </p>
           )}
           {lanyardUrl && (
-            <div className="done-lanyard-wrap">
-              <img src={lanyardUrl} alt="Your Pass" className="done-lanyard-img" />
-              <a href={lanyardUrl} download="effie-pass.png" className="done-download-btn">
+            <div className="corp-lanyard-wrap">
+              <img src={lanyardUrl} alt="Your Pass" className="corp-lanyard-img" />
+              <a href={lanyardUrl} download="effie-pass.png" className="corp-download-btn">
                 Download Pass
               </a>
             </div>
@@ -200,26 +199,29 @@ export default function CorporateForm() {
   }
 
   return (
-    <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
-      <div className="confirm-content" style={{ width: '100%', maxWidth: 440 }}>
-        <h2 className="confirm-title" style={{ marginBottom: '0.25rem' }}>Complete Your Booking</h2>
-        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', margin: '0 0 1.5rem' }}>
-          Fill in your details to receive your seat pass
-        </p>
+    <div className="corp-page">
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className='toplogo'>
+        <img style = {{ width:'120px'}} src='/logo.png'  />
+      </div>
+
+      <div className="corp-card">
+        <h2 className="corp-title">Complete Your Booking</h2>
+        <p className="corp-subtitle">Fill in your details to receive your seat pass</p>
+
+        <form onSubmit={handleSubmit} className="corp-form">
 
           {/* Photo upload */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', letterSpacing: '0.04em' }}>
-              PHOTO <span style={{ color: '#fca5a5' }}>*</span>
+          <div className="corp-photo-row">
+            <label className="corp-label">
+              PHOTO <span className="corp-required">*</span>
             </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="corp-photo-inner">
               {imagePreview
-                ? <img src={imagePreview} alt="preview" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(218,165,32,0.7)' }} />
-                : <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '1.4rem' }}>👤</div>
+                ? <img src={imagePreview} alt="preview" className="corp-photo-ring" />
+                : <div className="corp-photo-placeholder">👤</div>
               }
-              <label style={{ cursor: 'pointer', color: '#facc15', fontSize: '0.82rem', border: '1px solid rgba(250,204,21,0.4)', borderRadius: 6, padding: '6px 14px' }}>
+              <label className="corp-choose-btn">
                 Choose Photo
                 <input type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
               </label>
@@ -228,8 +230,8 @@ export default function CorporateForm() {
 
           {/* Text fields */}
           {FIELDS.map(({ name, label, type, required, placeholder }) => (
-            <div key={name} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              <label htmlFor={name} style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', letterSpacing: '0.04em' }}>
+            <div key={name} className="corp-field">
+              <label htmlFor={name} className="corp-label">
                 {label.toUpperCase()}{required && ' *'}
               </label>
               <input
@@ -240,37 +242,23 @@ export default function CorporateForm() {
                 placeholder={placeholder}
                 value={form[name]}
                 onChange={handleChange}
-                style={{
-                  background: '#0f1829',
-                  border: fieldErrors[name] ? '1px solid #fca5a5' : '1px solid #1e293b',
-                  borderRadius: 8,
-                  color: '#fff',
-                  padding: '10px 14px',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  width: '100%',
-                  boxSizing: 'border-box',
-                }}
+                className={`corp-input${fieldErrors[name] ? ' corp-input--err' : ''}`}
               />
               {fieldErrors[name] && (
-                <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: '-0.25rem' }}>
-                  {fieldErrors[name]}
-                </span>
+                <span className="corp-field-error">{fieldErrors[name]}</span>
               )}
             </div>
           ))}
 
-          {error && (
-            <p style={{ color: '#fca5a5', fontSize: '0.82rem', margin: 0 }}>{error}</p>
-          )}
+          {error && <p className="corp-error">{error}</p>}
 
           {uploading ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-              <div className="spinner" style={{ width: 22, height: 22, borderWidth: 3 }} />
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>{step}</span>
+            <div className="corp-uploading-row">
+              <div className="corp-spinner" />
+              <span className="corp-uploading-text">{step}</span>
             </div>
           ) : (
-            <button type="submit" className="confirm-ok" style={{ marginTop: '0.5rem', width: '100%' }}>
+            <button type="submit" className="corp-submit-btn">
               Submit &amp; Get My Pass
             </button>
           )}
