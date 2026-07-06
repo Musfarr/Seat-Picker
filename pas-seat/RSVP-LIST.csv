@@ -1,0 +1,116 @@
+S. No.,# Invitees,Table #,Seat#,Email,Title,Full Name,Company
+1,1,1,A,ali.rashid@nfoods.com,Mr.,Ali Rashid Khan,National Foods Limited
+2,1,1,B,raheel.yousuf@bankalfalah.com,Mr.,Raheel Yousuf,Bank Alfalah
+3,1,1,C,sarahasad.sadiq@frieslandcampina.com,Ms.,Sarah Sadiq,Friesland Campina
+4,1,1,D,Ali.habib@hbl.com,Mr.,Ali Habib,HBL
+5,1,1,F,hassaan.sherwani@pel.com.pk,Mr.,Hassaan Sherwani Khan,PEL
+6,1,1,G,Ammad.Danish@unilever.com,Mr.,Ammad Danish,Unilever Pakistan
+7,1,1,H,Fuad.Ghazanfar1@pk.nestle.com,Mr.,Fuad Ghazanfar,Nestle
+8,1,7,A,daniyal.patel@ebm.com.pk,Mr.,Daniyal Asif Patel,EBM
+9,1,7,B,saeed.durrani@ebm.com.pk,Mr.,Muhammad Saeed Durrani,EBM
+10,1,8,A,adnan.syed@thegma.com,Mr.,Adnan Syed,Green Man's Ark
+11,1,8,B,maryam@iriscommunications.com.pk,Ms.,Maryam Wazirzada,Iris Communications
+12,1,8,C,alirizvi@whsnxt.com,Ms.,Rizvi,What's Next Entertainment
+13,1,8,D,alirizvi@whsnxt.com,Mr,Ali A. Rizvi,What's Next Entertainment
+14,1,8,E,rashna@vitamincdigital.com; rsabdi@gmail.com,Ms.,Rashna Abidi,Vitamin C
+15,1,8,F,Amna.Khatib@wppmedia.com,Ms.,Amna Khatib,Wpp Media
+16,1,9,D,sobia.khalid@jazz.com.pk,Ms.,Sobia Samad Khalid,Jazz
+17,1,9,E,adil.hussain@unilever.com,Mr.,Sheikh Adil Hussain,Unilever Pakistan
+18,1,9,F,Fuad.Chundrigar@masarratmakeup.com,Mr.,Fuad Chudrigar,Masarrat Misbah Cosmetics Pvt. Ltd
+19,1,9,H,faisal.amanat@daldafoods.com,Mr.,Faisal Amanat Khan,Dalda Foods
+20,1,12,A,faisal@jackofdigital.com,Mr.,Faisal Sheikh,Jack of Digital
+21,1,12,B,farzana@jackofdigital.com,Ms,Farzana Sheikh,Jack of Digital
+22,1,12,C,ahmad.chagla@jackofdigital.com,Mr.,Ahmad Chagla,Jack of Digital
+23,1,15,G,jaliawala.owais@theajency.com,Mr.,Owais A. Jaliawala,The Ajency
+24,1,16,A,turan.quettawala@jafferjees.com,Mr.,Turan Quettawala,Jafferjees
+25,1,16,B,nafisa.shabbir@jafferjees.com,Ms.,Nafisa Monpuri,Jafferjees
+26,1,16,C,ehmer.kirmani@mediaidee.com,Mr,Ehmer Kirmani,Mediaidee
+27,1,16,D,qamar.saima@gmail.com; saima.qamar@tenderdragonco.com,Ms.,Saima Qamar,Tender Dragon Consulting Company
+28,1,16,E,qamar.ullah@tenderdragonco.com,Mr.,Muhammad Qamarullah,Tender Dragon Consulting Company
+29,1,16,F,justumair@gmail.com; umair.saeed@bold-one.com,Mr.,Umair Saeed,Bold One
+30,1,16,G,mehwish.umair@jsbl.com,Ms.,Mehwish A. Umair,JSBL
+31,1,16,H,muhammadmrhsn@gmail.com,Mr.,Muhammad Ammar Hassan,BuyPass.ai
+32,1,19,C,Talha.Sohail@shield.com.pk,Mr.,Talha Sohail,Shield Corporation Limited
+33,1,21,A,sadia.dada@ke.com.pk,Ms.,Sadia Dada,K-Electric
+34,1,21,B,afroseaamir.dar@akzonobel.com,Mr.,Afrose Dar,Akzo Nobel
+35,1,22,A,shazya@convexinteractive.com,Ms.,Shazya Aamir,Convex Interactive
+36,1,22,B,aamir@convexinteractive.com,Mr.,Aamir Irfan Siddiqui,Convex Interactive
+37,1,22,C,sohaib.hassan@bmlh.org,Mr.,Sohaib Hassan,BMLH
+38,1,22,D,kjawwad@coca-cola.com,Ms.,Kinza Jawwad,Coca-Cola
+39,1,22,E,mavkhan@coca-cola.com,Ms.,Mavra Coke,Coca-Cola
+40,1,22,F,mahrukh.batool@onic.com.pk,Ms.,Mahrukh Batool,Onic
+41,1,22,G,mehek.zafar@affairstudio.ai,Ms.,Mehak Zafar Ali,Affair Studio
+42,1,22,H,Sarah.moquim@symmetrygroup.biz,Ms.,Sarah Moquim,Symmetry group
+43,1,23,F,shoaib.shamim@shanfoods.com,Mr.,Shoaib Shamim,Shan Foods
+44,1,23,G,umair@ishtehari.com,Mr.,Umair Kazi,Ishtehari
+45,1,23,H,Mustansir.salim@accppl.com,Mr.,Mustansir Salim,Dabur
+46,1,24,A,shafaq.sewani@freshbasket.com.pk,Ms.,Shafaq Sewani,Freshbasket
+47,1,24,B,naveed@freshbasket.com.pk,Mr.,Naveed Nasir,Freshbasket
+48,1,24,C,anique.sewani@freshbasket.com.pk,Mr.,Anique Sewani,Freshbasket
+49,1,25,A,ahmer.rasheed@markematics.com.pk,Mr.,Ahmer Rasheed,Markematics
+50,1,25,B,somia.khan@engro.com,Ms.,Somia Manzoor Khan,Engro Group
+51,1,25,D,Tarab.Majaz@lipton.com,Ms.,Tarab Majaz ,Lipton 
+52,1,25,E,kamran.zulfiqar@siehs.org,Mr.,Kamran Zulfiqar,SIEHS
+53,1,25,F,kashif.hafeez@pulseconsultant.com,Mr.,Kashif Hafeez Siddiqui,Pulse Consultant
+54,1,25,G,danish@wearemadvertising.com,Mr.,Danish Ejaz,We are madvertising
+55,1,25,H,hasan.tahir@alt-story.com,Mr.,Hasan Tahir ,Alt-Story
+56,1,28,G,Zoya.merchant@z2climited.com,Ms.,Zoya Merchant,Z2climited
+57,1,29,A,salman.yahya@essencemediacom.com,Mr.,Salman Yahya ,Essence Mediacom
+58,1,29,B,altamash.kohati@mindshareworld.com; akohati@gmail.com,Mr.,Altamash Kohati,Mindshare
+59,1,29,C,Hassan.zia@wppmedia.com,Mr.,Hassan Zia ,Wpp Media
+60,1,30,C,shakeel.qureshi@mediaidee.com,Mr.,Shakeel Qureshi,Mediaidee
+61,1,46,F,Usman.qaiser@uigmts.com,Mr.,Usman Qaiser,J.
+62,1,46,A,Sarah.Ahmed@reckitt.com>,Ms.,Sara Ahmed,Reckitt
+63,1,46,C,m.aminuddin@tplinsurance.com,Mr.,Muhammad Aminuddin,TPL Insurance
+64,1,46,D,umarahsan.khan@dawlance.com.pk,Mr.,Umar Ahsan,Dawlance
+65,1,46,E,Mansoor.Ali@Daldafoods.com,Mr.,Mansoor Ali,Dalda Foods
+66,1,46,H,Fuad.Chundrigar@masarratmakeup.com,Ms.,Mussarat Misbah,Masarrat Misbah Cosmetics Pvt. Ltd
+67,1,52,A,ahmad.owais@activemedia.com.pk,Seyed,Ahmad Owais,Activemedia
+68,1,52,B,saad.khan@activemedia.com.pk,Mr.,Saad M. Khan,Activemedia
+69,1,53,A,a.rez@impactbbdo.ae,Mr,Ali Rez,Impact BBDO
+70,1,53,B,z.atiya@bbdopak.com,Ms,Atiya Zaidi,BBDO 
+71,1,53,C,farhan.khan@starcompakistan.com,Mr.,Farhan Khan,Starcom Pakistan
+72,1,53,D,sarocsh.ahmed@symmetrygroup.biz,Mr.,Sarocsh Ahmed,Symmetry Group
+73,1,53,F,aamir.ali@symmetrygroup.biz,Mr.,Aamir Ali,Symmetry Group
+74,1,53,G,javed.jafri@hbl.com,Mr.,Javed Jafri,HBL
+75,1,57,H,Anam.ShafaatKhan@frieslandcampina.com,Ms.,Anam Shafaat Khan,Friesland Campina
+76,1,58,H,Mariam Vohra,Ms.,Mariam vohra,National Foods
+77,1,60,A,ahmad.raheel@dawlance.com.pk,Mr.,Raheel Hashmi,Dawlance
+78,1,60,B,kashif.muhammad@toyota-indus.com,Mr.,Muhammad Kashif,Indus Motor Company
+79,1,60,C,aliza.yousuf@dawlance.com.pk,Ms.,Aliza Yousuf ,Dawlance
+80,1,69,F,zain@backspace.works,Mr.,Zain Rizvi ,Backspace
+81,1,69,H,emaad.khan@synitedigital.com,Mr. ,Emaad Ishaq,Synite Digital
+82,1,69,D,farooq@babelfishinc.com,Mr.,Farooq Sheikh,Babelfishinc
+83,1,69,G,omar.farooq@packages.com.pk,Mr.,Omar Farooq,Packages Group
+84,1,69,A,hamza.hussain@loreal.com,Mr.,Hamza Hussain,Loreal
+85,1,69,B,yasir.yasin@telenor.com.pk,Mr.,Yasir Yasin,Telenor
+86,1,69,C,farzana.abdullah@tplinsurance.com,Ms.,Farzana Abdullah,TPL Insurance
+87,1,70,B,waleed.ahmed@publicismedia.com,Mr.,Waleed Ahmed ,Publicis Media
+88,1,70,C,aijaz@yellowork.com,Mr.,Aijaz Ahmed ,Yellow
+89,1,70,D,omer.rizwan@tapaltea.com,Mr.,Omer Rizwan,Tapal Tea
+90,1,70,E,maimoona.batra@tapaltea.com,Ms.,Maimoona Batra,Tapal Tea
+91,1,74,B,mubesharaziz@adcompk.com,Mr.,Mubesher Aziz,Adcom (Pvt) Limited
+92,1,74,C,usman.tahir@zenithmedia.com.pk,Mr.,Usman B. Tahir,Zenith Media
+93,1,74,D,mahnoornadir@adcompk.com,Ms.,Mahnoor Nadir,Adcom (Pvt) Limited
+94,1,74,E,shayan.moin@zenithmedia.com.pk,Mr.,Shayan Moin,Zenith Media
+95,1,74,G,dawer.bukhari@zenithmedia.com.pk,Mr.,Dawer Bukhari,Zenith Media
+96,1,74,H,rafaykhan@adcompk.com,Mr.,Rafay Ali Khan,Adcom (Pvt) Limited
+97,1,74,A,bilalmalik@adcompk.com,Mr.,Bilal Malik,Adcom (Pvt) Limited
+98,1,R1,A,famir@ismailindustries.com,Ms.,Farheen Salman Amir ,Ismail Industries Limited
+99,1,R1,C,Ali_akbar_syed@bat.com,Syed,Ali Akbar ,PTC
+100,1,R1,F,zeelaf.munir@ebm.com.pk,Dr.,Zeelaf Munir,EBM
+101,1,R1,D,sarmad.ali@janggroup.com.pk,Mr.,Sarmad Ali,Jang Group
+102,1,R1,E,Amir.Paracha@unilever.com,Mr.,Amir Paracha,Unilever Pakistan
+103,1,R11,A,sakn@live.com,Mr.,Saeed Ahmed Khan,PepsiCo
+104,1,R11,B,muhammad.binhusain@pepsico.com,Mr.,Mohammad bin Husain,PepsiCo
+105,1,R11,C,Ayesha.Khan@pepsico.com,Ms.,Ayesha Khan,PepsiCo
+106,1,R11,F,farooq.soomro@pepsico.com,Mr.,Farooq Soomro,PepsiCo
+107,1,R11,G,umer.sohail@pepsico.com,Mr.,Umer Sohail,PepsiCo
+108,1,R5,H,asad.saeed@ebm.com.pk,Mr.,Muhammad Asad Saeed,EBM
+109,1,R8,B,swahid@coca-cola.com,Mr.,Sami Wahid,Coca-Cola
+110,1,R8,A,nauman.khan@accppl.com,Mr.,Nauman Khan ,Dabur
+111,1,R8,C,shahzain.munir@ebm.com.pk,Mr.,Shahzain Munir,EBM
+112,1,R8,G,shakeel.hussain@dawnnews.tv,Mr.,Shakeel Masud,Dawn News
+113,1,R8,E,Mamoon.javed@mdlz.com,Mr.,Mamoon Javed,Mondel?z International
+114,1,R9,A,shahzad.deshmukh@nfoods.com,Mr.,Shahzad Deshmukh,National Foods Limited
+115,1,R9,B,afran.khalid@nfoods.com,Mr.,Afran Khalid,National Foods Limited

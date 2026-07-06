@@ -98,15 +98,15 @@ export default function Profile() {
             {booking.name || 'Guest'}
           </h2>
 
-          {/* Designation & Company */}
-          {(booking.designation || booking.companyName) && (
+          {/* Company Name */}
+          {booking.companyName && (
             <p style={{ 
               color: 'rgba(255,255,255,0.75)', 
               fontSize: '0.95rem', 
               textAlign: 'center',
               margin: '0 0 2rem'
             }}>
-              {[booking.designation, booking.companyName].filter(Boolean).join(', ')}
+              {booking.companyName}
             </p>
           )}
 

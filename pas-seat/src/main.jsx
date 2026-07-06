@@ -7,6 +7,7 @@ import CorporateForm from './pages/CorporateForm.jsx'
 import Profile from './pages/Profile.jsx'
 import ReservedBooking from './pages/ReservedBooking.jsx'
 import QrBroadcast from './pages/QrBroadcast.jsx'
+import BulkInviteGenerator from './pages/BulkInviteGenerator.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
@@ -14,8 +15,9 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<App />} />
         <Route path="/form/:id" element={<CorporateForm />} />
         <Route path="/Profile/:id" element={<Profile />} />
-        <Route path="/reserved107094qrL4" element={<ReservedBooking />} />
+        <Route path="/reserved" element={<ReservedBooking />} />
         <Route path="/qr-broadcast" element={<QrBroadcast />} />
+        <Route path="/bulk-invite" element={<BulkInviteGenerator />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

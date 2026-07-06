@@ -155,7 +155,6 @@ export default function ReservedBooking() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [cnic, setCnic] = useState('')
-  const [designation, setDesignation] = useState('')
   const [companyName, setCompanyName] = useState('')
 
   const [indTable, setIndTable] = useState('')
@@ -195,7 +194,6 @@ export default function ReservedBooking() {
       const { booking } = await bookSeats({
         seatNumber,
         phone: phone.trim(),
-        designation: designation.trim() || undefined,
         companyName: companyName.trim() || undefined,
         cnic: cnic.trim(),
         type: 'Individual',
@@ -214,7 +212,6 @@ export default function ReservedBooking() {
         cnic: cnic.trim(),
         seatNumber,
         imageUrl: PAS_LOGO_URL,
-        designation: designation.trim() || undefined,
         companyName: companyName.trim() || undefined,
         lanyardQrUrl,
       })
@@ -343,7 +340,7 @@ export default function ReservedBooking() {
             onClick={() => {
               setDone(false); setFlow(null)
               setFullName(''); setEmail(''); setPhone(''); setCnic('')
-              setDesignation(''); setCompanyName('')
+              setCompanyName('')
               setIndTable(''); setIndChair('')
               setCorpSeats([{ table: '', chair: '' }])
               setLanyardUrl(null); setEmailError(''); setFieldErrors({})
@@ -453,10 +450,6 @@ export default function ReservedBooking() {
               placeholder="XXXXX-XXXXXXX-X" error={fieldErrors.cnic}
             />
           )}
-
-          <FormField
-            label="Designation" value={designation} onChange={setDesignation}
-          />
 
           <FormField
             label="Company Name" value={companyName} onChange={setCompanyName}
