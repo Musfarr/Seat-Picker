@@ -113,16 +113,19 @@ export default function CorporateForm() {
 
       setStep('Allocating your seat...')
       
-      const { seatNumber, bookingId } = await allocateCorporateSeat({
-        corporateId,
-        phone: form.phone_number,
-        image: imageUrl,
-        name: form.Full_Name,
-        cnic: form.CNIC_Number,
-        designation: form.Designation,
-        companyName: form.Company_Name,
-        type: "Corporate"
-      })
+      // const { seatNumber, bookingId } = await allocateCorporateSeat({
+      //   corporateId,
+      //   phone: form.phone_number,
+      //   image: imageUrl,
+      //   name: form.Full_Name,
+      //   cnic: form.CNIC_Number,
+      //   designation: form.Designation,
+      //   companyName: form.Company_Name,
+      //   type: "Corporate"
+      // })
+
+
+      let bookingId = 10;
 
       // Create profile URL
       const profileUrl = "https://effie.convexinteractive.com/Profile/" + bookingId
@@ -137,7 +140,7 @@ export default function CorporateForm() {
       const { blob } = await generateLanyard({
         name: form.Full_Name,
         cnic: form.CNIC_Number,
-        seatNumber,
+        // seatNumber,
         imageUrl,
         designation: form.Designation,
         companyName: form.Company_Name,
