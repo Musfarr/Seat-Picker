@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
-const BROADCAST_URL = 'https://broadcast.convexinteractive.com/api/broadcast/send'
+const BROADCAST_URL = 'https://qaomni.convexinteractive.comz/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
 
 // const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
@@ -13,8 +13,8 @@ const BOOK_URL            = 'https://effie.convexinteractive.com/api/book-seat'
 const BOOK_CORPORATE_URL  = 'https://effie.convexinteractive.com/api/book-corporate'
 const ALLOCATE_URL        = 'https://effie.convexinteractive.com/api/book-corporate/allocate'
 const BOOKING_DATA_URL    = 'https://effie.convexinteractive.com/api/booking-data'
-const CHECK_TOKEN_URL     = 'https://effie.convexinteractive.com/api/check-token'
-const SAVE_TOKEN_URL      = 'https://effie.convexinteractive.com/api/save-token'
+const CHECK_TOKEN_URL     = 'http://localhost:8000/api/check-token'
+const SAVE_TOKEN_URL      = 'http://localhost:8000/api/save-token'
 const RESERVED_EMAIL_URL  = 'https://effie.convexinteractive.com/api/send-reserved-email'
 
 const LINK_TEMPLATE_ID = '2420728638424994'  // update to your text/link template ID
@@ -164,8 +164,8 @@ export async function checkToken(token) {
   return res.data
 }
 
-export async function saveToken(token, userId) {
-  const res = await axios.post(SAVE_TOKEN_URL, { token, userId }, {
+export async function saveToken(token, userId, usedCount, totalAllowed) {
+  const res = await axios.post(SAVE_TOKEN_URL, { token, userId, usedCount, totalAllowed }, {
     headers: { 'Content-Type': 'application/json' },
   })
   return res.data

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { allocateCorporateSeat, uploadFile, sendLanyardWhatsapp } from '../api'
+import { allocateCorporateSeat, uploadFile, sendLanyardWhatsapp, checkToken, saveToken } from '../api'
 import { generateLanyard } from '../generateLanyard'
+import { decryptParams } from '../utils/Decrypt'
 
 
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
@@ -59,6 +60,95 @@ export default function CorporateForm() {
   const [lanyardUrl, setLanyardUrl] = useState(null)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
+  
+  const [usedCount, setUsedCount] = useState(0)
+  const [totalAllowed, setTotalAllowed] = useState(1)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      if (!corporateId) {
+        setError('No invitation token found.')
+        setLoading(false)
+        return
+      }
+      try {
+        setStep('Verifying your invitation...')
+        const parsed = await decryptParams(corporateId)
+        
+        if (!parsed || !parsed.phone_number) {
+          setError('Invalid or corrupt invitation link.')
+          setLoading(false)
+          return
+        }
+
+        // Prefill form
+        setForm({
+          Full_Name: parsed.Full_Name || '',
+          CNIC_Number: parsed.CNIC_Number || '',
+          phone_number: parsed.phone_number || '',
+          Company_Name: parsed.Company_Name || '',
+          Designation: parsed.Designation || '',
+        })
+
+        if (parsed.Image) {
+          setImagePreview(parsed.Image)
+        }
+
+        const totalTickets = parseInt(parsed.Number_of_ticket, 10) || 1
+
+        // Check token in DB
+        const status = await checkToken(corporateId)
+        
+        let currentUsed = status.usedCount || 0
+        let currentTotal = status.totalAllowed || totalTickets
+
+        // If not exists in DB, initialize it
+        if (!status.exists) {
+          const initStatus = await saveToken(corporateId, parsed.phone_number, 0, totalTickets)
+          currentUsed = initStatus.usedCount || 0
+          currentTotal = initStatus.totalAllowed || totalTickets
+        }
+
+        setUsedCount(currentUsed)
+        setTotalAllowed(currentTotal)
+
+        if (currentUsed >= currentTotal) {
+          setError(`This link is exhausted. All ${currentTotal} of ${currentTotal} pass(es) have been claimed.`)
+        }
+      } catch (err) {
+        console.error('Verifying token failed:', err)
+        setError('Invalid or expired booking link.')
+      } finally {
+        setLoading(false)
+        setStep('')
+      }
+    }
+    load()
+  }, [corporateId])
+
+  // Periodic token check on render (every 30 seconds)
+  useEffect(() => {
+    if (!corporateId || loading) return
+
+    const interval = setInterval(async () => {
+      try {
+        const status = await checkToken(corporateId)
+        if (status.exists) {
+          setUsedCount(status.usedCount || 0)
+          setTotalAllowed(status.totalAllowed || 1)
+          
+          if ((status.usedCount || 0) >= (status.totalAllowed || 1)) {
+            setError(`This link is exhausted. All ${status.totalAllowed || 1} of ${status.totalAllowed || 1} pass(es) have been claimed.`)
+          }
+        }
+      } catch (err) {
+        console.error('Periodic token check failed:', err)
+      }
+    }, 30000) // Check every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [corporateId, loading])
 
   function handleChange(e) {
     const { name } = e.target
@@ -96,36 +186,37 @@ export default function CorporateForm() {
       return
     }
 
-    if (!imageFile) {
-      setError('Please upload your photo')
+    if (usedCount >= totalAllowed) {
+      setError(`All ${totalAllowed} pass(es) have already been claimed.`)
       return
     }
 
-    if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
-      setError('Image size must not exceed 2MB')
+    let imageUrl = imagePreview
+    if (imageFile) {
+      if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
+        setError('Image size must not exceed 2MB')
+        return
+      }
+      setUploading(true)
+      setStep('Uploading your photo...')
+      const uploadRes = await uploadFile(imageFile, imageFile.name)
+      imageUrl = uploadRes.url
+    } else if (!imageUrl) {
+      setError('Please upload your photo')
       return
     }
 
     setUploading(true)
     try {
-      setStep('Uploading your photo...')
-      const { url: imageUrl } = await uploadFile(imageFile, imageFile.name)
+      // Increment and save token count
+      const nextUsed = usedCount + 1
+      setStep('Saving booking status...')
+      await saveToken(corporateId, form.phone_number, nextUsed, totalAllowed)
+      setUsedCount(nextUsed)
 
-      setStep('Allocating your seat...')
-      
-      // const { seatNumber, bookingId } = await allocateCorporateSeat({
-      //   corporateId,
-      //   phone: form.phone_number,
-      //   image: imageUrl,
-      //   name: form.Full_Name,
-      //   cnic: form.CNIC_Number,
-      //   designation: form.Designation,
-      //   companyName: form.Company_Name,
-      //   type: "Corporate"
-      // })
-
-
-      let bookingId = 10;
+      // Generate bookingId from timestamp for profile URL
+      const bookingId = Date.now().toString()
+      const seatNumber = "Corporate"
 
       // Create profile URL
       const profileUrl = "https://effie.convexinteractive.com/Profile/" + bookingId
@@ -140,7 +231,7 @@ export default function CorporateForm() {
       const { blob } = await generateLanyard({
         name: form.Full_Name,
         cnic: form.CNIC_Number,
-        // seatNumber,
+        seatNumber,
         imageUrl,
         designation: form.Designation,
         companyName: form.Company_Name,
@@ -167,6 +258,17 @@ export default function CorporateForm() {
       setUploading(false)
       setStep('')
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="corp-page">
+        <div style={{ textAlign: 'center' }}>
+          <div className="corp-spinner" style={{ width: 44, height: 44, margin: '0 auto 1rem' }} />
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>{step || 'Verifying your invitation...'}</p>
+        </div>
+      </div>
+    )
   }
 
   if (done) {
@@ -210,62 +312,74 @@ export default function CorporateForm() {
 
       <div className="corp-card">
         <h2 className="corp-title">Complete Your Booking</h2>
-        <p className="corp-subtitle">Fill in your details to receive your seat pass</p>
-
-        <form onSubmit={handleSubmit} className="corp-form">
-
-          {/* Photo upload */}
-          <div className="corp-photo-row">
-            <label className="corp-label">
-              PHOTO <span className="corp-required">*</span>
-            </label>
-            <div className="corp-photo-inner">
-              {imagePreview
-                ? <img src={imagePreview} alt="preview" className="corp-photo-ring" />
-                : <div className="corp-photo-placeholder">👤</div>
-              }
-              <label className="corp-choose-btn">
-                Choose Photo
-                <input type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
-              </label>
-            </div>
+        
+        {usedCount >= totalAllowed ? (
+          <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>claim-status</div>
+            <p className="corp-done-sub">
+              All <strong style={{ color: '#edbb3a' }}>{totalAllowed}</strong> of <strong style={{ color: '#edbb3a' }}>{totalAllowed}</strong> ticket pass(es) under this link have been successfully claimed.
+            </p>
           </div>
+        ) : (
+          <>
+            <p className="corp-subtitle">Claim Pass {usedCount + 1} of {totalAllowed}</p>
 
-          {/* Text fields */}
-          {FIELDS.map(({ name, label, type, required, placeholder }) => (
-            <div key={name} className="corp-field">
-              <label htmlFor={name} className="corp-label">
-                {label.toUpperCase()}{required && ' *'}
-              </label>
-              <input
-                id={name}
-                name={name}
-                type={type}
-                required={required}
-                placeholder={placeholder}
-                value={form[name]}
-                onChange={handleChange}
-                className={`corp-input${fieldErrors[name] ? ' corp-input--err' : ''}`}
-              />
-              {fieldErrors[name] && (
-                <span className="corp-field-error">{fieldErrors[name]}</span>
+            <form onSubmit={handleSubmit} className="corp-form">
+
+              {/* Photo upload */}
+              <div className="corp-photo-row">
+                <label className="corp-label">
+                  PHOTO <span className="corp-required">*</span>
+                </label>
+                <div className="corp-photo-inner">
+                  {imagePreview
+                    ? <img src={imagePreview} alt="preview" className="corp-photo-ring" />
+                    : <div className="corp-photo-placeholder">👤</div>
+                  }
+                  <label className="corp-choose-btn">
+                    Choose Photo
+                    <input type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
+                  </label>
+                </div>
+              </div>
+
+              {/* Text fields */}
+              {FIELDS.map(({ name, label, type, required, placeholder }) => (
+                <div key={name} className="corp-field">
+                  <label htmlFor={name} className="corp-label">
+                    {label.toUpperCase()}{required && ' *'}
+                  </label>
+                  <input
+                    id={name}
+                    name={name}
+                    type={type}
+                    required={required}
+                    placeholder={placeholder}
+                    value={form[name]}
+                    onChange={handleChange}
+                    className={`corp-input${fieldErrors[name] ? ' corp-input--err' : ''}`}
+                  />
+                  {fieldErrors[name] && (
+                    <span className="corp-field-error">{fieldErrors[name]}</span>
+                  )}
+                </div>
+              ))}
+
+              {error && <p className="corp-error">{error}</p>}
+
+              {uploading ? (
+                <div className="corp-uploading-row">
+                  <div className="corp-spinner" />
+                  <span className="corp-uploading-text">{step}</span>
+                </div>
+              ) : (
+                <button type="submit" className="corp-submit-btn">
+                  Submit &amp; Get My Pass
+                </button>
               )}
-            </div>
-          ))}
-
-          {error && <p className="corp-error">{error}</p>}
-
-          {uploading ? (
-            <div className="corp-uploading-row">
-              <div className="corp-spinner" />
-              <span className="corp-uploading-text">{step}</span>
-            </div>
-          ) : (
-            <button type="submit" className="corp-submit-btn">
-              Submit &amp; Get My Pass
-            </button>
-          )}
-        </form>
+            </form>
+          </>
+        )}
       </div>
     </div>
   )
