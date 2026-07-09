@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/form/:id" element={<CorporateForm />} />
+        <Route path="/form" element={<CorporateForm />} />
         {/* <Route path="/Profile/:id" element={<Profile />} /> */}
         {/* <Route path="/reserved" element={<ReservedBooking />} /> */}
         {/* <Route path="/qr-broadcast" element={<QrBroadcast />} /> */}

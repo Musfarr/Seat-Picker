@@ -42,7 +42,10 @@ export default function App() {
       let parsed
       try {
         parsed = await decryptParams(encryptedData)
+        console.log(parsed)
       } catch {
+
+        console.log('error decrypting')
         setAuthError('invalid')
         setAuthLoading(false)
         return

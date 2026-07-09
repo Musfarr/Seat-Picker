@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { allocateCorporateSeat, uploadFile, sendLanyardWhatsapp, checkToken, saveToken } from '../api'
+import { uploadFile, sendLanyardWhatsapp, checkToken, saveToken } from '../api'
 import { generateLanyard } from '../generateLanyard'
 import { decryptParams } from '../utils/Decrypt'
 
@@ -47,7 +47,10 @@ function validateForm(form) {
 }
 
 export default function CorporateForm() {
-  const { id: corporateId } = useParams()
+  const { id: token } = useParams()
+
+  
+
 
   const [form, setForm] = useState({
     Full_Name: '', CNIC_Number: '', phone_number: '', Company_Name: '', Designation: '',
@@ -67,15 +70,28 @@ export default function CorporateForm() {
 
   useEffect(() => {
     async function load() {
-      if (!corporateId) {
+
+
+      const p = new URLSearchParams(window.location.search)
+      const encryptedData = p.get('data')
+      console.log(encryptedData , " encryp")
+      let parsed = await decryptParams(encryptedData)
+      console.log(parsed , 'parsed')
+
+
+
+
+      if (!token) {
         setError('No invitation token found.')
         setLoading(false)
         return
       }
       try {
         setStep('Verifying your invitation...')
-        const parsed = await decryptParams(corporateId)
-        
+        const parsed = await decryptParams(token)
+
+        console.log(parsed, " parsed")
+
         if (!parsed || !parsed.phone_number) {
           setError('Invalid or corrupt invitation link.')
           setLoading(false)
@@ -98,14 +114,14 @@ export default function CorporateForm() {
         const totalTickets = parseInt(parsed.Number_of_ticket, 10) || 1
 
         // Check token in DB
-        const status = await checkToken(corporateId)
-        
+        const status = await checkToken(token)
+
         let currentUsed = status.usedCount || 0
         let currentTotal = status.totalAllowed || totalTickets
 
         // If not exists in DB, initialize it
         if (!status.exists) {
-          const initStatus = await saveToken(corporateId, parsed.phone_number, 0, totalTickets)
+          const initStatus = await saveToken(token, parsed.phone_number, 0, totalTickets)
           currentUsed = initStatus.usedCount || 0
           currentTotal = initStatus.totalAllowed || totalTickets
         }
@@ -125,15 +141,15 @@ export default function CorporateForm() {
       }
     }
     load()
-  }, [corporateId])
+  }, [token])
 
   // Periodic token check on render (every 30 seconds)
   useEffect(() => {
-    if (!corporateId || loading) return
+    if (!token || loading) return
 
     const interval = setInterval(async () => {
       try {
-        const status = await checkToken(corporateId)
+        const status = await checkToken(token)
         if (status.exists) {
           setUsedCount(status.usedCount || 0)
           setTotalAllowed(status.totalAllowed || 1)
@@ -148,7 +164,7 @@ export default function CorporateForm() {
     }, 30000) // Check every 30 seconds
 
     return () => clearInterval(interval)
-  }, [corporateId, loading])
+  }, [token, loading])
 
   function handleChange(e) {
     const { name } = e.target
@@ -211,7 +227,7 @@ export default function CorporateForm() {
       // Increment and save token count
       const nextUsed = usedCount + 1
       setStep('Saving booking status...')
-      await saveToken(corporateId, form.phone_number, nextUsed, totalAllowed)
+      await saveToken(token, form.phone_number, nextUsed, totalAllowed)
       setUsedCount(nextUsed)
 
       // Generate bookingId from timestamp for profile URL
