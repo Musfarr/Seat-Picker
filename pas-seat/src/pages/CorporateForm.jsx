@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { uploadFile, sendLanyardWhatsapp, checkToken, saveToken } from '../api'
+import { uploadFile, sendLanyardWhatsapp, checkToken, saveToken,bookSeats } from '../api'
 import { generateLanyard } from '../generateLanyard'
 import { decryptParams } from '../utils/Decrypt'
 
@@ -72,11 +72,11 @@ export default function CorporateForm() {
     async function load() {
 
 
-      const p = new URLSearchParams(window.location.search)
-      const encryptedData = p.get('data')
-      console.log(encryptedData , " encryp")
-      let parsed = await decryptParams(encryptedData)
-      console.log(parsed , 'parsed')
+      // const p = new URLSearchParams(window.location.search)
+      // const encryptedData = p.get('data')
+      // console.log(encryptedData , " encryp")
+      // let parsed = await decryptParams(encryptedData)
+      // console.log(parsed , 'parsed')
 
 
 
@@ -253,6 +253,20 @@ export default function CorporateForm() {
         companyName: form.Company_Name,
         lanyardQrUrl,
       })
+
+      setStep('Reserving your seat...')
+
+      const {id} = await bookSeats({
+        name: form.Full_Name,
+        cnic: form.CNIC_Number,
+        seatNumber,
+        imageUrl,
+        designation: form.Designation,
+        companyName: form.Company_Name,
+        lanyardQrUrl,
+      })
+
+
 
       setStep('Uploading your pass...')
       const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${form.phone_number}.png`)
