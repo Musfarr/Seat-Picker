@@ -226,9 +226,9 @@ export default function CorporateForm() {
     try {
       // Increment and save token count
       const nextUsed = usedCount + 1
-      setStep('Saving booking status...')
-      await saveToken(token, form.phone_number, nextUsed, totalAllowed)
-      setUsedCount(nextUsed)
+      // setStep('Saving booking status...')
+      // await saveToken(token, form.phone_number, nextUsed, totalAllowed)
+      // setUsedCount(nextUsed)
 
       // Generate bookingId from timestamp for profile URL
       const bookingId = Date.now().toString()
@@ -256,15 +256,15 @@ export default function CorporateForm() {
 
       setStep('Reserving your seat...')
 
-      const {id} = await bookSeats({
-        name: form.Full_Name,
-        cnic: form.CNIC_Number,
-        seatNumber,
-        imageUrl,
-        designation: form.Designation,
-        companyName: form.Company_Name,
-        lanyardQrUrl,
-      })
+      // const {id} = await bookSeats({
+      //   name: form.Full_Name,
+      //   cnic: form.CNIC_Number,
+      //   seatNumber,
+      //   imageUrl,
+      //   designation: form.Designation,
+      //   companyName: form.Company_Name,
+      //   lanyardQrUrl,
+      // })
 
 
 
