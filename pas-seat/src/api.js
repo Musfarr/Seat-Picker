@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
-const BROADCAST_URL = 'https://qaomni.convexinteractive.comz/api/broadcast/send'
+const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
 
 // const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
@@ -22,8 +22,8 @@ const LINK_TEMPLATE_ID = '2420728638424994'  // update to your text/link templat
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
 
-const LOGIN_EMAIL = 'newtestuser@google.com'
-const LOGIN_PASSWORD = 'Newuser@123'
+const LOGIN_EMAIL = 'apinewtestuser@google.com'
+const LOGIN_PASSWORD = 'APi@32145'
 
 const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1776253942489-886168050.png'
 
