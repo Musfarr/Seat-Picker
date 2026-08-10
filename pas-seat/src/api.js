@@ -1,29 +1,29 @@
 import axios from 'axios'
 
 const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
-const BROADCAST_URL = 'https://broadcast.convexinteractive.com/api/broadcast/send'
+const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
 
 // const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
 // const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
 // const BOOK_CORPORATE_URL  = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate'
 // const ALLOCATE_URL        = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate/allocate'
-const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
-const BOOK_URL            = 'https://effie.convexinteractive.com/api/book-seat'
-const BOOK_CORPORATE_URL  = 'https://effie.convexinteractive.com/api/book-corporate'
-const ALLOCATE_URL        = 'https://effie.convexinteractive.com/api/book-corporate/allocate'
-const BOOKING_DATA_URL    = 'https://effie.convexinteractive.com/api/booking-data'
-const CHECK_TOKEN_URL     = 'https://effie.convexinteractive.com/api/check-token'
-const SAVE_TOKEN_URL      = 'https://effie.convexinteractive.com/api/save-token'
-const RESERVED_EMAIL_URL  = 'https://effie.convexinteractive.com/api/send-reserved-email'
+const SEATS_URL = 'https://effie.convexinteractive.com/api/seats-data'
+const BOOK_URL = 'https://effie.convexinteractive.com/api/book-seat'
+const BOOK_CORPORATE_URL = 'https://effie.convexinteractive.com/api/book-corporate'
+const ALLOCATE_URL = 'https://effie.convexinteractive.com/api/book-corporate/allocate'
+const BOOKING_DATA_URL = 'https://effie.convexinteractive.com/api/booking-data'
+const CHECK_TOKEN_URL = 'https://effie.convexinteractive.com/api/check-token'
+const SAVE_TOKEN_URL = 'https://effie.convexinteractive.com/api/save-token'
+const RESERVED_EMAIL_URL = 'https://effie.convexinteractive.com/api/send-reserved-email'
 
-const LINK_TEMPLATE_ID = '2420728638424994'  // update to your text/link template ID
+const LINK_TEMPLATE_ID = '2439716791418701'  // update to your text/link template ID
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
 
 const LOGIN_EMAIL = 'newtestuser@google.com'
-const LOGIN_PASSWORD = 'Newuser@123'
+const LOGIN_PASSWORD = 'Agent@12'
 
 const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1785997330356-602485987.png'
 
@@ -132,10 +132,10 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
       },
     })
 
-    console.log(response , " response")
+    console.log(response, " response")
 
     if (response.status === 200) {
-      console.log(response.data , " response.data")
+      console.log(response.data, " response.data")
       console.log(BASE_URL + response.data.url, " BASE_URL + response.data.url")
       return {
         url: BASE_URL + response.data.url,
