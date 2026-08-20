@@ -3,13 +3,15 @@ import './App.css'
 import NotFound from './NotFound'
 import { generateLanyard } from './generateLanyard'
 import QRCode from 'qrcode'
-import { sendLanyardWhatsapp, sendLinkWhatsapp, fetchSeatsData, bookSeats, bookCorporate, uploadFile, checkToken, saveToken } from './api'
-import { INIT, applySeatsData } from './utils/seatLayout'
+import { sendLanyardWhatsapp, bookSeats, uploadFile } from './api'
+import { INIT } from './utils/seatLayout'
 import { decryptParams } from './utils/Decrypt'
 import VenueFloor from './components/VenueFloor'
 import BookingBar from './components/BookingBar'
 import ChairPickerModal from './components/ChairPickerModal'
 import ConfirmModal from './components/ConfirmModal'
+import AttendeeFormModal from './components/AttendeeFormModal'
+import SideBookingDrawer from './components/SideBookingDrawer'
 import ProcessingOverlay from './components/ProcessingOverlay'
 import DoneModal from './components/DoneModal'
 
@@ -18,23 +20,38 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true)
   const [authError, setAuthError] = useState('')
   const [tables, setTables] = useState(INIT)
-  const [seatsLoading, setSeatsLoading] = useState(false)
   const [modalTable, setModalTable] = useState(null)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [showAttendeeForm, setShowAttendeeForm] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [processStep, setProcessStep] = useState('')
   const [done, setDone] = useState(false)
-  const [lanyardUrl, setLanyardUrl] = useState(null)
-  const [whatsappError, setWhatsappError] = useState('')
+  const [lanyardUrls, setLanyardUrls] = useState([])    // array of { url, name, seatNumber }
+  const [broadcastFailed, setBroadcastFailed] = useState(false)
 
-  // Decrypt URL param, validate token, then load seats
+  // Decrypt URL param if present, otherwise use static test values
   useEffect(() => {
     async function init() {
       const p = new URLSearchParams(window.location.search)
       const encryptedData = p.get('data')
 
       if (!encryptedData) {
-        setAuthError('invalid')
+        // Static mock data for direct testing
+        setParamData({
+          flow: 'corporate',
+          allowedSeats: 4,
+          allowedTypes: ['normal', 'vip'],
+          phone_number: '+92 300 1234567',
+          Email_Address: 'guest@convexinteractive.com',
+          flow_token: 'demo_flow_token',
+          Company_Name: 'Convex Interactive',
+          Full_Name: 'VIP Guest',
+          Designation: 'Executive Director',
+          CNIC_Number: '42101-1234567-1',
+          Image: null,
+          seats_api_url: null,
+          _token: 'demo_token_static',
+        })
         setAuthLoading(false)
         return
       }
@@ -42,22 +59,32 @@ export default function App() {
       let parsed
       try {
         parsed = await decryptParams(encryptedData)
-      } catch {
-        setAuthError('invalid')
-        setAuthLoading(false)
-        return
+      } catch (err) {
+        console.warn('Decryption failed, falling back to static data:', err)
+        parsed = {
+          Full_Name: 'VIP Guest',
+          phone_number: '+92 300 1234567',
+          Email_Address: 'guest@convexinteractive.com',
+          Number_of_ticket: '4',
+          Company_Name: 'Convex Interactive',
+          Designation: 'Executive Director',
+        }
       }
 
       if (!parsed?.phone_number) {
-        setAuthError('invalid')
-        setAuthLoading(false)
-        return
+        parsed = {
+          Full_Name: 'VIP Guest',
+          phone_number: '+92 300 1234567',
+          Email_Address: 'guest@convexinteractive.com',
+          Number_of_ticket: '4',
+          Company_Name: 'Convex Interactive',
+          Designation: 'Executive Director',
+        }
       }
 
       // Build paramData from decrypted fields
       const Number_of_ticket = parseInt(parsed.Number_of_ticket, 10)
       const isCorporate = !isNaN(Number_of_ticket) && Number_of_ticket > 0
-      // console.log(parsed , " parseddd")
       setParamData({
         flow: isCorporate ? 'corporate' : 'individual',
         allowedSeats: isCorporate ? Number_of_ticket : 1,
@@ -71,26 +98,30 @@ export default function App() {
         CNIC_Number: parsed.CNIC_Number || null,
         Image: parsed.Image || null,
         seats_api_url: parsed.seats_api_url || null,
-        _token: encryptedData,
+        _token: encryptedData || 'demo_token_static',
       })
       setAuthLoading(false)
     }
     init()
   }, [])
 
-  useEffect(() => {
-    if (!paramData) return
-    setSeatsLoading(true)
-    fetchSeatsData()
-      .then(seatsArray => {
-        if (seatsArray) setTables(prev => applySeatsData(prev, seatsArray))
-      })
-      .catch(err => console.error('Failed to load seat status:', err))
-      .finally(() => setSeatsLoading(false))
-  }, [paramData])
+  const [drawerOpen, setDrawerOpen] = useState(true)
+
+  // Seats data fetching is disabled — using static INIT data
+  // useEffect(() => {
+  //   if (!paramData) return
+  //   fetchSeatsData()
+  //     .then(seatsArray => {
+  //       if (seatsArray) setTables(prev => applySeatsData(prev, seatsArray))
+  //     })
+  //     .catch(err => console.error('Failed to load seat status:', err))
+  // }, [paramData])
 
   const openModal = useCallback((table) => setModalTable(table), [])
-  const closeModal = useCallback(() => setModalTable(null), [])
+  const closeModal = useCallback(() => {
+    setModalTable(null)
+    setDrawerOpen(true) // Ensure drawer opens when modal closes
+  }, [])
 
   const toggleChair = useCallback((chairLabel) => {
     if (!modalTable) return
@@ -108,6 +139,21 @@ export default function App() {
       return updated
     })
   }, [modalTable])
+
+  const removeSeat = useCallback((tableId, chairLabel) => {
+    setTables(prev => {
+      if (!prev[tableId]) return prev
+      return {
+        ...prev,
+        [tableId]: {
+          ...prev[tableId],
+          chairs: prev[tableId].chairs.map(c =>
+            c.label === chairLabel ? { ...c, selected: false } : c
+          ),
+        },
+      }
+    })
+  }, [])
 
   const allSelections = Object.values(tables).flatMap(table =>
     table.chairs
@@ -137,114 +183,75 @@ export default function App() {
     })
   }
 
-  const confirmBooking = async () => {
+  // Step 1: ConfirmModal → open AttendeeFormModal
+  const handleConfirmToForm = () => {
     setShowConfirm(false)
+    setShowAttendeeForm(true)
+  }
+
+  // Step 2: AttendeeFormModal submits → process all bookings
+  const processBookings = async (attendees) => {
+    setShowAttendeeForm(false)
     setProcessing(true)
+    setBroadcastFailed(false)
+
+    const collectedLanyards = []
+    const total = attendees.length
+
     try {
-      // Validate token before booking
-      setProcessStep('Verifying your invitation...')
-      const { exists } = await checkToken(paramData._token)
-      if (exists) {
-        setProcessStep('Error: This booking link has already been used.')
-        return
-      }
-      await saveToken(paramData._token, paramData.phone_number)
+      for (let i = 0; i < total; i++) {
+        const attendee = attendees[i]
 
-      if (paramData.flow === 'individual') {
-        const seatNumber = `${allSelections[0].tableId}-${allSelections[0].chair}`
-
-        
-        
-
-        setProcessStep('Reserving your seat...')
+        // 1. Book the seat
+        setProcessStep(`Reserving seat ${i + 1} of ${total}...`)
         const { booking } = await bookSeats({
-          seatNumber: seatNumber,
-          phone: paramData.phone_number,
-          designation: paramData.Designation,
-          companyName: paramData.Company_Name,
-          cnic: paramData.CNIC_Number,
-          type:"Individual",
-          name:paramData.Full_Name,
+          seatNumber: attendee.seatNumber,
+          phone: attendee.phone,
+          name: attendee.name,
+          companyName: attendee.companyName,
+          type: 'Individual',
+          designation: '',
+          cnic: '',
           flow_token: paramData.flow_token,
-          image: paramData.Image
+          image: null,
         })
 
-        // create profile url
-        // const profile_Url = window.location.origin + "/Profile/" + booking;
-        const profile_Url = "https://effie.convexinteractive.com" + "/Profile/" + booking;
-
-
-        // create qr of Profile URL for Lanyard
-        const LanyardQrUrl = await QRCode.toDataURL(profile_Url, { width: 512, margin: 2 })
-        const qrBlob = await (await fetch(LanyardQrUrl)).blob()
+        // 2. Generate QR code pointing to Profile page
+        const profileUrl = `${window.location.origin}/Profile/${booking}`
+        setProcessStep(`Generating QR code ${i + 1} of ${total}...`)
+        const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
+        const qrBlob = await (await fetch(qrDataUrl)).blob()
         const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${booking}.png`)
 
-
-        setProcessStep('Generating your pass...')
+        // 3. Generate lanyard
+        setProcessStep(`Generating pass ${i + 1} of ${total}...`)
         const { blob } = await generateLanyard({
-          name: paramData.Full_Name,
-          cnic: paramData.CNIC_Number,
-          seatNumber,
-          imageUrl: paramData.Image,
-          designation: paramData.Designation,
-          companyName: paramData.Company_Name,
+          name: attendee.name,
+          companyName: attendee.companyName,
+          seatNumber: attendee.seatNumber,
           lanyardQrUrl,
-          image: paramData.Image,
         })
 
-        const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${paramData.phone_number}.png`)
-        setLanyardUrl(lanyardUrl)
-
-
-        setProcessStep('Sending your pass via WhatsApp...')
-
-        try {
-          await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
-        } catch (whatsappErr) {
-          console.error('WhatsApp send failed:', whatsappErr)
-          setWhatsappError('WhatsApp delivery failed. Please download your pass below.')
-        }
-        setDone(true)
-
-      }
-      
-      
-      
-      else {
-        const bookings = allSelections.map(s => ({
-          seatNumber: `${s.tableId}-${s.chair}`,
-          seatStatus: true,
-        }))
-
-        setProcessStep('Reserving seats block...')
-        const { key } = await bookCorporate({
-          bookings, 
-          phone_number: paramData.phone_number,
-          flow_token: paramData.flow_token,
-          Company_Name: paramData.Company_Name,
-          Full_Name: paramData.Full_Name,
-          Email_Address: paramData.Email_Address,
-          Designation: paramData.Designation,
+        // 4. Upload lanyard
+        const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${attendee.phone}-${i}.png`)
+        collectedLanyards.push({
+          url: lanyardUrl,
+          name: attendee.name,
+          seatNumber: attendee.seatNumber,
         })
 
-        // const formLink = `${window.location.origin}/form/${key}`
-        const formLink = `https://effie.convexinteractive.com/form/${key}`
-
-        setProcessStep('Generating QR code...')
-        const qrDataUrl = await QRCode.toDataURL(formLink, { width: 512, margin: 5 })
-        const qrBlob = await (await fetch(qrDataUrl)).blob()
-        const { url: qrUrl } = await uploadFile(qrBlob, `qr-${key}.png`)
-
-        setProcessStep('Sending form link via WhatsApp...')
-
+        // 5. Broadcast via WhatsApp
+        setProcessStep(`Broadcasting pass ${i + 1} of ${total}...`)
         try {
-          await sendLinkWhatsapp({ contactNumber: paramData.phone_number, link: formLink, qrImageUrl: qrUrl })
+          await sendLanyardWhatsapp({ contactNumber: attendee.phone, lanyardUrl })
         } catch (whatsappErr) {
-          console.error('WhatsApp send failed:', whatsappErr)
-          setWhatsappError('WhatsApp delivery failed. Form link: ' + formLink)
+          console.error(`WhatsApp broadcast failed for ${attendee.name}:`, whatsappErr)
+          setBroadcastFailed(true)
         }
-        setDone(true)
       }
+
+      setLanyardUrls(collectedLanyards)
+      setDone(true)
     } catch (err) {
       console.error('Booking error:', err)
       setProcessStep('Error: ' + (err?.response?.data?.message || err.message || 'Something went wrong'))
@@ -284,47 +291,8 @@ export default function App() {
     <div className="app-bg">
       <div className="venue-card">
 
-        <div className="venue-header">
-          <div className="header-user-row">
-            <div>
-              <h1 className="venue-title">EFFIE AWARDS</h1>
-              {paramData.Full_Name && (
-                <p className="venue-sub">
-                  Hi <strong>{paramData.Full_Name}</strong> ·{' '}
-                  {paramData.flow === 'individual'
-                    ? 'Select 1 chair'
-                    : `Select up to ${allowedSeats} chairs`}
-                </p>
-              )}
-            </div>
-          </div>
-          <span className={`counter-pill${atLimit ? ' counter-full' : ''}`}>
-            {totalSelected} / {allowedSeats} selected
-          </span>
-        </div>
-
         <div className="venue-scale-outer">
           <div className="venue-scale-inner">
-            <div className="stage-wrap">
-              <div className="stage-bar">
-                <div className="stage-sponsors">
-                  <div className="sponsor-logo sponsor-logo--pepsi">
-                    <img src="PEP.png" alt="Pepsi" className="sponsor-img-pepsi" />
-                    <span className="sponsor-text">PRESENTS</span>
-                  </div>
-                  <div className="sponsor-logo sponsor-logo-main">
-                    <img src="Effie_Awardswhite.png" alt="Effie Awards Pakistan" />
-                  </div>
-                  <div className="sponsor-logo sponsor-logo--assoc">
-                    <span className="sponsor-text">IN ASSOCIATION WITH</span>
-                    <img src="Unilever.svg" alt="Unilever" className="sponsor-img-unilever" />
-                  </div>
-                </div>
-                {/* <span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span> */}
-                {/* <span className="stage-text">&#9670; &nbsp; STAGE &nbsp; &#9670;</span> */}
-              </div>
-            </div>
-
             <VenueFloor
               tables={tables}
               allowedTypes={allowedTypes}
@@ -333,12 +301,40 @@ export default function App() {
           </div>
         </div>
 
-        <BookingBar
+        {/* <BookingBar
           totalSelected={totalSelected}
           onClear={clearAll}
           onBook={() => setShowConfirm(true)}
-        />
+        /> */}
       </div>
+
+      {/* Floating Toggle Button when Drawer is Closed */}
+      {!modalTable && totalSelected > 0 && !drawerOpen && (
+        <button
+          type="button"
+          className="side-drawer-toggle-btn"
+          onClick={() => setDrawerOpen(true)}
+          title="Open Selection Summary"
+        >
+          <span className="side-drawer-toggle-icon">💺</span>
+          <span className="side-drawer-toggle-badge">{totalSelected}</span>
+        </button>
+      )}
+
+      {/* Side Booking Drawer (matching reference image) */}
+      {!modalTable && (
+        <SideBookingDrawer
+          allSelections={allSelections}
+          allowedSeats={allowedSeats}
+          totalSelected={totalSelected}
+          paramData={paramData}
+          onClear={clearAll}
+          onBook={() => setShowConfirm(true)}
+          onRemoveSeat={removeSeat}
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        />
+      )}
 
       {modalTable && (
         <ChairPickerModal
@@ -357,11 +353,18 @@ export default function App() {
           paramData={paramData}
           allSelections={allSelections}
           onCancel={() => setShowConfirm(false)}
-          onConfirm={confirmBooking}
+          onConfirm={handleConfirmToForm}
         />
       )}
 
-      {seatsLoading && <ProcessingOverlay step="Loading available seats..." />}
+      {showAttendeeForm && (
+        <AttendeeFormModal
+          allSelections={allSelections}
+          paramData={paramData}
+          onSubmit={processBookings}
+          onCancel={() => setShowAttendeeForm(false)}
+        />
+      )}
 
       {processing && <ProcessingOverlay step={processStep} />}
 
@@ -380,10 +383,12 @@ export default function App() {
       )}
 
       {done && (
-        <DoneModal phone_number={paramData.phone_number} lanyardUrl={lanyardUrl} errorMessage={whatsappError} />
+        <DoneModal
+          lanyardUrls={lanyardUrls}
+          broadcastFailed={broadcastFailed}
+        />
       )}
 
-      
     </div>
   )
 }
