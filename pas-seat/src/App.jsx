@@ -3,11 +3,10 @@ import './App.css'
 import NotFound from './NotFound'
 import { generateLanyard } from './generateLanyard'
 import QRCode from 'qrcode'
-import { sendLanyardWhatsapp, bookSeats, uploadFile } from './api'
-import { INIT } from './utils/seatLayout'
+import { sendLanyardWhatsapp, bookSeats, uploadFile, validateToken, fetchSeatsData } from './api'
+import { INIT, applySeatsData } from './utils/seatLayout'
 import { decryptParams } from './utils/Decrypt'
 import VenueFloor from './components/VenueFloor'
-import BookingBar from './components/BookingBar'
 import ChairPickerModal from './components/ChairPickerModal'
 import ConfirmModal from './components/ConfirmModal'
 import AttendeeFormModal from './components/AttendeeFormModal'
@@ -26,96 +25,86 @@ export default function App() {
   const [processing, setProcessing] = useState(false)
   const [processStep, setProcessStep] = useState('')
   const [done, setDone] = useState(false)
-  const [lanyardUrls, setLanyardUrls] = useState([])    // array of { url, name, seatNumber }
+  const [lanyardUrls, setLanyardUrls] = useState([]) // array of { url, name, seatNumber }
   const [broadcastFailed, setBroadcastFailed] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(true)
 
-  // Decrypt URL param if present, otherwise use static test values
+  // 1. Validate encrypted URL token with backend (or use mock data in dev)
   useEffect(() => {
     async function init() {
       const p = new URLSearchParams(window.location.search)
-      const encryptedData = p.get('data')
+      const encryptedData = p.get('data') || p.get('p')
 
       if (!encryptedData) {
-        // Static mock data for direct testing
+        // Static mock data for direct testing without URL params
         setParamData({
-          flow: 'corporate',
           allowedSeats: 4,
+          totalAllowed: 4,
+          usedSeats: 0,
           allowedTypes: ['normal', 'vip'],
-          phone_number: '+92 300 1234567',
-          Email_Address: 'guest@convexinteractive.com',
-          flow_token: 'demo_flow_token',
+          phone_number: '923001234567',
           Company_Name: 'Convex Interactive',
-          Full_Name: 'VIP Guest',
-          Designation: 'Executive Director',
-          CNIC_Number: '42101-1234567-1',
-          Image: null,
-          seats_api_url: null,
-          _token: 'demo_token_static',
+          _token: null,
         })
         setAuthLoading(false)
         return
       }
 
-      let parsed
       try {
-        parsed = await decryptParams(encryptedData)
+        const res = await validateToken(encryptedData)
+        if (res.valid) {
+          setParamData({
+            allowedSeats: res.remainingSeats,
+            totalAllowed: res.allowedSeats,
+            usedSeats: res.usedSeats,
+            allowedTypes: ['normal', 'vip'],
+            phone_number: res.phone || '',
+            Company_Name: res.companyName || 'Guest Company',
+            _token: encryptedData,
+          })
+          setAuthLoading(false)
+        } else if (res.reason === 'fully_used') {
+          setAuthError('used')
+          setAuthLoading(false)
+        } else {
+          setAuthError('invalid')
+          setAuthLoading(false)
+        }
       } catch (err) {
-        console.warn('Decryption failed, falling back to static data:', err)
-        parsed = {
-          Full_Name: 'VIP Guest',
-          phone_number: '+92 300 1234567',
-          Email_Address: 'guest@convexinteractive.com',
-          Number_of_ticket: '4',
-          Company_Name: 'Convex Interactive',
-          Designation: 'Executive Director',
+        console.warn('Backend token validation failed, attempting client-side fallback:', err)
+        try {
+          const parsed = await decryptParams(encryptedData)
+          const seats = parseInt(parsed.allowedSeats || parsed.Number_of_ticket || 4, 10)
+          setParamData({
+            allowedSeats: seats,
+            totalAllowed: seats,
+            usedSeats: 0,
+            allowedTypes: ['normal', 'vip'],
+            phone_number: parsed.phone_number || parsed.phone || '',
+            Company_Name: parsed.Company_Name || parsed.companyName || 'Guest Company',
+            _token: encryptedData,
+          })
+          setAuthLoading(false)
+        } catch (decryptErr) {
+          console.error('Client-side decryption also failed:', decryptErr)
+          setAuthError('invalid')
+          setAuthLoading(false)
         }
       }
-
-      if (!parsed?.phone_number) {
-        parsed = {
-          Full_Name: 'VIP Guest',
-          phone_number: '+92 300 1234567',
-          Email_Address: 'guest@convexinteractive.com',
-          Number_of_ticket: '4',
-          Company_Name: 'Convex Interactive',
-          Designation: 'Executive Director',
-        }
-      }
-
-      // Build paramData from decrypted fields
-      const Number_of_ticket = parseInt(parsed.Number_of_ticket, 10)
-      const isCorporate = !isNaN(Number_of_ticket) && Number_of_ticket > 0
-      setParamData({
-        flow: isCorporate ? 'corporate' : 'individual',
-        allowedSeats: isCorporate ? Number_of_ticket : 1,
-        allowedTypes: ['normal', 'vip'],
-        phone_number: parsed.phone_number,
-        Email_Address: parsed.Email_Address || null,
-        flow_token: parsed.flow_token || null,
-        Company_Name: parsed.Company_Name || null,
-        Full_Name: parsed.Full_Name || null,
-        Designation: parsed.Designation || null,
-        CNIC_Number: parsed.CNIC_Number || null,
-        Image: parsed.Image || null,
-        seats_api_url: parsed.seats_api_url || null,
-        _token: encryptedData || 'demo_token_static',
-      })
-      setAuthLoading(false)
     }
     init()
   }, [])
 
-  const [drawerOpen, setDrawerOpen] = useState(true)
-
-  // Seats data fetching is disabled — using static INIT data
-  // useEffect(() => {
-  //   if (!paramData) return
-  //   fetchSeatsData()
-  //     .then(seatsArray => {
-  //       if (seatsArray) setTables(prev => applySeatsData(prev, seatsArray))
-  //     })
-  //     .catch(err => console.error('Failed to load seat status:', err))
-  // }, [paramData])
+  // 2. Fetch real seat status from backend DB
+  useEffect(() => {
+    fetchSeatsData()
+      .then(seatsArray => {
+        if (seatsArray && seatsArray.length > 0) {
+          setTables(prev => applySeatsData(prev, seatsArray))
+        }
+      })
+      .catch(err => console.error('Failed to load seat status from DB:', err))
+  }, [])
 
   const openModal = useCallback((table) => setModalTable(table), [])
   const closeModal = useCallback(() => {
@@ -205,15 +194,12 @@ export default function App() {
         // 1. Book the seat
         setProcessStep(`Reserving seat ${i + 1} of ${total}...`)
         const { booking } = await bookSeats({
+          token: paramData._token,
           seatNumber: attendee.seatNumber,
           phone: attendee.phone,
           name: attendee.name,
           companyName: attendee.companyName,
           type: 'Individual',
-          designation: '',
-          cnic: '',
-          flow_token: paramData.flow_token,
-          image: null,
         })
 
         // 2. Generate QR code pointing to Profile page
@@ -233,7 +219,7 @@ export default function App() {
         })
 
         // 4. Upload lanyard
-        const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${attendee.phone}-${i}.png`)
+        const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${attendee.phone}-${i}.jpg`)
         collectedLanyards.push({
           url: lanyardUrl,
           name: attendee.name,
@@ -278,7 +264,7 @@ export default function App() {
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
           <h2 className="confirm-title" style={{ color: '#fca5a5' }}>Already Used</h2>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: '1rem 0' }}>
-            This booking link has already been used. Each invitation can only be used once.
+            This booking link has already been used for all allocated seats.
           </p>
         </div>
       </div>
@@ -300,12 +286,6 @@ export default function App() {
             />
           </div>
         </div>
-
-        {/* <BookingBar
-          totalSelected={totalSelected}
-          onClear={clearAll}
-          onBook={() => setShowConfirm(true)}
-        /> */}
       </div>
 
       {/* Floating Toggle Button when Drawer is Closed */}

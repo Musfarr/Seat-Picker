@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import QRCode from 'qrcode'
 import { uploadFile, sendLinkWhatsapp } from '../api'
+import { encryptParams } from '../utils/Decrypt'
+
 
 const INPUT_STYLE = {
   background: '#0f1829',
@@ -23,6 +25,8 @@ const LABEL_STYLE = {
 }
 
 export default function QrBroadcast() {
+  const [name, setName] = useState('')
+  const [noOfSeats, setNoOfSeats] = useState('')
   const [url, setUrl] = useState('')
   const [phone, setPhone] = useState('')
   const [processing, setProcessing] = useState(false)
@@ -89,6 +93,30 @@ export default function QrBroadcast() {
               style={{ ...INPUT_STYLE, border: errors.url ? '1px solid #fca5a5' : INPUT_STYLE.border }}
             />
             {errors.url && <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: 4 }}>{errors.url}</span>}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label style={LABEL_STYLE}>Name <span style={{ color: '#fca5a5' }}>*</span></label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: '' })) }}
+              placeholder="Name"
+              style={{ ...INPUT_STYLE, border: errors.url ? '1px solid #fca5a5' : INPUT_STYLE.border }}
+            />
+            {errors.url && <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: 4 }}>{errors.url}</span>}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label style={LABEL_STYLE}>No of seats <span style={{ color: '#fca5a5' }}>*</span></label>
+            <input
+              type="text"
+              value={noOfSeats}
+              onChange={e => { setNoOfSeats(e.target.value); setErrors(p => ({ ...p, noOfSeats: '' })) }}
+              placeholder="1"
+              style={{ ...INPUT_STYLE, border: errors.noOfSeats ? '1px solid #fca5a5' : INPUT_STYLE.border }}
+            />
+            {errors.noOfSeats && <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: 4 }}>{errors.noOfSeats}</span>}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>

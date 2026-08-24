@@ -22,7 +22,7 @@ export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
         const res = await fetch(item.url)
         const blob = await res.blob()
         const safeName = (item.name || `attendee-${i + 1}`).replace(/[^a-zA-Z0-9]/g, '_')
-        folder.file(`${safeName}_pass.png`, blob)
+        folder.file(`${safeName}_pass.jpg`, blob)
       }
 
       const zipBlob = await zip.generateAsync({ type: 'blob' })
@@ -75,7 +75,7 @@ export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
                 </div>
                 <a
                   href={item.url}
-                  download={`${(item.name || 'pass').replace(/[^a-zA-Z0-9]/g, '_')}_pass.png`}
+                  download={`${(item.name || 'pass').replace(/[^a-zA-Z0-9]/g, '_')}_pass.jpg`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="done-single-download"
@@ -98,7 +98,7 @@ export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
         {lanyardUrls.length === 1 && (
           <a
             href={lanyardUrls[0].url}
-            download="dragons-pass.png"
+            download="dragons-pass.jpg"
             target="_blank"
             rel="noopener noreferrer"
             className="done-download-btn"

@@ -4,20 +4,10 @@ const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
 const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1614007330125849'
 
-// const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
-// const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
-// const BOOK_CORPORATE_URL  = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate'
-// const ALLOCATE_URL        = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate/allocate'
 const SEATS_URL = 'http://localhost:8000/api/seats-data'
 const BOOK_URL = 'http://localhost:8000/api/book-seat'
-const BOOK_CORPORATE_URL = 'http://localhost:8000/api/book-corporate'
-const ALLOCATE_URL = 'http://localhost:8000/api/book-corporate/allocate'
 const BOOKING_DATA_URL = 'http://localhost:8000/api/booking-data'
-const CHECK_TOKEN_URL = 'http://localhost:8000/api/check-token'
-const SAVE_TOKEN_URL = 'http://localhost:8000/api/save-token'
-const RESERVED_EMAIL_URL = 'http://localhost:8000/api/send-reserved-email'
-
-const LINK_TEMPLATE_ID = '1614007330125849'  // update to your text/link template ID
+const VALIDATE_TOKEN_URL = 'http://localhost:8000/api/validate-token'
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
@@ -27,18 +17,22 @@ const LOGIN_PASSWORD = 'Convex@123'
 
 const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1786977606323-362082422.jpeg'
 
+/* Fetch seat availability from backend DB */
 export async function fetchSeatsData() {
-  const res = await axios.get(SEATS_URL, {
-    withCredentials: false,
-    // headers: {
-    //   'ngrok-skip-browser-warning': 'true',
-    // },
-  })
+  const res = await axios.get(SEATS_URL, { withCredentials: false })
   const data = res.data
-  return Array.isArray(data) ? data : data.seats
+  return Array.isArray(data) ? data : (data.seats || [])
 }
 
-/* Individual booking: { seatNumber, phone, flow_token } */
+/* Validate encrypted invitation token and get seat quota / tracking */
+export async function validateToken(token) {
+  const res = await axios.post(VALIDATE_TOKEN_URL, { token }, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
+/* Book individual seat: { token, seatNumber, phone, name, companyName, ... } */
 export async function bookSeats(payload) {
   const res = await axios.post(BOOK_URL, payload, {
     headers: { 'Content-Type': 'application/json' },
@@ -46,21 +40,16 @@ export async function bookSeats(payload) {
   return res.data
 }
 
-/* Corporate phase-1: reserve seats block.
-   payload: { bookings: [{seatNumber, seatStatus}], phone_number, flow_token, ... }
-   Returns: { key: mongoId, bookingsLeft } */
-export async function bookCorporate(payload) {
-  const res = await axios.post(BOOK_CORPORATE_URL, payload, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
+/* Legacy stubs for unused routes if visited */
+export async function allocateCorporateSeat(payload) { return bookSeats(payload) }
+export async function bookCorporate(payload) { return bookSeats(payload) }
+export async function sendReservedEmail(payload) { return true }
+export async function checkToken(token) { return validateToken(token) }
+export async function saveToken(token, userId) { return true }
 
-/* Corporate phase-2: allocate one seat to a form filler.
-   payload: { corporateId }
-   Returns: { seatNumber } */
-export async function allocateCorporateSeat(payload) {
-  const res = await axios.post(ALLOCATE_URL, payload, {
+/* Get booking data for profile display */
+export async function getBookingData(userId) {
+  const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
     headers: { 'Content-Type': 'application/json' },
   })
   return res.data
@@ -71,6 +60,41 @@ async function getAccessToken() {
   const token = res.data?.data?.accessToken
   if (!token) throw new Error('Login failed: no accessToken in response')
   return token
+}
+
+
+
+export async function sendLinkWhatsapp({ contactNumber, numberofseats, FinalURL }) {
+
+  const accessToken = await getAccessToken()
+
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: "1072390301848926",
+      param: [
+        {
+          componentType: "body",
+          parameters: [
+            {
+              type: "text",
+              value: numberofseats
+            },
+            {
+              type: "text",
+              value: FinalURL
+            }
+          ]
+        }
+      ]
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
+
+  return true
+
+
 }
 
 /* Send lanyard image via WhatsApp */
@@ -94,33 +118,6 @@ export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
   )
 }
 
-/* Send a form link via WhatsApp (corporate phase-1) */
-export async function sendLinkWhatsapp({ contactNumber, link, qrImageUrl }) {
-  const accessToken = await getAccessToken()
-  await axios.post(
-    BROADCAST_URL,
-    {
-      to: contactNumber,
-      templateId: LINK_TEMPLATE_ID,
-      param: [
-        {
-          parameters: [{ value: link, type: 'text' }],
-          componentType: 'body',
-          buttonType: null,
-          index: null,
-        },
-        {
-          parameters: [{ value: qrImageUrl || 'https://mediaupload.convexinteractive.com/api/file/1774434706246-157684823.jpg', type: 'image' }],
-          componentType: 'header',
-          buttonType: null,
-          index: null,
-        },
-      ],
-    },
-    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
-  )
-}
-
 export async function uploadFile(blob, fileName = 'lanyard.png') {
   try {
     const formData = new FormData()
@@ -132,11 +129,7 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
       },
     })
 
-    console.log(response, " response")
-
     if (response.status === 200) {
-      console.log(response.data, " response.data")
-      console.log(BASE_URL + response.data.url, " BASE_URL + response.data.url")
       return {
         url: BASE_URL + response.data.url,
         fileName: response.data.name,
@@ -149,40 +142,3 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
     throw error
   }
 }
-
-export async function getBookingData(userId) {
-  const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-
-export async function checkToken(token) {
-  const res = await axios.post(CHECK_TOKEN_URL, { token }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-
-export async function saveToken(token, userId) {
-  const res = await axios.post(SAVE_TOKEN_URL, { token, userId }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-
-/* Send reserved-seat lanyard via email (SMTP handled by backend).
-   Backend must implement POST /api/send-reserved-email
-   using secretariat@pas.org.pk SMTP credentials. */
-export async function sendReservedEmail({ toEmail, name, seatNumber, lanyardUrl }) {
-  const res = await axios.post(RESERVED_EMAIL_URL, {
-    toEmail,
-    name,
-    seatNumber,
-    lanyardUrl,
-  }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-
