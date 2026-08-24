@@ -1,40 +1,85 @@
-import { useCallback } from 'react'
-import JSZip from 'jszip'
+import { useState, useCallback } from 'react'
+import { jsPDF } from 'jspdf'
+
+function loadImageData(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0)
+      resolve({
+        dataUrl: canvas.toDataURL('image/jpeg', 0.95),
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      })
+    }
+    img.onerror = reject
+    img.src = url
+  })
+}
 
 /**
- * DoneModal — shows N lanyard previews with download buttons and ZIP download.
+ * DoneModal — shows N lanyard previews with download buttons and PDF download.
  *
  * Props:
  *  - lanyardUrls: [{ url, name, seatNumber }, ...]
  *  - broadcastFailed: boolean
  */
 export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
+  const [generatingPdf, setGeneratingPdf] = useState(false)
 
-  const downloadAll = useCallback(async () => {
+  const downloadAllAsPdf = useCallback(async () => {
     if (lanyardUrls.length === 0) return
+    setGeneratingPdf(true)
 
     try {
-      const zip = new JSZip()
-      const folder = zip.folder('dragons-awards-passes')
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      })
+
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
 
       for (let i = 0; i < lanyardUrls.length; i++) {
-        const item = lanyardUrls[i]
-        const res = await fetch(item.url)
-        const blob = await res.blob()
-        const safeName = (item.name || `attendee-${i + 1}`).replace(/[^a-zA-Z0-9]/g, '_')
-        folder.file(`${safeName}_pass.jpg`, blob)
+        if (i > 0) {
+          pdf.addPage('a4', 'portrait')
+        }
+
+        // Pure black background on each page
+        pdf.setFillColor(0, 0, 0)
+        pdf.rect(0, 0, pageWidth, pageHeight, 'F')
+
+        const { dataUrl, width, height } = await loadImageData(lanyardUrls[i].url)
+        const imgAspect = width / height
+        const margin = 12
+        const maxW = pageWidth - margin * 2
+        const maxH = pageHeight - margin * 2
+
+        let renderW = maxW
+        let renderH = renderW / imgAspect
+
+        if (renderH > maxH) {
+          renderH = maxH
+          renderW = renderH * imgAspect
+        }
+
+        const posX = (pageWidth - renderW) / 2
+        const posY = (pageHeight - renderH) / 2
+
+        pdf.addImage(dataUrl, 'JPEG', posX, posY, renderW, renderH)
       }
 
-      const zipBlob = await zip.generateAsync({ type: 'blob' })
-      const link = document.createElement('a')
-      link.href = URL.createObjectURL(zipBlob)
-      link.download = 'dragons-awards-passes.zip'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(link.href)
+      pdf.save('dragons-awards-passes.pdf')
     } catch (err) {
-      console.error('ZIP download failed:', err)
+      console.error('PDF generation failed:', err)
+    } finally {
+      setGeneratingPdf(false)
     }
   }, [lanyardUrls])
 
@@ -87,11 +132,16 @@ export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
           </div>
         )}
 
-        {/* Download All ZIP */}
+        {/* Download All as Multi-page PDF (Black Background) */}
         {lanyardUrls.length > 1 && (
-          <button className="done-download-btn" onClick={downloadAll}>
-            <span>Download All Passes (ZIP)</span>
-            <span>📦</span>
+          <button
+            type="button"
+            className="done-download-btn"
+            onClick={downloadAllAsPdf}
+            disabled={generatingPdf}
+          >
+            <span>{generatingPdf ? 'Generating PDF...' : 'Download All Passes (PDF)'}</span>
+            <span>📄</span>
           </button>
         )}
 

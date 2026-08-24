@@ -69,7 +69,7 @@ export async function generateLanyard({ name, companyName, seatNumber, seatNumbe
 
   // ── SEAT / TABLE NUMBER (right column, ~78% X) ──
   ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 24px Arial'
+  ctx.font = 'bold 28px Arial'
   const seatLabel = seats.length > 1 ? seats.join(' · ') : (seats[0] || '')
   ctx.fillText(seatLabel, Math.round(W * 0.78), labelY)
 
