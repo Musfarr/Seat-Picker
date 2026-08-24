@@ -45,7 +45,7 @@ export async function generateLanyard({ name, companyName, seatNumber, seatNumbe
   // ── NAME (left column, ~22% X) ──
   ctx.textAlign = 'center'
   ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 28px Arial'
+  ctx.font = 'bold 24px Arial'
   const nameText = (name || '').toUpperCase()
   const maxNameWidth = W * 0.26
   let displayName = nameText
@@ -57,7 +57,7 @@ export async function generateLanyard({ name, companyName, seatNumber, seatNumbe
 
   // ── COMPANY NAME (center column, ~50% X) ──
   ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 28px Arial'
+  ctx.font = 'bold 24px Arial'
   const companyText = (companyName || '').toUpperCase()
   const maxCompanyWidth = W * 0.26
   let displayCompany = companyText
@@ -69,7 +69,7 @@ export async function generateLanyard({ name, companyName, seatNumber, seatNumbe
 
   // ── SEAT / TABLE NUMBER (right column, ~78% X) ──
   ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 28px Arial'
+  ctx.font = 'bold 24px Arial'
   const seatLabel = seats.length > 1 ? seats.join(' · ') : (seats[0] || '')
   ctx.fillText(seatLabel, Math.round(W * 0.78), labelY)
 
