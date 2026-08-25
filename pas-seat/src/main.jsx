@@ -15,7 +15,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/form/:id" element={<CorporateForm />} />
         <Route path="/Profile/:id" element={<Profile />} />
         <Route path="/reserved107094qrL4" element={<ReservedBooking />} />
-        <Route path="/qr-broadcast" element={<QrBroadcast />} />
+        <Route path="/qr-23d9H92nO@f" element={<QrBroadcast />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

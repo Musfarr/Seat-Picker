@@ -5,7 +5,6 @@ import { generateLanyard } from './generateLanyard'
 import QRCode from 'qrcode'
 import { sendLanyardWhatsapp, bookSeats, uploadFile, validateToken, fetchSeatsData } from './api'
 import { INIT, applySeatsData } from './utils/seatLayout'
-import { decryptParams } from './utils/Decrypt'
 import VenueFloor from './components/VenueFloor'
 import ChairPickerModal from './components/ChairPickerModal'
 import ConfirmModal from './components/ConfirmModal'
@@ -13,6 +12,14 @@ import AttendeeFormModal from './components/AttendeeFormModal'
 import SideBookingDrawer from './components/SideBookingDrawer'
 import ProcessingOverlay from './components/ProcessingOverlay'
 import DoneModal from './components/DoneModal'
+
+function generateMongoId() {
+  const timestamp = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0')
+  const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+  return (timestamp + randomBytes).toLowerCase()
+}
 
 export default function App() {
   const [paramData, setParamData] = useState(null)
@@ -29,23 +36,14 @@ export default function App() {
   const [broadcastFailed, setBroadcastFailed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(true)
 
-  // 1. Validate encrypted URL token with backend (or use mock data in dev)
+  // 1. Validate encrypted URL token with backend
   useEffect(() => {
     async function init() {
       const p = new URLSearchParams(window.location.search)
       const encryptedData = p.get('data') || p.get('p')
 
       if (!encryptedData) {
-        // Static mock data for direct testing without URL params
-        setParamData({
-          allowedSeats: 4,
-          totalAllowed: 4,
-          usedSeats: 0,
-          allowedTypes: ['normal', 'vip'],
-          phone_number: '923001234567',
-          Company_Name: 'Convex Interactive',
-          _token: null,
-        })
+        setAuthError('invalid')
         setAuthLoading(false)
         return
       }
@@ -57,7 +55,7 @@ export default function App() {
             allowedSeats: res.remainingSeats,
             totalAllowed: res.allowedSeats,
             usedSeats: res.usedSeats,
-            allowedTypes: ['normal', 'vip'],
+            allowedTypes: res.allowedTypes || ['normal', 'vip'],
             phone_number: res.phone || '',
             Company_Name: res.companyName || 'Guest Company',
             _token: encryptedData,
@@ -71,25 +69,9 @@ export default function App() {
           setAuthLoading(false)
         }
       } catch (err) {
-        console.warn('Backend token validation failed, attempting client-side fallback:', err)
-        try {
-          const parsed = await decryptParams(encryptedData)
-          const seats = parseInt(parsed.allowedSeats || parsed.Number_of_ticket || 4, 10)
-          setParamData({
-            allowedSeats: seats,
-            totalAllowed: seats,
-            usedSeats: 0,
-            allowedTypes: ['normal', 'vip'],
-            phone_number: parsed.phone_number || parsed.phone || '',
-            Company_Name: parsed.Company_Name || parsed.companyName || 'Guest Company',
-            _token: encryptedData,
-          })
-          setAuthLoading(false)
-        } catch (decryptErr) {
-          console.error('Client-side decryption also failed:', decryptErr)
-          setAuthError('invalid')
-          setAuthLoading(false)
-        }
+        console.error('Backend token validation failed:', err)
+        setAuthError('invalid')
+        setAuthLoading(false)
       }
     }
     init()
@@ -191,25 +173,17 @@ export default function App() {
       for (let i = 0; i < total; i++) {
         const attendee = attendees[i]
 
-        // 1. Book the seat
-        setProcessStep(`Reserving seat ${i + 1} of ${total}...`)
-        const { booking } = await bookSeats({
-          token: paramData._token,
-          seatNumber: attendee.seatNumber,
-          phone: attendee.phone,
-          name: attendee.name,
-          companyName: attendee.companyName,
-          type: 'Individual',
-        })
+        // 1. Pre-generate unique booking ID for QR code profile URL
+        const bookingId = generateMongoId()
+        const profileUrl = `${window.location.origin}/Profile/${bookingId}`
 
         // 2. Generate QR code pointing to Profile page
-        const profileUrl = `${window.location.origin}/Profile/${booking}`
         setProcessStep(`Generating QR code ${i + 1} of ${total}...`)
         const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
         const qrBlob = await (await fetch(qrDataUrl)).blob()
-        const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${booking}.png`)
+        const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${bookingId}.png`)
 
-        // 3. Generate lanyard
+        // 3. Generate lanyard pass
         setProcessStep(`Generating pass ${i + 1} of ${total}...`)
         const { blob } = await generateLanyard({
           name: attendee.name,
@@ -218,7 +192,8 @@ export default function App() {
           lanyardQrUrl,
         })
 
-        // 4. Upload lanyard
+        // 4. Upload lanyard image to obtain URL
+        setProcessStep(`Uploading pass ${i + 1} of ${total}...`)
         const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${attendee.phone}-${i}.jpg`)
         collectedLanyards.push({
           url: lanyardUrl,
@@ -226,7 +201,20 @@ export default function App() {
           seatNumber: attendee.seatNumber,
         })
 
-        // 5. Broadcast via WhatsApp
+        // 5. Book the seat with lanyardUrl sent in the payload as 'image'
+        setProcessStep(`Reserving seat ${i + 1} of ${total}...`)
+        await bookSeats({
+          _id: bookingId,
+          token: paramData._token,
+          seatNumber: attendee.seatNumber,
+          phone: attendee.phone,
+          name: attendee.name,
+          companyName: attendee.companyName,
+          type: 'Individual',
+          image: lanyardUrl,
+        })
+
+        // 6. Broadcast via WhatsApp
         setProcessStep(`Broadcasting pass ${i + 1} of ${total}...`)
         try {
           await sendLanyardWhatsapp({ contactNumber: attendee.phone, lanyardUrl })
@@ -366,6 +354,7 @@ export default function App() {
         <DoneModal
           lanyardUrls={lanyardUrls}
           broadcastFailed={broadcastFailed}
+          onClose={() => setDone(false)}
         />
       )}
 

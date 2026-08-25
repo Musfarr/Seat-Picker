@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
-const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
+const LOGIN_URL = 'https://portal.berrytalks.com/api/auth/client/login'
+const BROADCAST_URL = 'https://broadcast.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1614007330125849'
 
 const SEATS_URL = 'http://localhost:8000/api/seats-data'
@@ -12,8 +12,8 @@ const VALIDATE_TOKEN_URL = 'http://localhost:8000/api/validate-token'
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
 
-const LOGIN_EMAIL = 'convexwaba@yopmail.com'
-const LOGIN_PASSWORD = 'Convex@123'
+const LOGIN_EMAIL = 'apiadstreet@gmail.com'
+const LOGIN_PASSWORD = '2inK4QQiAU@'
 
 const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1786977606323-362082422.jpeg'
 

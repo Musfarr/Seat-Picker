@@ -29,7 +29,7 @@ function loadImageData(url) {
  *  - lanyardUrls: [{ url, name, seatNumber }, ...]
  *  - broadcastFailed: boolean
  */
-export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
+export default function DoneModal({ lanyardUrls = [], broadcastFailed, onClose }) {
   const [generatingPdf, setGeneratingPdf] = useState(false)
 
   const downloadAllAsPdf = useCallback(async () => {
@@ -84,8 +84,25 @@ export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
   }, [lanyardUrls])
 
   return (
-    <div className="modal-overlay">
-      <div className="done-card modal-content--gala">
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="done-card modal-content--gala"
+        style={{ position: 'relative' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top-right close button */}
+        {onClose && (
+          <button
+            type="button"
+            className="chair-modal-close"
+            style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}
+            onClick={onClose}
+            title="Close"
+          >
+            ✕
+          </button>
+        )}
+
         <div className="done-check-wrapper">
           <div className="done-check-halo" />
           <div className="done-check">✓</div>
@@ -97,7 +114,7 @@ export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
 
         {broadcastFailed ? (
           <div className="done-error-box">
-            <p className="done-err-txt">⚠️ Some WhatsApp broadcasts failed. Please download passes below.</p>
+            <p className="done-err-txt">⚠️ Some WhatsApp delivery failed. Please download passes below.</p>
             <p className="done-sub">All seat reservations are confirmed in our system.</p>
           </div>
         ) : (
@@ -156,6 +173,17 @@ export default function DoneModal({ lanyardUrls = [], broadcastFailed }) {
             <span>Download Digital Pass</span>
             <span>↓</span>
           </a>
+        )}
+
+        {onClose && (
+          <button
+            type="button"
+            className="confirm-cancel"
+            style={{ width: '100%', marginTop: 8 }}
+            onClick={onClose}
+          >
+            Close
+          </button>
         )}
       </div>
     </div>
