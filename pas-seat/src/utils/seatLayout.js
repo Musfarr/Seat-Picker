@@ -2,7 +2,7 @@ export const CHAIR_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
 // Front 2 rows nearest to the stage on both sides are VIP (Tables 1-8 and 29-36)
 export const VIP_TABLES = new Set([])
-export const UNAVAILABLE_TABLES = new Set([1, 2]) // Zero reserved tables
+export const UNAVAILABLE_TABLES = new Set([]) // Zero reserved tables
 
 export const LAYOUT = {
   leftBlock: [
