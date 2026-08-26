@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1786977606323-362082422.jpeg'
+const TEMPLATE_URL = import.meta.env.VITE_TEMPLATE_IMAGE_URL || 'https://mediaupload.convexinteractive.com/api/file/1786977606323-362082422.jpeg'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {

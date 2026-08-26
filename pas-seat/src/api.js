@@ -1,21 +1,27 @@
 import axios from 'axios'
 
-const LOGIN_URL = 'https://portal.berrytalks.com/api/auth/client/login'
-const BROADCAST_URL = 'https://broadcast.convexinteractive.com/api/broadcast/send'
-const TEMPLATE_ID = '1614007330125849'
+// Backend API Endpoints (constructed using VITE_BACKEND_BASE_URL)
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000'
+const SEATS_URL = `${BACKEND_BASE_URL}/api/seats-data`
+const BOOK_URL = `${BACKEND_BASE_URL}/api/book-seat`
+const BOOKING_DATA_URL = `${BACKEND_BASE_URL}/api/booking-data`
+const VALIDATE_TOKEN_URL = `${BACKEND_BASE_URL}/api/validate-token`
 
-const SEATS_URL = 'http://localhost:8000/api/seats-data'
-const BOOK_URL = 'http://localhost:8000/api/book-seat'
-const BOOKING_DATA_URL = 'http://localhost:8000/api/booking-data'
-const VALIDATE_TOKEN_URL = 'http://localhost:8000/api/validate-token'
+// WhatsApp Portal & Broadcast Configuration
+const LOGIN_URL = import.meta.env.VITE_PORTAL_LOGIN_URL || 'https://portal.berrytalks.com/api/auth/client/login'
+const BROADCAST_URL = import.meta.env.VITE_BROADCAST_URL || 'https://broadcast.convexinteractive.com/api/broadcast/send'
+const LOGIN_EMAIL = import.meta.env.VITE_BROADCAST_EMAIL || 'apiadstreet@gmail.com'
+const LOGIN_PASSWORD = import.meta.env.VITE_BROADCAST_PASSWORD || '2inK4QQiAU@'
 
-const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
-const BASE_URL = 'https://mediaupload.convexinteractive.com'
+// WhatsApp Template IDs
+const TEMPLATE_LANYARD_ID = import.meta.env.VITE_TEMPLATE_LANYARD_ID || '1614007330125849'
+const TEMPLATE_LINK_ID = import.meta.env.VITE_TEMPLATE_LINK_ID || '1072390301848926'
+const TEMPLATE_PDF_ID = import.meta.env.VITE_TEMPLATE_PDF_ID || '935342972294331'
 
-const LOGIN_EMAIL = 'apiadstreet@gmail.com'
-const LOGIN_PASSWORD = '2inK4QQiAU@'
-
-const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1786977606323-362082422.jpeg'
+// Media Upload CDN
+const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'https://mediaupload.convexinteractive.com'
+const UPLOAD_API_URL = import.meta.env.VITE_MEDIA_UPLOAD_URL || `${MEDIA_BASE_URL}/api/upload`
+const TEMPLATE_IMAGE_URL = import.meta.env.VITE_TEMPLATE_IMAGE_URL || `${MEDIA_BASE_URL}/api/file/1786977606323-362082422.jpeg`
 
 /* Fetch seat availability from backend DB */
 export async function fetchSeatsData() {
@@ -65,14 +71,13 @@ async function getAccessToken() {
 
 
 export async function sendLinkWhatsapp({ contactNumber, numberofseats, FinalURL }) {
-
   const accessToken = await getAccessToken()
 
   await axios.post(
     BROADCAST_URL,
     {
       to: contactNumber,
-      templateId: "1072390301848926",
+      templateId: TEMPLATE_LINK_ID,
       param: [
         {
           componentType: "body",
@@ -93,8 +98,32 @@ export async function sendLinkWhatsapp({ contactNumber, numberofseats, FinalURL 
   )
 
   return true
+}
 
+export async function sendPDFWhatsapp({ contactNumber, pdfUrl }) {
+  const accessToken = await getAccessToken()
 
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: TEMPLATE_PDF_ID,
+      param: [
+        {
+          componentType: "header",
+          parameters: [
+            {
+              type: "document",
+              value: pdfUrl,
+            }
+          ]
+        }
+      ]
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
+
+  return true
 }
 
 /* Send lanyard image via WhatsApp */
@@ -104,7 +133,7 @@ export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
     BROADCAST_URL,
     {
       to: contactNumber,
-      templateId: TEMPLATE_ID,
+      templateId: TEMPLATE_LANYARD_ID,
       param: [
         {
           parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image' }],
