@@ -1,27 +1,27 @@
 import axios from 'axios'
 
 // Backend API Endpoints (constructed using VITE_BACKEND_BASE_URL)
-const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || 'http://localhost:8000'
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || ''
 const SEATS_URL = `${BACKEND_BASE_URL}/api/seats-data`
 const BOOK_URL = `${BACKEND_BASE_URL}/api/book-seat`
 const BOOKING_DATA_URL = `${BACKEND_BASE_URL}/api/booking-data`
 const VALIDATE_TOKEN_URL = `${BACKEND_BASE_URL}/api/validate-token`
 
 // WhatsApp Portal & Broadcast Configuration
-const LOGIN_URL = import.meta.env.VITE_PORTAL_LOGIN_URL || 'https://portal.berrytalks.com/api/auth/client/login'
-const BROADCAST_URL = import.meta.env.VITE_BROADCAST_URL || 'https://broadcast.convexinteractive.com/api/broadcast/send'
-const LOGIN_EMAIL = import.meta.env.VITE_BROADCAST_EMAIL || 'apiadstreet@gmail.com'
-const LOGIN_PASSWORD = import.meta.env.VITE_BROADCAST_PASSWORD || '2inK4QQiAU@'
+const LOGIN_URL = import.meta.env.VITE_PORTAL_LOGIN_URL || ''
+const BROADCAST_URL = import.meta.env.VITE_BROADCAST_URL || ''
+const LOGIN_EMAIL = import.meta.env.VITE_BROADCAST_EMAIL || ''
+const LOGIN_PASSWORD = import.meta.env.VITE_BROADCAST_PASSWORD || ''
 
 // WhatsApp Template IDs
-const TEMPLATE_LANYARD_ID = import.meta.env.VITE_TEMPLATE_LANYARD_ID || '1614007330125849'
-const TEMPLATE_LINK_ID = import.meta.env.VITE_TEMPLATE_LINK_ID || '1072390301848926'
-const TEMPLATE_PDF_ID = import.meta.env.VITE_TEMPLATE_PDF_ID || '935342972294331'
+const TEMPLATE_LANYARD_ID = import.meta.env.VITE_TEMPLATE_LANYARD_ID || ''
+const TEMPLATE_LINK_ID = import.meta.env.VITE_TEMPLATE_LINK_ID || ''
+const TEMPLATE_PDF_ID = import.meta.env.VITE_TEMPLATE_PDF_ID || '2585328365269708'
 
 // Media Upload CDN
-const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'https://mediaupload.convexinteractive.com'
-const UPLOAD_API_URL = import.meta.env.VITE_MEDIA_UPLOAD_URL || `${MEDIA_BASE_URL}/api/upload`
-const TEMPLATE_IMAGE_URL = import.meta.env.VITE_TEMPLATE_IMAGE_URL || `${MEDIA_BASE_URL}/api/file/1786977606323-362082422.jpeg`
+const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || ''
+const UPLOAD_API_URL = import.meta.env.VITE_MEDIA_UPLOAD_URL || (MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/api/upload` : '')
+const TEMPLATE_IMAGE_URL = import.meta.env.VITE_TEMPLATE_IMAGE_URL || (MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/api/file/1786977606323-362082422.jpeg` : '')
 
 /* Fetch seat availability from backend DB */
 export async function fetchSeatsData() {
@@ -107,18 +107,22 @@ export async function sendPDFWhatsapp({ contactNumber, pdfUrl }) {
     BROADCAST_URL,
     {
       to: contactNumber,
-      templateId: TEMPLATE_PDF_ID,
+      templateId: TEMPLATE_PDF_ID || "2585328365269708",
       param: [
         {
-          componentType: "header",
           parameters: [
             {
-              type: "document",
               value: pdfUrl,
+              type: "document",
+              mediaId: null,
             }
-          ]
+          ],
+          componentType: "header",
+          buttonType: null,
+          index: null,
         }
-      ]
+      ],
+      flowToken: null,
     },
     { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
   )
@@ -160,7 +164,7 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
 
     if (response.status === 200) {
       return {
-        url: BASE_URL + response.data.url,
+        url: MEDIA_BASE_URL + response.data.url,
         fileName: response.data.name,
       }
     } else {

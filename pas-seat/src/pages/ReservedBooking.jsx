@@ -190,7 +190,7 @@ export default function ReservedBooking() {
 
         setStep(`[${i + 1}/${total}] Generating lanyard pass for ${seatNumber}...`)
         const { blob: lanyardBlob } = await generateLanyard({
-          name: companyName.trim(),
+          name: (i + 1).toString(),
           companyName: companyName.trim(),
           seatNumber,
           lanyardQrUrl,
