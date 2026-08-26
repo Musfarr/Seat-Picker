@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1776253942489-886168050.png'
+const TEMPLATE_URL = import.meta.env.VITE_TEMPLATE_IMAGE_URL || 'https://mediaupload.convexinteractive.com/api/file/1786977606323-362082422.jpeg'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -10,10 +10,19 @@ function loadImage(src) {
   })
 }
 
-export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, imageUrl, designation, companyName, lanyardQrUrl }) {
+/**
+ * Generate a Dragons Awards lanyard.
+ *
+ * Label positions on the template (from the provided image):
+ *   - "Name"             label at ~34% Y, ~24% X (left-aligned)
+ *   - "Company Name"     label at ~34% Y, ~50% X (center)
+ *   - "No. Seat or Table" label at ~34% Y, ~76% X (right-aligned)
+ *   - QR Code area below "Pearl Continental" (~82-88% Y, centered)
+ */
+export async function generateLanyard({ name, companyName, seatNumber, seatNumbers, lanyardQrUrl }) {
   const template = await loadImage(TEMPLATE_URL)
-  const W = template.naturalWidth || 434
-  const H = template.naturalHeight || 900
+  const W = template.naturalWidth || 540
+  const H = template.naturalHeight || 960
 
   const canvas = document.createElement('canvas')
   canvas.width = W
@@ -23,81 +32,65 @@ export async function generateLanyard({ name, cnic, seatNumber, seatNumbers, ima
   // Draw template image as background
   ctx.drawImage(template, 0, 0, W, H)
 
-  ctx.textAlign = 'center'
-  ctx.shadowColor = 'rgba(0,0,0,0.95)'
-  ctx.shadowBlur = 8
+  ctx.shadowColor = 'rgba(0,0,0,0.85)'
+  ctx.shadowBlur = 6
 
   const seats = seatNumbers || (seatNumber ? [seatNumber] : [])
 
-  // ── Photo position (middle of card) ──
-  const photoCX = W / 2
-  const photoCY = Math.round(H * 0.50)
-  const photoR = Math.round(W * 0.155)
-  
-  const QRCX = W / 2
-  const QRCY = Math.round(H * 0.88)
-  const QRR = Math.round(W * 0.155)
+  // ── Label row Y position (just above the printed labels on the template) ──
+  // The template shows "Name", "Company Name", "No. Seat or Table" labels
+  // at approximately 33-34% from the top. We render text ABOVE them.
+  const labelY = Math.round(H * 0.323)
 
-  // ── Name above photo ──
-  const nameY = Math.round(H * 0.35)
-  ctx.fillStyle = 'rgb(254, 242, 194)'
-  ctx.font = `bold ${Math.round(W * 0.062)}px Arial`
-  ctx.fillText((name || '').toUpperCase(), W / 2, nameY)
-
-  // ── Designation + Company below name ──
-  const desigParts = [designation, companyName].filter(Boolean).join(', ')
-  if (desigParts) {
-    ctx.fillStyle = 'rgba(255,255,255,0.85)'
-    ctx.font = ` bold ${Math.round(W * 0.036)}px Arial`
-    ctx.fillText(desigParts, W / 2, nameY + Math.round(H * 0.036))
+  // ── NAME (left column, ~22% X) ──
+  ctx.textAlign = 'center'
+  ctx.fillStyle = '#ffffff'
+  ctx.font = 'bold 24px Arial'
+  const nameText = (name || '').toUpperCase()
+  const maxNameWidth = W * 0.26
+  let displayName = nameText
+  while (ctx.measureText(displayName).width > maxNameWidth && displayName.length > 3) {
+    displayName = displayName.slice(0, -1)
   }
+  if (displayName !== nameText) displayName += '…'
+  ctx.fillText(displayName, Math.round(W * 0.22), labelY)
 
-  // ── Profile photo ──
-  if (imageUrl) {
-    try {
-      const photo = await loadImage(imageUrl)
-      const enlargedPhotoR = Math.round(photoR * 1.15)
-      ctx.save()
-      ctx.beginPath()
-      ctx.arc(photoCX, photoCY, enlargedPhotoR, 0, Math.PI * 2)
-      ctx.clip()
-      ctx.drawImage(photo, photoCX - enlargedPhotoR, photoCY - enlargedPhotoR, enlargedPhotoR * 2, enlargedPhotoR * 2)
-      ctx.restore()
-      ctx.strokeStyle = 'rgb(254, 242, 194)'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.arc(photoCX, photoCY, enlargedPhotoR + 3, 0, Math.PI * 2)
-      ctx.stroke()
-    } catch (_) {
-      // photo failed to load — skip
-    }
+  // ── COMPANY NAME (center column, ~50% X) ──
+  ctx.fillStyle = '#ffffff'
+  ctx.font = 'bold 24px Arial'
+  const companyText = (companyName || '').toUpperCase()
+  const maxCompanyWidth = W * 0.26
+  let displayCompany = companyText
+  while (ctx.measureText(displayCompany).width > maxCompanyWidth && displayCompany.length > 3) {
+    displayCompany = displayCompany.slice(0, -1)
   }
+  if (displayCompany !== companyText) displayCompany += '…'
+  ctx.fillText(displayCompany, Math.round(W * 0.50), labelY)
 
+  // ── SEAT / TABLE NUMBER (right column, ~78% X) ──
+  ctx.fillStyle = '#ffffff'
+  ctx.font = 'bold 28px Arial'
+  const seatLabel = seats.length > 1 ? seats.join(' · ') : (seats[0] || '')
+  ctx.fillText(seatLabel, Math.round(W * 0.78), labelY)
 
-  // #QR
-
+  // ── QR CODE aligned left below "Pearl Continental" ──
   if (lanyardQrUrl) {
     try {
       const qrImg = await loadImage(lanyardQrUrl)
-      const qrSize = QRR * 1.5
-      ctx.drawImage(qrImg, QRCX - qrSize / 2, QRCY - qrSize / 2, qrSize, qrSize)
+      const qrSize = Math.round(W * 0.16)
+      const qrX = Math.round(W * 0.10)
+      const qrY = Math.round(H * 0.705)
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
     } catch (_) {
       // QR failed to load — skip
     }
   }
-
-  // ── Seat number below template's "EXPO CENTER KARACHI" text ──
-  const seatY = Math.round(H * 0.79)
-  ctx.fillStyle = 'rgb(254, 242, 194)'
-  ctx.font = `bold ${Math.round(W * 0.072)}px Arial`
-  const seatLabel = seats.length > 1 ? `SEAT #: ${seats.join(' · ')}` : `SEAT #: ${seats[0] || ''}`
-  ctx.fillText(seatLabel, W / 2, seatY)
 
   ctx.shadowBlur = 0
 
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
       resolve({ blob })
-    }, 'image/png')
+    }, 'image/jpeg', 0.85)
   })
 }

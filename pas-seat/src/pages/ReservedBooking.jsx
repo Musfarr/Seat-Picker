@@ -1,407 +1,276 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import QRCode from 'qrcode'
-import { bookSeats, bookCorporate, uploadFile, sendLinkWhatsapp, sendReservedEmail } from '../api'
+import { jsPDF } from 'jspdf'
+import { bookSeats, uploadFile, sendPDFWhatsapp, fetchSeatsData } from '../api'
 import { generateLanyard } from '../generateLanyard'
+import { CHAIR_LABELS, UNAVAILABLE_TABLES } from '../utils/seatLayout'
+import DoneModal from '../components/DoneModal'
 
-const FULL_TABLE_SEATS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+const ALL_TABLE_NUMBERS = Array.from({ length: 56 }, (_, i) => i + 1)
 
-const RESERVED_SEATS_BY_TABLE = {
-  1: FULL_TABLE_SEATS,
-  3: FULL_TABLE_SEATS,
-  7: FULL_TABLE_SEATS,
-  8: FULL_TABLE_SEATS,
-  9: FULL_TABLE_SEATS,
-  12: ['A', 'B', 'C'],
-  14: FULL_TABLE_SEATS,
-  15: FULL_TABLE_SEATS,
-  16: FULL_TABLE_SEATS,
-  19: ['B', 'C'],
-  20: FULL_TABLE_SEATS,
-  21: ['A', 'B', 'G', 'H'],
-  22: FULL_TABLE_SEATS,
-  23: FULL_TABLE_SEATS,
-  24: FULL_TABLE_SEATS,
-  25: FULL_TABLE_SEATS,
-  28: FULL_TABLE_SEATS,
-  29: FULL_TABLE_SEATS,
-  30: FULL_TABLE_SEATS,
-  31: FULL_TABLE_SEATS,
-  46: FULL_TABLE_SEATS,
-  47: FULL_TABLE_SEATS,
-  48: FULL_TABLE_SEATS,
-  52: FULL_TABLE_SEATS,
-  53: FULL_TABLE_SEATS,
-  57: ['A', 'B', 'C', 'D', 'G', 'H'],
-  58: FULL_TABLE_SEATS,
-  59: FULL_TABLE_SEATS,
-  60: FULL_TABLE_SEATS,
-  66: FULL_TABLE_SEATS,
-  67: FULL_TABLE_SEATS,
-  68: FULL_TABLE_SEATS,
-  69: FULL_TABLE_SEATS,
-  70: FULL_TABLE_SEATS,
-  73: FULL_TABLE_SEATS,
-  74: FULL_TABLE_SEATS,
-  R1: FULL_TABLE_SEATS,
-  R2: FULL_TABLE_SEATS,
-  R3: FULL_TABLE_SEATS,
-  R4: FULL_TABLE_SEATS,
-  R5: FULL_TABLE_SEATS,
-  R6: FULL_TABLE_SEATS,
-  R7: FULL_TABLE_SEATS,
-  R8: FULL_TABLE_SEATS,
-  R9: FULL_TABLE_SEATS,
-  R10: FULL_TABLE_SEATS,
-  R11: FULL_TABLE_SEATS,
-  R12: FULL_TABLE_SEATS,
-  R13: FULL_TABLE_SEATS,
-  R14: FULL_TABLE_SEATS,
-}
-const RESERVED_TABLES = Object.keys(RESERVED_SEATS_BY_TABLE)
-const PAS_LOGO_URL = `${window.location.origin}/test.jpeg`
-
-const INPUT_STYLE = {
-  background: '#0f1829',
-  border: '1px solid #1e293b',
-  borderRadius: 8,
-  color: '#fff',
-  padding: '10px 14px',
-  fontSize: '0.9rem',
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
+function generateMongoId() {
+  const timestamp = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0')
+  const randomBytes = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+  return (timestamp + randomBytes).toLowerCase()
 }
 
-const LABEL_STYLE = {
-  color: 'rgba(255,255,255,0.55)',
-  fontSize: '0.75rem',
-  letterSpacing: '0.04em',
-  display: 'block',
-  marginBottom: 4,
+function loadImageData(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0)
+      resolve({
+        dataUrl: canvas.toDataURL('image/jpeg', 0.95),
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      })
+    }
+    img.onerror = reject
+    img.src = url
+  })
 }
 
-function FormField({ label, value, onChange, type = 'text', required, placeholder, error }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <label style={LABEL_STYLE}>
-        {label.toUpperCase()}{required && <span style={{ color: '#fca5a5', marginLeft: 2 }}>*</span>}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder || label}
-        style={{ ...INPUT_STYLE, border: error ? '1px solid #fca5a5' : INPUT_STYLE.border }}
-      />
-      {error && <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: 4 }}>{error}</span>}
-    </div>
-  )
-}
+async function createMultiPassPdfBlob(lanyardList) {
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+  })
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const pageHeight = pdf.internal.pageSize.getHeight()
 
-function SeatPicker({ tableVal, chairVal, onTableChange, onChairChange, label, tableError, chairError }) {
-  return (
-    <div>
-      {label && (
-        <p style={{ ...LABEL_STYLE, marginBottom: 8 }}>{label.toUpperCase()}</p>
-      )}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <label style={LABEL_STYLE}>TABLE <span style={{ color: '#fca5a5' }}>*</span></label>
-          <select
-            value={tableVal}
-            onChange={e => onTableChange(e.target.value)}
-            style={{
-              ...INPUT_STYLE,
-              cursor: 'pointer',
-              border: tableError ? '1px solid #fca5a5' : INPUT_STYLE.border,
-            }}
-          >
-            <option value="" disabled style={{ background: '#0f1829' }}>Select</option>
-            {RESERVED_TABLES.map(t => (
-              <option key={t} value={t} style={{ background: '#0f1829' }}>{t}</option>
-            ))}
-          </select>
-          {tableError && <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: 4, display: 'block' }}>{tableError}</span>}
-        </div>
-        <div style={{ flex: 1 }}>
-          <label style={LABEL_STYLE}>CHAIR <span style={{ color: '#fca5a5' }}>*</span></label>
-          <select
-            value={chairVal}
-            onChange={e => onChairChange(e.target.value)}
-            disabled={!tableVal}
-            style={{
-              ...INPUT_STYLE,
-              cursor: tableVal ? 'pointer' : 'not-allowed',
-              opacity: tableVal ? 1 : 0.45,
-              border: chairError ? '1px solid #fca5a5' : INPUT_STYLE.border,
-            }}
-          >
-            <option value="" disabled style={{ background: '#0f1829' }}>Select</option>
-            {(tableVal ? RESERVED_SEATS_BY_TABLE[tableVal] || [] : []).map(c => (
-              <option key={c} value={c} style={{ background: '#0f1829' }}>{c}</option>
-            ))}
-          </select>
-          {chairError && <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: 4, display: 'block' }}>{chairError}</span>}
-        </div>
-      </div>
-    </div>
-  )
+  for (let i = 0; i < lanyardList.length; i++) {
+    if (i > 0) {
+      pdf.addPage('a4', 'portrait')
+    }
+    // Pure black background on each page
+    pdf.setFillColor(0, 0, 0)
+    pdf.rect(0, 0, pageWidth, pageHeight, 'F')
+
+    const { dataUrl, width, height } = await loadImageData(lanyardList[i].url)
+    const imgAspect = width / height
+    const margin = 12
+    const maxW = pageWidth - margin * 2
+    const maxH = pageHeight - margin * 2
+
+    let renderW = maxW
+    let renderH = renderW / imgAspect
+    if (renderH > maxH) {
+      renderH = maxH
+      renderW = renderH * imgAspect
+    }
+
+    const posX = (pageWidth - renderW) / 2
+    const posY = (pageHeight - renderH) / 2
+    pdf.addImage(dataUrl, 'JPEG', posX, posY, renderW, renderH)
+  }
+
+  return pdf.output('blob')
 }
 
 export default function ReservedBooking() {
-  const [flow, setFlow] = useState(null)
-
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [cnic, setCnic] = useState('')
   const [companyName, setCompanyName] = useState('')
-
-  const [indTable, setIndTable] = useState('')
-  const [indChair, setIndChair] = useState('')
-
-  const [corpSeats, setCorpSeats] = useState([{ table: '', chair: '' }])
+  const [phone, setPhone] = useState('')
+  const [currentTable, setCurrentTable] = useState(3)
+  const [selectedSeats, setSelectedSeats] = useState([])
+  const [bookedSeatsSet, setBookedSeatsSet] = useState(new Set())
+  const [loadingSeats, setLoadingSeats] = useState(true)
 
   const [processing, setProcessing] = useState(false)
   const [step, setStep] = useState('')
   const [done, setDone] = useState(false)
-  const [doneMsg, setDoneMsg] = useState('')
-  const [lanyardUrl, setLanyardUrl] = useState(null)
-  const [emailError, setEmailError] = useState('')
+  const [broadcastFailed, setBroadcastFailed] = useState(false)
+  const [lanyardUrls, setLanyardUrls] = useState([])
+  const [pdfDownloadUrl, setPdfDownloadUrl] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
 
-  const addCorpSeat = () => setCorpSeats(prev => [...prev, { table: '', chair: '' }])
-  const removeCorpSeat = idx => setCorpSeats(prev => prev.filter((_, i) => i !== idx))
-  const updateCorpSeat = (idx, field, val) =>
-    setCorpSeats(prev => prev.map((s, i) =>
-      i === idx ? { ...s, [field]: val, ...(field === 'table' ? { chair: '' } : {}) } : s
-    ))
+  // Load latest booked seats status
+  const refreshSeats = useCallback(async () => {
+    try {
+      setLoadingSeats(true)
+      const data = await fetchSeatsData()
+      const booked = new Set()
+      data.forEach(s => {
+        if (!s.seatStatus) {
+          booked.add(s.seatNumber)
+        }
+      })
+      setBookedSeatsSet(booked)
+    } catch (err) {
+      console.error('Failed to fetch seat data:', err)
+    } finally {
+      setLoadingSeats(false)
+    }
+  }, [])
 
-  const handleIndividualSubmit = async () => {
+  useEffect(() => {
+    refreshSeats()
+  }, [refreshSeats])
+
+  // Chair selection toggles
+  const isSeatSelected = (tableNum, chair) => selectedSeats.includes(`${tableNum}-${chair}`)
+  const isSeatBooked = (tableNum, chair) => {
+    if (UNAVAILABLE_TABLES.has(tableNum)) return true
+    return bookedSeatsSet.has(`${tableNum}-${chair}`)
+  }
+
+  const toggleChair = (chair) => {
+    const seatId = `${currentTable}-${chair}`
+    if (isSeatBooked(currentTable, chair)) return
+
+    setSelectedSeats(prev =>
+      prev.includes(seatId) ? prev.filter(s => s !== seatId) : [...prev, seatId]
+    )
+  }
+
+  const selectFullTable = () => {
+    if (UNAVAILABLE_TABLES.has(currentTable)) return
+    const tableSeats = CHAIR_LABELS
+      .filter(c => !isSeatBooked(currentTable, c))
+      .map(c => `${currentTable}-${c}`)
+
+    setSelectedSeats(prev => {
+      const filtered = prev.filter(s => !s.startsWith(`${currentTable}-`))
+      return [...filtered, ...tableSeats]
+    })
+  }
+
+  const clearCurrentTableSeats = () => {
+    setSelectedSeats(prev => prev.filter(s => !s.startsWith(`${currentTable}-`)))
+  }
+
+  const removeSeatChip = (seatId) => {
+    setSelectedSeats(prev => prev.filter(s => s !== seatId))
+  }
+
+  const clearAllSeats = () => {
+    setSelectedSeats([])
+  }
+
+  // Submission handler
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault()
+
     const errs = {}
-    if (!fullName.trim()) errs.fullName = 'Required'
-    if (!email.trim()) errs.email = 'Required'
-    // if (!phone.trim()) errs.phone = 'Required'
-    if (!indTable) errs.indTable = 'Select table'
-    if (!indChair) errs.indChair = 'Select chair'
+    if (!companyName.trim()) errs.companyName = 'Company / Recipient name is required'
+    const cleanPhone = phone.trim().replace(/[^0-9]/g, '')
+    if (!cleanPhone || cleanPhone.length < 10) {
+      errs.phone = 'Valid WhatsApp phone number required (e.g. 923001234567)'
+    }
+    if (selectedSeats.length === 0) {
+      errs.seats = 'Please select at least 1 seat'
+    }
+
     setFieldErrors(errs)
-    if (Object.keys(errs).length) return
+    if (Object.keys(errs).length > 0) return
 
     setProcessing(true)
-    const seatNumber = `${indTable}-${indChair}`
+    setBroadcastFailed(false)
+    const collectedLanyards = []
+    const total = selectedSeats.length
+
     try {
-      setStep('Reserving your seat...')
-      const { booking } = await bookSeats({
-        seatNumber,
-        phone: phone.trim(),
-        companyName: companyName.trim() || undefined,
-        cnic: cnic.trim(),
-        type: 'Individual',
-        name: fullName.trim(),
-        image: PAS_LOGO_URL,
-      })
+      // 1. Process each seat: create MongoId, QR, Lanyard, upload, and book in backend
+      for (let i = 0; i < total; i++) {
+        const seatNumber = selectedSeats[i]
+        const bookingId = generateMongoId()
 
-      const profileUrl = `https://effie.convexinteractive.com/Profile/${booking}`
-      const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
-      const qrBlob = await (await fetch(qrDataUrl)).blob()
-      const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${booking}.png`)
+        setStep(`[${i + 1}/${total}] Generating QR for seat ${seatNumber}...`)
+        const profileUrl = `${window.location.origin}/Profile/${bookingId}`
+        const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
+        const qrBlob = await (await fetch(qrDataUrl)).blob()
+        const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${bookingId}.png`)
 
-      setStep('Generating your pass...')
-      const { blob } = await generateLanyard({
-        name: fullName.trim(),
-        cnic: cnic.trim(),
-        seatNumber,
-        imageUrl: PAS_LOGO_URL,
-        companyName: companyName.trim() || undefined,
-        lanyardQrUrl,
-      })
-
-      setStep('Uploading pass...')
-      const { url: uploadedUrl } = await uploadFile(blob, `reserved-lanyard-${phone.trim()}.png`)
-      setLanyardUrl(uploadedUrl)
-
-      setStep('Sending pass via Email...')
-      try {
-        await sendReservedEmail({
-          toEmail: email.trim(),
-          name: fullName.trim(),
+        setStep(`[${i + 1}/${total}] Generating lanyard pass for ${seatNumber}...`)
+        const { blob: lanyardBlob } = await generateLanyard({
+          name: (i + 1).toString(),
+          companyName: companyName.trim(),
           seatNumber,
-          lanyardUrl: uploadedUrl,
+          lanyardQrUrl,
         })
-        setDoneMsg(`Pass sent to ${email.trim()}`)
-      } catch (emailErr) {
-        console.error('Email send failed:', emailErr)
-        setEmailError('Email delivery failed. Download the pass below to send manually.')
-        setDoneMsg(`Seat ${seatNumber} reserved for ${fullName.trim()}`)
+
+        setStep(`[${i + 1}/${total}] Uploading pass for ${seatNumber}...`)
+        const { url: lanyardUrl } = await uploadFile(
+          lanyardBlob,
+          `lanyard-${cleanPhone}-${seatNumber}.jpg`
+        )
+
+        collectedLanyards.push({
+          url: lanyardUrl,
+          name: companyName.trim(),
+          seatNumber,
+        })
+
+        setStep(`[${i + 1}/${total}] Reserving seat ${seatNumber} in database...`)
+        await bookSeats({
+          _id: bookingId,
+          seatNumber,
+          phone: cleanPhone,
+          name: companyName.trim(),
+          companyName: companyName.trim(),
+          type: 'Individual',
+          image: lanyardUrl,
+        })
       }
 
+      // 2. Generate multi-page PDF with black background for all lanyards
+      setStep('Generating consolidated multi-pass PDF...')
+      const pdfBlob = await createMultiPassPdfBlob(collectedLanyards)
+
+      // 3. Upload the generated PDF
+      setStep('Uploading multi-pass PDF document...')
+      const safeName = companyName.trim().replace(/[^a-zA-Z0-9]/g, '_')
+      const { url: pdfUrl } = await uploadFile(pdfBlob, `${safeName}_event_passes.pdf`)
+      setPdfDownloadUrl(pdfUrl)
+
+      // 4. Send PDF via WhatsApp broadcast
+      setStep('Dispatching event passes PDF via WhatsApp...')
+      try {
+        await sendPDFWhatsapp({ contactNumber: cleanPhone, pdfUrl })
+      } catch (whatsappErr) {
+        console.error('WhatsApp PDF dispatch failed:', whatsappErr)
+        setBroadcastFailed(true)
+      }
+
+      setLanyardUrls(collectedLanyards)
       setDone(true)
+      refreshSeats()
     } catch (err) {
-      setStep('Error: ' + (err?.response?.data?.message || err.message || 'Something went wrong'))
+      console.error('Direct booking failed:', err)
+      setStep('Error: ' + (err?.response?.data?.message || err.message || 'Something went wrong during reservation'))
     } finally {
       setProcessing(false)
     }
   }
 
-  const handleCorporateSubmit = async () => {
-    const errs = {}
-    if (!fullName.trim()) errs.fullName = 'Required'
-    if (!phone.trim()) errs.phone = 'Required'
-    if (!companyName.trim()) errs.companyName = 'Required'
-    corpSeats.forEach((s, i) => {
-      if (!s.table) errs[`seat_table_${i}`] = 'Select table'
-      if (!s.chair) errs[`seat_chair_${i}`] = 'Select chair'
-    })
-    setFieldErrors(errs)
-    if (Object.keys(errs).length) return
-
-    setProcessing(true)
-    try {
-      const bookings = corpSeats.map(s => ({
-        seatNumber: `${s.table}-${s.chair}`,
-        seatStatus: true,
-      }))
-
-      setStep('Reserving seats...')
-      const { key } = await bookCorporate({
-        bookings,
-        phone_number: phone.trim(),
-        Company_Name: companyName.trim(),
-        Full_Name: fullName.trim(),
-        Email_Address: email.trim() || undefined,
-        Designation: designation.trim() || undefined,
-      })
-
-      const formLink = `https://effie.convexinteractive.com/form/${key}`
-
-      setStep('Generating QR code...')
-      const qrDataUrl = await QRCode.toDataURL(formLink, { width: 512, margin: 5 })
-      const qrBlob = await (await fetch(qrDataUrl)).blob()
-      const { url: qrUrl } = await uploadFile(qrBlob, `qr-${key}.png`)
-
-      setStep('Sending form link via WhatsApp...')
-      await sendLinkWhatsapp({ contactNumber: phone.trim(), link: formLink, qrImageUrl: qrUrl })
-
-      setDoneMsg(`Form link sent to ${phone.trim()} via WhatsApp`)
-      setDone(true)
-    } catch (err) {
-      setStep('Error: ' + (err?.response?.data?.message || err.message || 'Something went wrong'))
-    } finally {
-      setProcessing(false)
-    }
+  const handleResetForm = () => {
+    setDone(false)
+    setCompanyName('')
+    setPhone('')
+    setSelectedSeats([])
+    setLanyardUrls([])
+    setPdfDownloadUrl('')
+    setStep('')
+    setFieldErrors({})
+    refreshSeats()
   }
 
   if (processing) {
     return (
       <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner-card">
+        <div className="spinner-card" style={{ maxWidth: 420, textAlign: 'center' }}>
           <div className="spinner" />
-          <p className="spinner-step">{step}</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!processing && step.startsWith('Error')) {
-    return (
-      <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div className="confirm-content" style={{ maxWidth: 420, textAlign: 'center' }}>
-          <h2 className="confirm-title" style={{ color: '#fca5a5' }}>Something went wrong</h2>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', margin: '0.75rem 0 1.5rem' }}>
-            {step.replace('Error: ', '')}
-          </p>
-          <button className="confirm-ok" style={{ width: '100%' }} onClick={() => setStep('')}>
-            Try Again
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (done) {
-    return (
-      <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div className="done-card" style={{ textAlign: 'center' }}>
-          <div className="done-check">✓</div>
-          <h2 className="done-title">Booking Confirmed!</h2>
-          <p className="done-sub">{doneMsg}</p>
-          {emailError && (
-            <p style={{ color: '#fca5a5', fontSize: '0.82rem', margin: '0.75rem 0 0' }}>⚠️ {emailError}</p>
-          )}
-          {lanyardUrl && (
-            <div className="done-lanyard-wrap" style={{ marginTop: '1.5rem' }}>
-              <img src={lanyardUrl} alt="Reserved Pass" className="done-lanyard-img" />
-              <a href={lanyardUrl} download="reserved-pass.png" className="done-download-btn">
-                Download Pass
-              </a>
-            </div>
-          )}
-          <button
-            onClick={() => {
-              setDone(false); setFlow(null)
-              setFullName(''); setEmail(''); setPhone(''); setCnic('')
-              setCompanyName('')
-              setIndTable(''); setIndChair('')
-              setCorpSeats([{ table: '', chair: '' }])
-              setLanyardUrl(null); setEmailError(''); setFieldErrors({})
-            }}
-            style={{ marginTop: '1.5rem', background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, color: 'rgba(255,255,255,0.55)', padding: '8px 20px', cursor: 'pointer', fontSize: '0.85rem' }}
-          >
-            Book Another
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (!flow) {
-    return (
-      <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div style={{ maxWidth: 480, width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <h1 className="venue-title">PAS AWARDS</h1>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.88rem', marginTop: 8 }}>
-              Reserved Seat Booking
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 16 }}>
-            <button
-              onClick={() => setFlow('individual')}
-              style={{
-                flex: 1, padding: '2rem 1rem',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1.5px solid rgba(255,255,255,0.12)',
-                borderRadius: 16, color: '#fff', cursor: 'pointer',
-                textAlign: 'center', transition: 'border-color 0.2s',
-              }}
-              onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(250,204,21,0.5)'}
-              onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
-            >
-              <div style={{ fontSize: '2.2rem', marginBottom: 10 }}>👤</div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 6 }}>Individual</div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
-                Single seat<br />Lanyard sent via email
-              </div>
-            </button>
-            <button
-              onClick={() => setFlow('corporate')}
-              style={{
-                flex: 1, padding: '2rem 1rem',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1.5px solid rgba(255,255,255,0.12)',
-                borderRadius: 16, color: '#fff', cursor: 'pointer',
-                textAlign: 'center', transition: 'border-color 0.2s',
-              }}
-              onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(250,204,21,0.5)'}
-              onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'}
-            >
-              <div style={{ fontSize: '2.2rem', marginBottom: 10 }}>🏢</div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 6 }}>Corporate</div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
-                Multiple seats<br />Form link via WhatsApp
-              </div>
-            </button>
-          </div>
+          <h3 style={{ color: '#fff', fontSize: '1.1rem', margin: '1rem 0 0.5rem', fontWeight: 800 }}>
+            Processing Reservation
+          </h3>
+          <p className="spinner-step" style={{ color: 'var(--gold-300)', fontSize: '0.85rem' }}>{step}</p>
         </div>
       </div>
     )
@@ -409,127 +278,390 @@ export default function ReservedBooking() {
 
   return (
     <div className="app-bg" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
-      <div style={{ maxWidth: 500, margin: '0 auto' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto' }}>
 
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <h1 className="venue-title" style={{ marginBottom: 6 }}>PAS AWARDS</h1>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem' }}>
-            Reserved · {flow === 'individual' ? 'Individual Booking' : 'Corporate Booking'}
+        {/* Page Header */}
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div style={{
+            display: 'inline-block',
+            background: 'rgba(212, 175, 55, 0.12)',
+            border: '1px solid rgba(212, 175, 55, 0.3)',
+            borderRadius: 6,
+            padding: '4px 12px',
+            fontSize: '0.72rem',
+            fontWeight: 800,
+            color: 'var(--gold-300)',
+            letterSpacing: 1.5,
+            marginBottom: 8,
+          }}>
+            DIRECT RESERVATION &amp; PDF DISPATCH
+          </div>
+          <h1 className="venue-title" style={{ margin: '0 0 6px' }}>PAS AWARDS 2026</h1>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+            Book seats directly, generate official digital lanyards, and broadcast the consolidated PDF via WhatsApp.
           </p>
-          <button
-            onClick={() => { setFlow(null); setFieldErrors({}) }}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', cursor: 'pointer', marginTop: 6 }}
-          >
-            ← Change type
-          </button>
         </div>
 
-        <div className="confirm-content" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Error message modal if booking failed */}
+        {!processing && step.startsWith('Error') && (
+          <div className="modal-overlay" onClick={() => setStep('')}>
+            <div className="confirm-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 440, textAlign: 'center' }}>
+              <h2 className="confirm-title" style={{ color: '#fca5a5' }}>Reservation Failed</h2>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', margin: '0.75rem 0 1.5rem' }}>
+                {step.replace('Error: ', '')}
+              </p>
+              <button className="confirm-ok" style={{ width: '100%' }} onClick={() => setStep('')}>
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
-          <FormField
-            label="Full Name" value={fullName} onChange={setFullName}
-            required error={fieldErrors.fullName}
-          />
+        {/* Main Reservation Form Card */}
+        <div className="confirm-content" style={{ maxWidth: '100%', padding: '2rem', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {flow === 'individual' && (
-            <FormField
-              label="Email Address" value={email} onChange={setEmail}
-              type="email" required placeholder="attendee@company.com"
-              error={fieldErrors.email}
+          {/* Company / Recipient Name */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: 'var(--gold-300)', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.04em' }}>
+              COMPANY / ATTENDEE NAME <span style={{ color: '#fca5a5' }}>*</span>
+            </label>
+            <input
+              type="text"
+              value={companyName}
+              onChange={e => {
+                setCompanyName(e.target.value)
+                if (fieldErrors.companyName) setFieldErrors(prev => ({ ...prev, companyName: null }))
+              }}
+              placeholder="e.g. Convex Interactive / Unilever"
+              className="attendee-input"
+              style={{
+                border: fieldErrors.companyName ? '1px solid #fca5a5' : '1px solid rgba(255,255,255,0.12)',
+              }}
             />
-          )}
+            {fieldErrors.companyName && (
+              <span style={{ color: '#fca5a5', fontSize: '0.75rem' }}>{fieldErrors.companyName}</span>
+            )}
+          </div>
 
-          <FormField
-            label="Phone Number" value={phone} onChange={setPhone}
-            placeholder="923XXXXXXXXX" 
-          />
-
-          {flow === 'individual' && (
-            <FormField
-              label="CNIC Number" value={cnic} onChange={setCnic}
-              placeholder="XXXXX-XXXXXXX-X" error={fieldErrors.cnic}
+          {/* WhatsApp Phone */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ color: 'var(--gold-300)', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.04em' }}>
+              WHATSAPP PHONE NUMBER <span style={{ color: '#fca5a5' }}>*</span>
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={e => {
+                setPhone(e.target.value)
+                if (fieldErrors.phone) setFieldErrors(prev => ({ ...prev, phone: null }))
+              }}
+              placeholder="e.g. 923001234567"
+              className="attendee-input"
+              style={{
+                border: fieldErrors.phone ? '1px solid #fca5a5' : '1px solid rgba(255,255,255,0.12)',
+              }}
             />
-          )}
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem' }}>
+              The multi-pass PDF will be dispatched to this WhatsApp contact.
+            </span>
+            {fieldErrors.phone && (
+              <span style={{ color: '#fca5a5', fontSize: '0.75rem' }}>{fieldErrors.phone}</span>
+            )}
+          </div>
 
-          <FormField
-            label="Company Name" value={companyName} onChange={setCompanyName}
-            required={flow === 'corporate'} error={fieldErrors.companyName}
-          />
+          {/* Seat Picker Section */}
+          <div style={{
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            paddingTop: 18,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <label style={{ color: 'var(--gold-300)', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.04em' }}>
+                SELECT SEATS &amp; TABLES <span style={{ color: '#fca5a5' }}>*</span>
+              </label>
+              {loadingSeats && (
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem' }}>
+                  Syncing live availability...
+                </span>
+              )}
+            </div>
 
-          {flow === 'corporate' && (
-            <FormField
-              label="Email Address (optional)" value={email} onChange={setEmail}
-              type="email" placeholder="contact@company.com"
-            />
-          )}
+            {/* Table Selection Dropdown & Full-Table Action */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>
+                  CHOOSE TABLE:
+                </span>
+                <select
+                  value={currentTable}
+                  onChange={e => setCurrentTable(Number(e.target.value))}
+                  style={{
+                    background: '#0f1829',
+                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                    borderRadius: 8,
+                    color: '#fff',
+                    padding: '9px 12px',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    outline: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                  }}
+                >
+                  {ALL_TABLE_NUMBERS.map(t => {
+                    const isUnavail = UNAVAILABLE_TABLES.has(t)
+                    return (
+                      <option key={t} value={t} style={{ background: '#0f1829' }}>
+                        Table {t} {isUnavail ? '(Unavailable)' : ''}
+                      </option>
+                    )
+                  })}
+                </select>
+              </div>
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 14 }}>
-            <p style={{ ...LABEL_STYLE, marginBottom: 12 }}>
-              SEAT SELECTION
-            </p>
+              <div style={{ display: 'flex', gap: 8, flex: '1 1 auto', marginTop: 18 }}>
+                <button
+                  type="button"
+                  onClick={selectFullTable}
+                  disabled={UNAVAILABLE_TABLES.has(currentTable)}
+                  style={{
+                    flex: 1,
+                    background: UNAVAILABLE_TABLES.has(currentTable)
+                      ? 'rgba(255,255,255,0.05)'
+                      : 'linear-gradient(135deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.08) 100%)',
+                    border: '1px solid var(--gold-border)',
+                    borderRadius: 8,
+                    color: UNAVAILABLE_TABLES.has(currentTable) ? 'rgba(255,255,255,0.3)' : 'var(--gold-300)',
+                    padding: '9px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: UNAVAILABLE_TABLES.has(currentTable) ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  ⚡ Select Full Table (10 Chairs)
+                </button>
 
-            {flow === 'individual' ? (
-              <SeatPicker
-                tableVal={indTable} chairVal={indChair}
-                onTableChange={v => { setIndTable(v); setIndChair('') }}
-                onChairChange={setIndChair}
-                tableError={fieldErrors.indTable}
-                chairError={fieldErrors.indChair}
-              />
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {corpSeats.map((seat, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-                    <div style={{ flex: 1 }}>
-                      <SeatPicker
-                        tableVal={seat.table} chairVal={seat.chair}
-                        onTableChange={v => updateCorpSeat(idx, 'table', v)}
-                        onChairChange={v => updateCorpSeat(idx, 'chair', v)}
-                        label={`Seat ${idx + 1}`}
-                        tableError={fieldErrors[`seat_table_${idx}`]}
-                        chairError={fieldErrors[`seat_chair_${idx}`]}
-                      />
-                    </div>
-                    {corpSeats.length > 1 && (
+                <button
+                  type="button"
+                  onClick={clearCurrentTableSeats}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 8,
+                    color: 'rgba(255,255,255,0.6)',
+                    padding: '9px 12px',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                  }}
+                  title="Clear seats of this table"
+                >
+                  Clear Table
+                </button>
+              </div>
+            </div>
+
+            {/* Chair Picker Grid for Current Table */}
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.35)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: 12,
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--gold-300)' }}>
+                  Table {currentTable} Chairs:
+                </span>
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)' }}>
+                  Click chair to toggle selection
+                </span>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                gap: 8,
+              }}>
+                {CHAIR_LABELS.map(chair => {
+                  const booked = isSeatBooked(currentTable, chair)
+                  const selected = isSeatSelected(currentTable, chair)
+
+                  let bg = 'rgba(255,255,255,0.04)'
+                  let border = '1px solid rgba(255,255,255,0.1)'
+                  let color = 'rgba(255,255,255,0.7)'
+
+                  if (selected) {
+                    bg = 'linear-gradient(135deg, #ffd700 0%, #d4af37 100%)'
+                    border = '1px solid #fff'
+                    color = '#1a0f02'
+                  } else if (booked) {
+                    bg = 'rgba(239, 68, 68, 0.08)'
+                    border = '1px solid rgba(239, 68, 68, 0.2)'
+                    color = 'rgba(239, 68, 68, 0.45)'
+                  }
+
+                  return (
+                    <button
+                      key={chair}
+                      type="button"
+                      disabled={booked}
+                      onClick={() => toggleChair(chair)}
+                      style={{
+                        background: bg,
+                        border,
+                        color,
+                        borderRadius: 8,
+                        padding: '10px 4px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 2,
+                        cursor: booked ? 'not-allowed' : 'pointer',
+                        transition: 'transform 0.15s, background 0.15s',
+                        transform: selected ? 'scale(1.05)' : 'scale(1)',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.88rem', fontWeight: 900 }}>
+                        {currentTable}-{chair}
+                      </span>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 700 }}>
+                        {selected ? '✓ Picked' : (booked ? 'Booked' : 'Available')}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Selected Seats Summary & Chips */}
+            <div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#fff' }}>
+                  Total Selected: <span style={{ color: 'var(--gold-400)' }}>{selectedSeats.length} seats</span>
+                </span>
+                {selectedSeats.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAllSeats}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#f87171',
+                      fontSize: '0.72rem',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              {selectedSeats.length === 0 ? (
+                <div style={{
+                  padding: '12px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px dashed rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  textAlign: 'center',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: '0.78rem',
+                }}>
+                  No seats selected yet. Choose a table and pick chairs or click &quot;Select Full Table&quot;.
+                </div>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 6,
+                  maxHeight: 140,
+                  overflowY: 'auto',
+                  padding: '4px',
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: 8,
+                }}>
+                  {selectedSeats.map(seatId => (
+                    <span
+                      key={seatId}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        background: 'rgba(212, 175, 55, 0.15)',
+                        border: '1px solid rgba(212, 175, 55, 0.35)',
+                        borderRadius: 6,
+                        padding: '3px 8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        color: 'var(--gold-300)',
+                      }}
+                    >
+                      {seatId}
                       <button
-                        onClick={() => removeCorpSeat(idx)}
+                        type="button"
+                        onClick={() => removeSeatChip(seatId)}
                         style={{
-                          background: 'rgba(239,68,68,0.12)',
-                          border: '1px solid rgba(239,68,68,0.25)',
-                          borderRadius: 8, color: '#f87171',
-                          padding: '10px 12px', cursor: 'pointer',
-                          flexShrink: 0, marginBottom: fieldErrors[`seat_chair_${idx}`] ? 22 : 0,
+                          background: 'none',
+                          border: 'none',
+                          color: 'rgba(255,255,255,0.5)',
+                          cursor: 'pointer',
+                          padding: 0,
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
                         }}
                       >
                         ✕
                       </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  onClick={addCorpSeat}
-                  style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px dashed rgba(255,255,255,0.18)',
-                    borderRadius: 8, color: 'rgba(255,255,255,0.45)',
-                    padding: '9px 14px', cursor: 'pointer', fontSize: '0.85rem',
-                  }}
-                >
-                  + Add Seat
-                </button>
-              </div>
-            )}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {fieldErrors.seats && (
+                <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: 4, display: 'block' }}>
+                  {fieldErrors.seats}
+                </span>
+              )}
+            </div>
           </div>
 
+          {/* Submit Button */}
           <button
+            type="button"
             className="confirm-ok"
-            style={{ width: '100%', marginTop: 4 }}
-            onClick={flow === 'individual' ? handleIndividualSubmit : handleCorporateSubmit}
+            onClick={handleSubmit}
+            style={{
+              width: '100%',
+              padding: '0.9rem',
+              fontSize: '0.95rem',
+              fontWeight: 800,
+              marginTop: 6,
+            }}
           >
-            {flow === 'individual' ? 'Book & Send Pass via Email' : 'Book & Send WhatsApp Link'}
+            Book {selectedSeats.length > 0 ? `${selectedSeats.length} Seats & Send PDF` : 'Seats'} →
           </button>
         </div>
       </div>
+
+      {/* Done Modal after successful booking & broadcast */}
+      {done && (
+        <DoneModal
+          lanyardUrls={lanyardUrls}
+          broadcastFailed={broadcastFailed}
+          onClose={handleResetForm}
+        />
+      )}
     </div>
   )
 }

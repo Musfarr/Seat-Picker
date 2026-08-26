@@ -1,44 +1,44 @@
 import axios from 'axios'
 
-const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
-const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
-const TEMPLATE_ID = '1349276167308607'
+// Backend API Endpoints (constructed using VITE_BACKEND_BASE_URL)
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || ''
+const SEATS_URL = `${BACKEND_BASE_URL}/api/seats-data`
+const BOOK_URL = `${BACKEND_BASE_URL}/api/book-seat`
+const BOOKING_DATA_URL = `${BACKEND_BASE_URL}/api/booking-data`
+const VALIDATE_TOKEN_URL = `${BACKEND_BASE_URL}/api/validate-token`
 
-// const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
-// const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
-// const BOOK_CORPORATE_URL  = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate'
-// const ALLOCATE_URL        = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate/allocate'
-const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
-const BOOK_URL            = 'https://effie.convexinteractive.com/api/book-seat'
-const BOOK_CORPORATE_URL  = 'https://effie.convexinteractive.com/api/book-corporate'
-const ALLOCATE_URL        = 'https://effie.convexinteractive.com/api/book-corporate/allocate'
-const BOOKING_DATA_URL    = 'https://effie.convexinteractive.com/api/booking-data'
-const CHECK_TOKEN_URL     = 'http://localhost:8000/api/check-token'
-const SAVE_TOKEN_URL      = 'http://localhost:8000/api/save-token'
-const RESERVED_EMAIL_URL  = 'https://effie.convexinteractive.com/api/send-reserved-email'
+// WhatsApp Portal & Broadcast Configuration
+const LOGIN_URL = import.meta.env.VITE_PORTAL_LOGIN_URL || ''
+const BROADCAST_URL = import.meta.env.VITE_BROADCAST_URL || ''
+const LOGIN_EMAIL = import.meta.env.VITE_BROADCAST_EMAIL || ''
+const LOGIN_PASSWORD = import.meta.env.VITE_BROADCAST_PASSWORD || ''
 
-const LINK_TEMPLATE_ID = '2420728638424994'  // update to your text/link template ID
+// WhatsApp Template IDs
+const TEMPLATE_LANYARD_ID = import.meta.env.VITE_TEMPLATE_LANYARD_ID || ''
+const TEMPLATE_LINK_ID = import.meta.env.VITE_TEMPLATE_LINK_ID || ''
+const TEMPLATE_PDF_ID = import.meta.env.VITE_TEMPLATE_PDF_ID || '2585328365269708'
 
-const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
-const BASE_URL = 'https://mediaupload.convexinteractive.com'
+// Media Upload CDN
+const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || ''
+const UPLOAD_API_URL = import.meta.env.VITE_MEDIA_UPLOAD_URL || (MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/api/upload` : '')
+const TEMPLATE_IMAGE_URL = import.meta.env.VITE_TEMPLATE_IMAGE_URL || (MEDIA_BASE_URL ? `${MEDIA_BASE_URL}/api/file/1786977606323-362082422.jpeg` : '')
 
-const LOGIN_EMAIL = 'apinewtestuser@google.com'
-const LOGIN_PASSWORD = 'APi@32145'
-
-const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1776253942489-886168050.png'
-
+/* Fetch seat availability from backend DB */
 export async function fetchSeatsData() {
-  const res = await axios.get(SEATS_URL, {
-    withCredentials: false,
-    // headers: {
-    //   'ngrok-skip-browser-warning': 'true',
-    // },
-  })
+  const res = await axios.get(SEATS_URL, { withCredentials: false })
   const data = res.data
-  return Array.isArray(data) ? data : data.seats
+  return Array.isArray(data) ? data : (data.seats || [])
 }
 
-/* Individual booking: { seatNumber, phone, flow_token } */
+/* Validate encrypted invitation token and get seat quota / tracking */
+export async function validateToken(token) {
+  const res = await axios.post(VALIDATE_TOKEN_URL, { token }, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
+/* Book individual seat: { token, seatNumber, phone, name, companyName, ... } */
 export async function bookSeats(payload) {
   const res = await axios.post(BOOK_URL, payload, {
     headers: { 'Content-Type': 'application/json' },
@@ -46,21 +46,16 @@ export async function bookSeats(payload) {
   return res.data
 }
 
-/* Corporate phase-1: reserve seats block.
-   payload: { bookings: [{seatNumber, seatStatus}], phone_number, flow_token, ... }
-   Returns: { key: mongoId, bookingsLeft } */
-export async function bookCorporate(payload) {
-  const res = await axios.post(BOOK_CORPORATE_URL, payload, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
+/* Legacy stubs for unused routes if visited */
+export async function allocateCorporateSeat(payload) { return bookSeats(payload) }
+export async function bookCorporate(payload) { return bookSeats(payload) }
+export async function sendReservedEmail(payload) { return true }
+export async function checkToken(token) { return validateToken(token) }
+export async function saveToken(token, userId) { return true }
 
-/* Corporate phase-2: allocate one seat to a form filler.
-   payload: { corporateId }
-   Returns: { seatNumber } */
-export async function allocateCorporateSeat(payload) {
-  const res = await axios.post(ALLOCATE_URL, payload, {
+/* Get booking data for profile display */
+export async function getBookingData(userId) {
+  const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
     headers: { 'Content-Type': 'application/json' },
   })
   return res.data
@@ -73,6 +68,68 @@ async function getAccessToken() {
   return token
 }
 
+
+
+export async function sendLinkWhatsapp({ contactNumber, numberofseats, FinalURL }) {
+  const accessToken = await getAccessToken()
+
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: TEMPLATE_LINK_ID,
+      param: [
+        {
+          componentType: "body",
+          parameters: [
+            {
+              type: "text",
+              value: numberofseats
+            },
+            {
+              type: "text",
+              value: FinalURL
+            }
+          ]
+        }
+      ]
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
+
+  return true
+}
+
+export async function sendPDFWhatsapp({ contactNumber, pdfUrl }) {
+  const accessToken = await getAccessToken()
+
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: TEMPLATE_PDF_ID || "2585328365269708",
+      param: [
+        {
+          parameters: [
+            {
+              value: pdfUrl,
+              type: "document",
+              mediaId: null,
+            }
+          ],
+          componentType: "header",
+          buttonType: null,
+          index: null,
+        }
+      ],
+      flowToken: null,
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
+
+  return true
+}
+
 /* Send lanyard image via WhatsApp */
 export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
   const accessToken = await getAccessToken()
@@ -80,37 +137,10 @@ export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
     BROADCAST_URL,
     {
       to: contactNumber,
-      templateId: TEMPLATE_ID,
+      templateId: TEMPLATE_LANYARD_ID,
       param: [
         {
           parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image' }],
-          componentType: 'header',
-          buttonType: null,
-          index: null,
-        },
-      ],
-    },
-    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
-  )
-}
-
-/* Send a form link via WhatsApp (corporate phase-1) */
-export async function sendLinkWhatsapp({ contactNumber, link, qrImageUrl }) {
-  const accessToken = await getAccessToken()
-  await axios.post(
-    BROADCAST_URL,
-    {
-      to: contactNumber,
-      templateId: LINK_TEMPLATE_ID,
-      param: [
-        {
-          parameters: [{ value: link, type: 'text' }],
-          componentType: 'body',
-          buttonType: null,
-          index: null,
-        },
-        {
-          parameters: [{ value: qrImageUrl || 'https://mediaupload.convexinteractive.com/api/file/1774434706246-157684823.jpg', type: 'image' }],
           componentType: 'header',
           buttonType: null,
           index: null,
@@ -132,13 +162,9 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
       },
     })
 
-    console.log(response , " response")
-
     if (response.status === 200) {
-      console.log(response.data , " response.data")
-      console.log(BASE_URL + response.data.url, " BASE_URL + response.data.url")
       return {
-        url: BASE_URL + response.data.url,
+        url: MEDIA_BASE_URL + response.data.url,
         fileName: response.data.name,
       }
     } else {
@@ -149,40 +175,3 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
     throw error
   }
 }
-
-export async function getBookingData(userId) {
-  const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-
-export async function checkToken(token) {
-  const res = await axios.post(CHECK_TOKEN_URL, { token }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-
-export async function saveToken(token, userId, usedCount, totalAllowed) {
-  const res = await axios.post(SAVE_TOKEN_URL, { token, userId, usedCount, totalAllowed }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-
-/* Send reserved-seat lanyard via email (SMTP handled by backend).
-   Backend must implement POST /api/send-reserved-email
-   using secretariat@pas.org.pk SMTP credentials. */
-export async function sendReservedEmail({ toEmail, name, seatNumber, lanyardUrl }) {
-  const res = await axios.post(RESERVED_EMAIL_URL, {
-    toEmail,
-    name,
-    seatNumber,
-    lanyardUrl,
-  }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-

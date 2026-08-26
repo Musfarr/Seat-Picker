@@ -59,10 +59,10 @@ export default function Profile() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h1 style={{ color: 'rgb(254, 242, 194)', fontSize: '1.8rem', fontWeight: 'bold', margin: '0 0 0.5rem' }}>
-            EFFIE AWARDS
+            DRAGONS AWARDS 2026
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', margin: 0 }}>
-            Gala Night 2026
+            Dragons of Pakistan
           </p>
         </div>
 
@@ -184,8 +184,8 @@ export default function Profile() {
 
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: '2rem', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>
-          <p style={{ margin: 0 }}>SATURDAY, 5PM • 25TH APRIL 2026</p>
-          <p style={{ margin: '0.25rem 0 0' }}>EXPO CENTER KARACHI</p>
+          <p style={{ margin: 0 }}>7PM ONWARDS • AUGUST 29TH, 2026</p>
+          <p style={{ margin: '0.25rem 0 0' }}>PEARL CONTINENTAL</p>
         </div>
       </div>
     </div>

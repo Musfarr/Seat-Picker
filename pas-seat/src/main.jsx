@@ -13,11 +13,10 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/form" element={<CorporateForm />} />
-        {/* <Route path="/Profile/:id" element={<Profile />} /> */}
-        {/* <Route path="/reserved" element={<ReservedBooking />} /> */}
-        {/* <Route path="/qr-broadcast" element={<QrBroadcast />} /> */}
-        {/* <Route path="/bulk-invite" element={<BulkInviteGenerator />} /> */}
+        <Route path="/form/:id" element={<CorporateForm />} />
+        <Route path="/Profile/:id" element={<Profile />} />
+        <Route path="/reserved107094qrL4" element={<ReservedBooking />} />
+        <Route path="/qr-23d9H92nO@f" element={<QrBroadcast />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
