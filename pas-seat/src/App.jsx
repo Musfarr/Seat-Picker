@@ -54,6 +54,7 @@ export default function App() {
         return
       }
 
+      console.log(parsed, "parsed")
       // Build paramData from decrypted fields
       const Number_of_ticket = parseInt(parsed.Number_of_ticket, 10)
       const isCorporate = !isNaN(Number_of_ticket) && Number_of_ticket > 0
@@ -153,8 +154,8 @@ export default function App() {
       if (paramData.flow === 'individual') {
         const seatNumber = `${allSelections[0].tableId}-${allSelections[0].chair}`
 
-        
-        
+
+
 
         setProcessStep('Reserving your seat...')
         const { booking } = await bookSeats({
@@ -163,8 +164,8 @@ export default function App() {
           designation: paramData.Designation,
           companyName: paramData.Company_Name,
           cnic: paramData.CNIC_Number,
-          type:"Individual",
-          name:paramData.Full_Name,
+          type: "Individual",
+          name: paramData.Full_Name,
           flow_token: paramData.flow_token,
           image: paramData.Image
         })
@@ -207,9 +208,9 @@ export default function App() {
         setDone(true)
 
       }
-      
-      
-      
+
+
+
       else {
         const bookings = allSelections.map(s => ({
           seatNumber: `${s.tableId}-${s.chair}`,
@@ -218,7 +219,7 @@ export default function App() {
 
         setProcessStep('Reserving seats block...')
         const { key } = await bookCorporate({
-          bookings, 
+          bookings,
           phone_number: paramData.phone_number,
           flow_token: paramData.flow_token,
           Company_Name: paramData.Company_Name,
@@ -383,7 +384,7 @@ export default function App() {
         <DoneModal phone_number={paramData.phone_number} lanyardUrl={lanyardUrl} errorMessage={whatsappError} />
       )}
 
-      
+
     </div>
   )
 }

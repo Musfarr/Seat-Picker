@@ -8,14 +8,15 @@ const TEMPLATE_ID = '1349276167308607'
 // const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
 // const BOOK_CORPORATE_URL  = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate'
 // const ALLOCATE_URL        = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate/allocate'
-const SEATS_URL = 'https://effie.convexinteractive.com/api/seats-data'
-const BOOK_URL = 'https://effie.convexinteractive.com/api/book-seat'
-const BOOK_CORPORATE_URL = 'https://effie.convexinteractive.com/api/book-corporate'
-const ALLOCATE_URL = 'https://effie.convexinteractive.com/api/book-corporate/allocate'
-const BOOKING_DATA_URL = 'https://effie.convexinteractive.com/api/booking-data'
-const CHECK_TOKEN_URL = 'https://effie.convexinteractive.com/api/check-token'
-const SAVE_TOKEN_URL = 'https://effie.convexinteractive.com/api/save-token'
-const RESERVED_EMAIL_URL = 'https://effie.convexinteractive.com/api/send-reserved-email'
+const SEATS_URL = 'http://localhost:8000/api/seats-data'
+const BOOK_URL = 'http://localhost:8000/api/book-seat'
+const BOOK_CORPORATE_URL = 'http://localhost:8000/api/book-corporate'
+const ALLOCATE_URL = 'http://localhost:8000/api/book-corporate/allocate'
+const BOOKING_DATA_URL = 'http://localhost:8000/api/booking-data'
+const ADD_BOOKING_URL = 'http://localhost:8000/api/booking-add'
+const CHECK_TOKEN_URL = 'https://local/api/check-token'
+const SAVE_TOKEN_URL = 'https://local/api/save-token'
+const RESERVED_EMAIL_URL = 'https://local/api/send-reserved-email'
 
 const LINK_TEMPLATE_ID = '2439716791418701'  // update to your text/link template ID
 
@@ -80,7 +81,7 @@ export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
     BROADCAST_URL,
     {
       to: contactNumber,
-      templateId: TEMPLATE_ID,
+      templateId: '2215703832410519',
       param: [
         {
           parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image' }],
@@ -174,6 +175,13 @@ export async function saveToken(token, userId) {
 /* Send reserved-seat lanyard via email (SMTP handled by backend).
    Backend must implement POST /api/send-reserved-email
    using secretariat@pas.org.pk SMTP credentials. */
+export async function createBooking(payload) {
+  const res = await axios.post(ADD_BOOKING_URL, payload, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
 export async function sendReservedEmail({ toEmail, name, seatNumber, lanyardUrl }) {
   const res = await axios.post(RESERVED_EMAIL_URL, {
     toEmail,

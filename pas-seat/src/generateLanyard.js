@@ -23,8 +23,15 @@ export async function generateLanyard({
 }) {
   const userPhoto = imageUrl || image
   const template = await loadImage(TEMPLATE_URL)
-  const W = template.naturalWidth || 1024
-  const H = template.naturalHeight || 1536
+  const MAX_WIDTH = 1400
+  let W = template.naturalWidth || 1024
+  let H = template.naturalHeight || 1536
+
+  if (W > MAX_WIDTH) {
+    const scale = MAX_WIDTH / W
+    W = Math.round(W * scale)
+    H = Math.round(H * scale)
+  }
 
   const canvas = document.createElement('canvas')
   canvas.width = W
@@ -82,7 +89,7 @@ export async function generateLanyard({
     if (document.fonts?.ready) {
       await document.fonts.ready
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // ── Text Left Alignment ──
   ctx.textAlign = 'left'
@@ -222,9 +229,13 @@ export async function generateLanyard({
   }
 
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      resolve({ blob })
-    }, 'image/png')
+    canvas.toBlob(
+      (blob) => {
+        resolve({ blob })
+      },
+      'image/jpeg',
+      0.85
+    )
   })
 }
 

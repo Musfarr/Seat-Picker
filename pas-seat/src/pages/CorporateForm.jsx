@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { allocateCorporateSeat, uploadFile, sendLanyardWhatsapp } from '../api'
+import { allocateCorporateSeat, createBooking, uploadFile, sendLanyardWhatsapp } from '../api'
 import { generateLanyard } from '../generateLanyard'
 
 
@@ -111,21 +111,19 @@ export default function CorporateForm() {
       setStep('Uploading your photo...')
       const { url: imageUrl } = await uploadFile(imageFile, imageFile.name)
 
-      setStep('Allocating your seat...')
-      
-      // const { seatNumber, bookingId } = await allocateCorporateSeat({
-      //   corporateId,
-      //   phone: form.phone_number,
-      //   image: imageUrl,
-      //   name: form.Full_Name,
-      //   cnic: form.CNIC_Number,
-      //   designation: form.Designation,
-      //   companyName: form.Company_Name,
-      //   type: "Corporate"
-      // })
+      setStep('Saving your booking...')
+      const bookingRes = await createBooking({
+        corporateId,
+        phone: form.phone_number,
+        image: imageUrl,
+        name: form.Full_Name,
+        cnic: form.CNIC_Number,
+        designation: form.Designation,
+        companyName: form.Company_Name,
+        type: 'Corporate'
+      })
 
-
-      let bookingId = 10;
+      const bookingId = bookingRes?.bookingId || bookingRes?.booking || bookingRes?._id || 10
 
       // Create profile URL
       const profileUrl = "https://effie.convexinteractive.com/Profile/" + bookingId
