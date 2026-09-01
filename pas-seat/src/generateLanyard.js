@@ -1,4 +1,4 @@
-const TEMPLATE_URL = import.meta.env.VITE_TEMPLATE_IMAGE_URL || 'https://mediaupload.convexinteractive.com/api/file/1786977606323-362082422.jpeg'
+const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1787225469897-40511096.jpg'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -10,19 +10,28 @@ function loadImage(src) {
   })
 }
 
-/**
- * Generate a Dragons Awards lanyard.
- *
- * Label positions on the template (from the provided image):
- *   - "Name"             label at ~34% Y, ~24% X (left-aligned)
- *   - "Company Name"     label at ~34% Y, ~50% X (center)
- *   - "No. Seat or Table" label at ~34% Y, ~76% X (right-aligned)
- *   - QR Code area below "Pearl Continental" (~82-88% Y, centered)
- */
-export async function generateLanyard({ name, companyName, seatNumber, seatNumbers, lanyardQrUrl }) {
+export async function generateLanyard({
+  name,
+  cnic,
+  seatNumber,
+  seatNumbers,
+  imageUrl,
+  image,
+  designation,
+  companyName,
+  lanyardQrUrl,
+}) {
+  const userPhoto = imageUrl || image
   const template = await loadImage(TEMPLATE_URL)
-  const W = template.naturalWidth || 540
-  const H = template.naturalHeight || 960
+  const MAX_WIDTH = 1400
+  let W = template.naturalWidth || 1024
+  let H = template.naturalHeight || 1536
+
+  if (W > MAX_WIDTH) {
+    const scale = MAX_WIDTH / W
+    W = Math.round(W * scale)
+    H = Math.round(H * scale)
+  }
 
   const canvas = document.createElement('canvas')
   canvas.width = W
@@ -32,65 +41,201 @@ export async function generateLanyard({ name, companyName, seatNumber, seatNumbe
   // Draw template image as background
   ctx.drawImage(template, 0, 0, W, H)
 
+  // ── Profile photo (top-mid left circle) ──
+  const photoCX = Math.round(W * 0.32)
+  const photoCY = Math.round(H * 0.34)
+  const photoR = Math.round(W * 0.175)
+
+  if (userPhoto) {
+    try {
+      const photo = await loadImage(userPhoto)
+      const imgAspect = (photo.naturalWidth || photo.width) / (photo.naturalHeight || photo.height)
+      let drawW, drawH, drawX, drawY
+
+      // Object-fit cover inside circle
+      if (imgAspect > 1) {
+        drawH = photoR * 2
+        drawW = drawH * imgAspect
+        drawX = photoCX - drawW / 2
+        drawY = photoCY - photoR
+      } else {
+        drawW = photoR * 2
+        drawH = drawW / imgAspect
+        drawX = photoCX - photoR
+        drawY = photoCY - drawH / 2
+      }
+
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(photoCX, photoCY, photoR, 0, Math.PI * 2)
+      ctx.clip()
+      ctx.drawImage(photo, drawX, drawY, drawW, drawH)
+      ctx.restore()
+
+      // Yellow border ring matching theme
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(photoCX, photoCY, photoR, 0, Math.PI * 2)
+      ctx.lineWidth = Math.round(W * 0.007)
+      ctx.strokeStyle = '#FED800'
+      ctx.stroke()
+      ctx.restore()
+    } catch (_) {
+      // photo failed to load — skip
+    }
+  }
+
+  try {
+    if (document.fonts?.ready) {
+      await document.fonts.ready
+    }
+  } catch (_) { }
+
+  // ── Text Left Alignment ──
+  ctx.textAlign = 'left'
   ctx.shadowColor = 'rgba(0,0,0,0.85)'
-  ctx.shadowBlur = 6
+  ctx.shadowBlur = 4
+  const textX = Math.round(W * 0.08)
+  const maxTextW = Math.round(W * 0.48)
 
-  const seats = seatNumbers || (seatNumber ? [seatNumber] : [])
-
-  // ── Label row Y position (just above the printed labels on the template) ──
-  // The template shows "Name", "Company Name", "No. Seat or Table" labels
-  // at approximately 33-34% from the top. We render text ABOVE them.
-  const labelY = Math.round(H * 0.323)
-
-  // ── NAME (left column, ~22% X) ──
-  ctx.textAlign = 'center'
-  ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 24px Arial'
-  const nameText = (name || '').toUpperCase()
-  const maxNameWidth = W * 0.26
-  let displayName = nameText
-  while (ctx.measureText(displayName).width > maxNameWidth && displayName.length > 3) {
-    displayName = displayName.slice(0, -1)
+  // Helper for auto-scaling text to fit container
+  function drawFittedText(
+    text,
+    x,
+    y,
+    maxW,
+    baseFontSize,
+    fontWeight = 'bold',
+    fillStyle = '#FFFFFF',
+    fontFamily = '"Arial", "Montserrat", sans-serif'
+  ) {
+    let fontSize = baseFontSize
+    ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
+    while (ctx.measureText(text).width > maxW && fontSize > 16) {
+      fontSize -= 1
+      ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
+    }
+    ctx.fillStyle = fillStyle
+    ctx.fillText(text, x, y)
+    return fontSize
   }
-  if (displayName !== nameText) displayName += '…'
-  ctx.fillText(displayName, Math.round(W * 0.22), labelY)
 
-  // ── COMPANY NAME (center column, ~50% X) ──
-  ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 24px Arial'
-  const companyText = (companyName || '').toUpperCase()
-  const maxCompanyWidth = W * 0.26
-  let displayCompany = companyText
-  while (ctx.measureText(displayCompany).width > maxCompanyWidth && displayCompany.length > 3) {
-    displayCompany = displayCompany.slice(0, -1)
+  // ── Name below photo (Yellow with varsity/octagonal font) ──
+  const nameY = Math.round(H * 0.555)
+  if (name) {
+    drawFittedText(
+      name.toUpperCase(),
+      textX,
+      nameY,
+      maxTextW,
+      Math.round(W * 0.056),
+      'bold',
+      '#FED800',
+      '"Jersey 25", "Chakra Petch", "Graduate", "Arial Black", sans-serif'
+    )
   }
-  if (displayCompany !== companyText) displayCompany += '…'
-  ctx.fillText(displayCompany, Math.round(W * 0.50), labelY)
 
-  // ── SEAT / TABLE NUMBER (right column, ~78% X) ──
-  ctx.fillStyle = '#ffffff'
-  ctx.font = 'bold 28px Arial'
-  const seatLabel = seats.length > 1 ? seats.join(' · ') : (seats[0] || '')
-  ctx.fillText(seatLabel, Math.round(W * 0.78), labelY)
+  // ── Designation (White) ──
+  const desigY = nameY + Math.round(H * 0.038)
+  if (designation) {
+    drawFittedText(
+      designation,
+      textX,
+      desigY,
+      maxTextW,
+      Math.round(W * 0.038),
+      'bold',
+      '#FFFFFF',
+      '"Arial", "Montserrat", sans-serif'
+    )
+  }
 
-  // ── QR CODE aligned left below "Pearl Continental" ──
+  // ── Company below Designation (White) ──
+  const companyY = desigY + Math.round(H * 0.032)
+  if (companyName) {
+    drawFittedText(
+      companyName,
+      textX,
+      companyY,
+      maxTextW,
+      Math.round(W * 0.034),
+      '500',
+      'rgba(255, 255, 255, 0.95)',
+      '"Arial", "Montserrat", sans-serif'
+    )
+  }
+
+  ctx.shadowBlur = 0
+
+  // ── QR Code (Bottom Left: Yellow + Transparent + Yellow Border) ──
   if (lanyardQrUrl) {
     try {
       const qrImg = await loadImage(lanyardQrUrl)
-      const qrSize = Math.round(W * 0.16)
-      const qrX = Math.round(W * 0.10)
-      const qrY = Math.round(H * 0.705)
-      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
+      const qrX = Math.round(W * 0.078)
+      const qrY = Math.round(H * 0.842)
+      const qrSize = Math.round(W * 0.145)
+
+      // Transform QR image to yellow modules with transparent background
+      const qrCanvas = document.createElement('canvas')
+      const qW = qrImg.naturalWidth || qrImg.width || 512
+      const qH = qrImg.naturalHeight || qrImg.height || 512
+      qrCanvas.width = qW
+      qrCanvas.height = qH
+      const qrCtx = qrCanvas.getContext('2d')
+      qrCtx.drawImage(qrImg, 0, 0, qW, qH)
+
+      const imgData = qrCtx.getImageData(0, 0, qW, qH)
+      const data = imgData.data
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i]
+        const g = data[i + 1]
+        const b = data[i + 2]
+        const a = data[i + 3]
+
+        const brightness = (r + g + b) / 3
+        // If dark module / QR pattern
+        if (brightness < 128 && a > 50) {
+          data[i] = 254     // R (#FED800 yellow)
+          data[i + 1] = 216 // G
+          data[i + 2] = 0   // B
+          data[i + 3] = 255 // A
+        } else {
+          // Transparent background
+          data[i + 3] = 0
+        }
+      }
+      qrCtx.putImageData(imgData, 0, 0)
+
+      // Draw tinted QR on main canvas
+      ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize)
+
+      // Draw yellow rounded border matching mockup
+      const pad = Math.round(qrSize * 0.05)
+      const borderRadius = Math.round(qrSize * 0.08)
+      ctx.save()
+      ctx.strokeStyle = '#FED800'
+      ctx.lineWidth = Math.max(2, Math.round(W * 0.0035))
+      ctx.beginPath()
+      if (ctx.roundRect) {
+        ctx.roundRect(qrX - pad, qrY - pad, qrSize + pad * 2, qrSize + pad * 2, borderRadius)
+      } else {
+        ctx.rect(qrX - pad, qrY - pad, qrSize + pad * 2, qrSize + pad * 2)
+      }
+      ctx.stroke()
+      ctx.restore()
     } catch (_) {
       // QR failed to load — skip
     }
   }
 
-  ctx.shadowBlur = 0
-
   return new Promise((resolve) => {
-    canvas.toBlob((blob) => {
-      resolve({ blob })
-    }, 'image/jpeg', 0.85)
+    canvas.toBlob(
+      (blob) => {
+        resolve({ blob })
+      },
+      'image/jpeg',
+      0.85
+    )
   })
 }
+

@@ -73,6 +73,28 @@ export default function App() {
         setAuthError('invalid')
         setAuthLoading(false)
       }
+
+      console.log(parsed, "parsed")
+      // Build paramData from decrypted fields
+      const Number_of_ticket = parseInt(parsed.Number_of_ticket, 10)
+      const isCorporate = !isNaN(Number_of_ticket) && Number_of_ticket > 0
+      // console.log(parsed , " parseddd")
+      setParamData({
+        flow: isCorporate ? 'corporate' : 'individual',
+        allowedSeats: isCorporate ? Number_of_ticket : 1,
+        allowedTypes: ['normal', 'vip'],
+        phone_number: parsed.phone_number,
+        Email_Address: parsed.Email_Address || null,
+        flow_token: parsed.flow_token || null,
+        Company_Name: parsed.Company_Name || null,
+        Full_Name: parsed.Full_Name || null,
+        Designation: parsed.Designation || null,
+        CNIC_Number: parsed.CNIC_Number || null,
+        Image: parsed.Image || null,
+        seats_api_url: parsed.seats_api_url || null,
+        _token: encryptedData,
+      })
+      setAuthLoading(false)
     }
     init()
   }, [])
@@ -164,24 +186,44 @@ export default function App() {
   const processBookings = async (attendees) => {
     setShowAttendeeForm(false)
     setProcessing(true)
-    setBroadcastFailed(false)
-
-    const collectedLanyards = []
-    const total = attendees.length
-
     try {
-      for (let i = 0; i < total; i++) {
-        const attendee = attendees[i]
+      // Validate token before booking
+      setProcessStep('Verifying your invitation...')
+      const { exists } = await checkToken(paramData._token)
+      if (exists) {
+        setProcessStep('Error: This booking link has already been used.')
+        return
+      }
+      await saveToken(paramData._token, paramData.phone_number)
 
-        // 1. Pre-generate unique booking ID for QR code profile URL
-        const bookingId = generateMongoId()
-        const profileUrl = `${window.location.origin}/Profile/${bookingId}`
+      if (paramData.flow === 'individual') {
+        const seatNumber = `${allSelections[0].tableId}-${allSelections[0].chair}`
 
-        // 2. Generate QR code pointing to Profile page
-        setProcessStep(`Generating QR code ${i + 1} of ${total}...`)
-        const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
-        const qrBlob = await (await fetch(qrDataUrl)).blob()
-        const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${bookingId}.png`)
+
+
+
+        setProcessStep('Reserving your seat...')
+        const { booking } = await bookSeats({
+          seatNumber: seatNumber,
+          phone: paramData.phone_number,
+          designation: paramData.Designation,
+          companyName: paramData.Company_Name,
+          cnic: paramData.CNIC_Number,
+          type: "Individual",
+          name: paramData.Full_Name,
+          flow_token: paramData.flow_token,
+          image: paramData.Image
+        })
+
+        // create profile url
+        // const profile_Url = window.location.origin + "/Profile/" + booking;
+        const profile_Url = "https://effie.convexinteractive.com" + "/Profile/" + booking;
+
+
+        // create qr of Profile URL for Lanyard
+        const LanyardQrUrl = await QRCode.toDataURL(profile_Url, { width: 512, margin: 2 })
+        const qrBlob = await (await fetch(LanyardQrUrl)).blob()
+        const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${booking}.png`)
 
         // 3. Generate lanyard pass
         setProcessStep(`Generating pass ${i + 1} of ${total}...`)
@@ -190,32 +232,54 @@ export default function App() {
           companyName: attendee.companyName,
           seatNumber: attendee.seatNumber,
           lanyardQrUrl,
+          image: paramData.Image,
         })
 
-        // 4. Upload lanyard image to obtain URL
-        setProcessStep(`Uploading pass ${i + 1} of ${total}...`)
-        const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${attendee.phone}-${i}.jpg`)
-        collectedLanyards.push({
-          url: lanyardUrl,
-          name: attendee.name,
-          seatNumber: attendee.seatNumber,
+        const { url: lanyardUrl } = await uploadFile(blob, `lanyard-${paramData.phone_number}.png`)
+        setLanyardUrl(lanyardUrl)
+
+
+        setProcessStep('Sending your pass via WhatsApp...')
+
+        try {
+          await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+        } catch (whatsappErr) {
+          console.error('WhatsApp send failed:', whatsappErr)
+          setWhatsappError('WhatsApp delivery failed. Please download your pass below.')
+        }
+        setDone(true)
+
+      }
+
+
+
+      else {
+        const bookings = allSelections.map(s => ({
+          seatNumber: `${s.tableId}-${s.chair}`,
+          seatStatus: true,
+        }))
+
+        setProcessStep('Reserving seats block...')
+        const { key } = await bookCorporate({
+          bookings,
+          phone_number: paramData.phone_number,
+          flow_token: paramData.flow_token,
+          Company_Name: paramData.Company_Name,
+          Full_Name: paramData.Full_Name,
+          Email_Address: paramData.Email_Address,
+          Designation: paramData.Designation,
         })
 
-        // 5. Book the seat with lanyardUrl sent in the payload as 'image'
-        setProcessStep(`Reserving seat ${i + 1} of ${total}...`)
-        await bookSeats({
-          _id: bookingId,
-          token: paramData._token,
-          seatNumber: attendee.seatNumber,
-          phone: attendee.phone,
-          name: attendee.name,
-          companyName: attendee.companyName,
-          type: 'Individual',
-          image: lanyardUrl,
-        })
+        // const formLink = `${window.location.origin}/form/${key}`
+        const formLink = `https://effie.convexinteractive.com/form/${key}`
 
-        // 6. Broadcast via WhatsApp
-        setProcessStep(`Broadcasting pass ${i + 1} of ${total}...`)
+        setProcessStep('Generating QR code...')
+        const qrDataUrl = await QRCode.toDataURL(formLink, { width: 512, margin: 5 })
+        const qrBlob = await (await fetch(qrDataUrl)).blob()
+        const { url: qrUrl } = await uploadFile(qrBlob, `qr-${key}.png`)
+
+        setProcessStep('Sending form link via WhatsApp...')
+
         try {
           await sendLanyardWhatsapp({ contactNumber: attendee.phone, lanyardUrl })
         } catch (whatsappErr) {
@@ -357,6 +421,7 @@ export default function App() {
           onClose={() => setDone(false)}
         />
       )}
+
 
     </div>
   )

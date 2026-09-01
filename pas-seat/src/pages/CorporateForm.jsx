@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { uploadFile, sendLanyardWhatsapp, checkToken, saveToken,bookSeats } from '../api'
+import { allocateCorporateSeat, createBooking, uploadFile, sendLanyardWhatsapp } from '../api'
 import { generateLanyard } from '../generateLanyard'
 import { decryptParams } from '../utils/Decrypt'
 
@@ -9,11 +9,11 @@ import { decryptParams } from '../utils/Decrypt'
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
 
 const FIELDS = [
-  { name: 'Full_Name',    label: 'Full Name',       type: 'text',  required: true,  placeholder: 'John Doe' },
-  { name: 'CNIC_Number',  label: 'CNIC Number',     type: 'text',  required: true,  placeholder: '41323-1393332-4' },
-  { name: 'phone_number', label: 'Phone Number',    type: 'tel',   required: true,  placeholder: '923344342234' },
-  { name: 'Company_Name', label: 'Company Name',    type: 'text',  required: true,  placeholder: 'Acme Corp' },
-  { name: 'Designation',  label: 'Designation',     type: 'text',  required: true,  placeholder: 'Engineer' },
+  { name: 'Full_Name', label: 'Full Name', type: 'text', required: true, placeholder: 'John Doe' },
+  { name: 'CNIC_Number', label: 'CNIC Number', type: 'text', required: true, placeholder: '41323-1393332-4' },
+  { name: 'phone_number', label: 'Phone Number', type: 'tel', required: true, placeholder: '923344342234' },
+  { name: 'Company_Name', label: 'Company Name', type: 'text', required: true, placeholder: 'Acme Corp' },
+  { name: 'Designation', label: 'Designation', type: 'text', required: true, placeholder: 'Engineer' },
 ]
 
 function validateForm(form) {
@@ -49,7 +49,7 @@ function validateForm(form) {
 export default function CorporateForm() {
   const { id: token } = useParams()
 
-  
+
 
 
   const [form, setForm] = useState({
@@ -63,7 +63,7 @@ export default function CorporateForm() {
   const [lanyardUrl, setLanyardUrl] = useState(null)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
-  
+
   const [usedCount, setUsedCount] = useState(0)
   const [totalAllowed, setTotalAllowed] = useState(1)
   const [loading, setLoading] = useState(true)
@@ -153,7 +153,7 @@ export default function CorporateForm() {
         if (status.exists) {
           setUsedCount(status.usedCount || 0)
           setTotalAllowed(status.totalAllowed || 1)
-          
+
           if ((status.usedCount || 0) >= (status.totalAllowed || 1)) {
             setError(`This link is exhausted. All ${status.totalAllowed || 1} of ${status.totalAllowed || 1} pass(es) have been claimed.`)
           }
@@ -224,15 +224,22 @@ export default function CorporateForm() {
 
     setUploading(true)
     try {
-      // Increment and save token count
-      const nextUsed = usedCount + 1
-      // setStep('Saving booking status...')
-      // await saveToken(token, form.phone_number, nextUsed, totalAllowed)
-      // setUsedCount(nextUsed)
+      setStep('Uploading your photo...')
+      const { url: imageUrl } = await uploadFile(imageFile, imageFile.name)
 
-      // Generate bookingId from timestamp for profile URL
-      const bookingId = Date.now().toString()
-      const seatNumber = "Corporate"
+      setStep('Saving your booking...')
+      const bookingRes = await createBooking({
+        corporateId,
+        phone: form.phone_number,
+        image: imageUrl,
+        name: form.Full_Name,
+        cnic: form.CNIC_Number,
+        designation: form.Designation,
+        companyName: form.Company_Name,
+        type: 'Corporate'
+      })
+
+      const bookingId = bookingRes?.bookingId || bookingRes?.booking || bookingRes?._id || 10
 
       // Create profile URL
       const profileUrl = "https://effie.convexinteractive.com/Profile/" + bookingId
@@ -337,12 +344,12 @@ export default function CorporateForm() {
     <div className="corp-page">
 
       <div className='toplogo'>
-        <img style = {{ width:'120px'}} src='/logo.png'  />
+        <img style={{ width: '120px' }} src='/logo.png' />
       </div>
 
       <div className="corp-card">
         <h2 className="corp-title">Complete Your Booking</h2>
-        
+
         {usedCount >= totalAllowed ? (
           <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>claim-status</div>
