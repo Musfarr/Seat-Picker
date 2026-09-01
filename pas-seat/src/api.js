@@ -1,5 +1,13 @@
 import axios from 'axios'
 
+// Ensure ngrok free tier warning interstitial is bypassed on EVERY request
+axios.defaults.headers.common['ngrok-skip-browser-warning'] = '69420'
+axios.interceptors.request.use((config) => {
+  config.headers = config.headers || {}
+  config.headers['ngrok-skip-browser-warning'] = '69420'
+  return config
+})
+
 const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
 const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
@@ -30,7 +38,7 @@ const LOGIN_PASSWORD = 'Agent@12'
 const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1787225469897-40511096.jpg'
 
 const NGROK_HEADERS = {
-  'ngrok-skip-browser-warning': 'true',
+  'ngrok-skip-browser-warning': '69420',
 }
 
 export async function fetchSeatsData() {
