@@ -14,11 +14,14 @@ const BOOK_CORPORATE_URL = 'http://localhost:8000/api/book-corporate'
 const ALLOCATE_URL = 'http://localhost:8000/api/book-corporate/allocate'
 const BOOKING_DATA_URL = 'http://localhost:8000/api/booking-data'
 const ADD_BOOKING_URL = 'http://localhost:8000/api/booking-add'
+const GET_BOOKINGS_URL = 'http://localhost:8000/api/bookings'
+const UPDATE_BOOKING_URL = 'http://localhost:8000/api/booking-update'
 const CHECK_TOKEN_URL = 'https://local/api/check-token'
 const SAVE_TOKEN_URL = 'https://local/api/save-token'
 const RESERVED_EMAIL_URL = 'https://local/api/send-reserved-email'
 
 const LINK_TEMPLATE_ID = '2439716791418701'  // update to your text/link template ID
+const BREAKOUT_LINK_TEMPLATE_ID = '1015900957923860'
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
@@ -82,6 +85,25 @@ export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
     {
       to: contactNumber,
       templateId: '2215703832410519',
+      param: [
+        {
+          parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image' }],
+          componentType: 'header',
+          buttonType: null,
+          index: null,
+        },
+      ],
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
+}
+export async function sendLanyardWhatsapp2({ contactNumber, lanyardUrl }) {
+  const accessToken = await getAccessToken()
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: '1383598440372006',
       param: [
         {
           parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image' }],
@@ -182,6 +204,39 @@ export async function createBooking(payload) {
   return res.data
 }
 
+/* Send breakout session invite link via WhatsApp (Template 1015900957923860 - 1 text param) */
+export async function sendBreakoutLink({ contactNumber, link }) {
+  const accessToken = await getAccessToken()
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: BREAKOUT_LINK_TEMPLATE_ID,
+      param: [
+        {
+          parameters: [{ value: link, type: 'text' }],
+          componentType: 'body',
+          buttonType: null,
+          index: null,
+        },
+      ],
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
+}
+
+export async function getAllBookings() {
+  const res = await axios.get(GET_BOOKINGS_URL)
+  return res.data?.data || res.data || []
+}
+
+export async function updateBooking(bookingId, payload) {
+  const res = await axios.patch(`${UPDATE_BOOKING_URL}/${bookingId}`, payload, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
 export async function sendReservedEmail({ toEmail, name, seatNumber, lanyardUrl }) {
   const res = await axios.post(RESERVED_EMAIL_URL, {
     toEmail,
@@ -193,4 +248,5 @@ export async function sendReservedEmail({ toEmail, name, seatNumber, lanyardUrl 
   })
   return res.data
 }
+
 

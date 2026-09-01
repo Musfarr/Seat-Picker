@@ -1,20 +1,17 @@
 import { useState } from 'react'
 import QRCode from 'qrcode'
-import { createBooking, uploadFile, sendLanyardWhatsapp } from '../api'
+import { updateBooking, createBooking, uploadFile, sendLanyardWhatsapp, sendLanyardWhatsapp2 } from '../api'
 import { generateBreakoutLanyard } from '../generateBreakoutLanyard'
 import { breakoutSessions } from '../data/breakoutSessions'
 
-// ── Static user data — replace with real encrypted URL parsing later ──
-const STATIC_USER = {
-  name: 'Demo Attendee',
-  phone: '923001234567',      // replace with decrypted field
-  companyName: 'Demo Corp',   // replace with decrypted field
-}
+export default function BreakoutForm({ userData = {} }) {
+  const {
+    name = 'Attendee',
+    phone = '',
+    companyName = '',
+    bookingId = '',
+  } = userData
 
-// ── Static number to receive the lanyard ──
-const BREAKOUT_NOTIFY_NUMBER = '923001234567'  // replace with real number
-
-export default function BreakoutForm() {
   const [selectedTopics, setSelectedTopics] = useState({
     'session-1': null,
     'session-2': null,
@@ -27,8 +24,8 @@ export default function BreakoutForm() {
   const [lanyardUrl, setLanyardUrl] = useState(null)
   const [error, setError] = useState('')
 
-  function pickTopic(sessionId, topic) {
-    setSelectedTopics(prev => ({ ...prev, [sessionId]: topic }))
+  function pickTopic(sessionId, topicId) {
+    setSelectedTopics(prev => ({ ...prev, [sessionId]: topicId }))
     if (sessionErrors[sessionId]) {
       setSessionErrors(prev => ({ ...prev, [sessionId]: '' }))
     }
@@ -65,34 +62,45 @@ export default function BreakoutForm() {
       const session2 = sel['session-2']
       const session3 = sel['session-3']
 
-      // 1. Save booking
-      setStep('Saving your booking...')
-      const bookingRes = await createBooking({
-        phone: STATIC_USER.phone,
-        name: STATIC_USER.name,
-        companyName: STATIC_USER.companyName,
-        type: 'Breakout',
+      const sessionPayload = {
         session1: session1?.title,
         session1Speaker: session1?.speaker,
         session2: session2?.title,
         session2Speaker: session2?.speaker,
         session3: session3?.title,
         session3Speaker: session3?.speaker,
-      })
-      const bookingId = bookingRes?.bookingId || bookingRes?.booking || 'breakout'
+        breakoutRegistered: true,
+      }
+
+      let activeBookingId = bookingId
+
+      // 1. Update existing booking if bookingId is provided, else create new
+      setStep('Saving your sessions...')
+      if (activeBookingId) {
+        await updateBooking(activeBookingId, sessionPayload)
+      } else {
+        const bookingRes = await createBooking({
+          phone: phone || '923000000000',
+          name,
+          companyName,
+          type: 'Breakout',
+          ...sessionPayload,
+        })
+        activeBookingId = bookingRes?.bookingId || bookingRes?.booking || 'breakout'
+      }
 
       // 2. Generate QR code
       setStep('Generating QR code...')
-      const profileUrl = `https://effie.convexinteractive.com/Profile/${bookingId}`
+      const profileUrl = `https://effie.convexinteractive.com/Profile/${activeBookingId}`
       const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
       const qrBlob = await (await fetch(qrDataUrl)).blob()
-      const { url: lanyardQrUrl } = await uploadFile(qrBlob, `breakout-qr-${bookingId}.png`)
+      const { url: lanyardQrUrl } = await uploadFile(qrBlob, `breakout-qr-${activeBookingId}.png`)
 
-      // 3. Generate lanyard
+      // 3. Generate lanyard pass
       setStep('Generating your pass...')
       const { blob } = await generateBreakoutLanyard({
-        name: STATIC_USER.name,
-        companyName: STATIC_USER.companyName,
+        name,
+        companyName,
         session1: session1?.title,
         session1Speaker: session1?.speaker,
         session2: session2?.title,
@@ -102,18 +110,25 @@ export default function BreakoutForm() {
         lanyardQrUrl,
       })
 
-      // 4. Upload lanyard
+      // 4. Upload lanyard pass
       setStep('Uploading your pass...')
-      const { url: uploadedLanyardUrl } = await uploadFile(blob, `breakout-${STATIC_USER.phone}.png`)
+      const { url: uploadedLanyardUrl } = await uploadFile(blob, `breakout-${phone || activeBookingId}.png`)
       setLanyardUrl(uploadedLanyardUrl)
 
-      // 5. Send via WhatsApp to static number
-      setStep('Sending your pass...')
-      try {
-        await sendLanyardWhatsapp({ contactNumber: BREAKOUT_NOTIFY_NUMBER, lanyardUrl: uploadedLanyardUrl })
-      } catch (waErr) {
-        console.error('WhatsApp send failed:', waErr)
-        setError('WhatsApp delivery failed. Download your pass below.')
+      // 5. Update booking with lanyard URL in background
+      if (activeBookingId) {
+        updateBooking(activeBookingId, { lanyardUrl: uploadedLanyardUrl }).catch(() => { })
+      }
+
+      // 6. Send pass via WhatsApp to the attendee's phone
+      if (phone) {
+        setStep('Sending your pass via WhatsApp...')
+        try {
+          await sendLanyardWhatsapp2({ contactNumber: phone, lanyardUrl: uploadedLanyardUrl })
+        } catch (waErr) {
+          console.error('WhatsApp send failed:', waErr)
+          setError('WhatsApp delivery failed. Please download your pass below.')
+        }
       }
 
       setDone(true)
@@ -132,7 +147,15 @@ export default function BreakoutForm() {
       <div className="bo-done">
         <div className="bo-done-check">✓</div>
         <h2 className="bo-done-title">You're Registered!</h2>
-        {error && <p className="bo-done-warn">⚠️ {error}</p>}
+        {error ? (
+          <p className="bo-done-warn">⚠️ {error}</p>
+        ) : (
+          phone && (
+            <p className="bo-done-sub">
+              Your pass has been sent via WhatsApp to <strong>{phone}</strong>
+            </p>
+          )
+        )}
         <p className="bo-done-sub">
           Your breakout session pass has been generated.
         </p>
@@ -150,6 +173,16 @@ export default function BreakoutForm() {
 
   return (
     <form onSubmit={handleSubmit} className="bo-form">
+      {/* Attendee banner */}
+      <div className="bo-attendee-card">
+        <div className="bo-attendee-badge">ATTENDEE</div>
+        <div className="bo-attendee-info">
+          <span className="bo-attendee-name">{name}</span>
+          {companyName && <span className="bo-attendee-company"> • {companyName}</span>}
+          {phone && <div className="bo-attendee-phone">{phone}</div>}
+        </div>
+      </div>
+
       {/* Section header */}
       <div className="bo-section-header">
         <h2 className="bo-section-title">Select Your Sessions</h2>

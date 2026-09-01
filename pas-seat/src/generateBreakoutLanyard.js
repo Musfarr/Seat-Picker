@@ -55,7 +55,7 @@ export async function generateBreakoutLanyard({
 
   try {
     if (document.fonts?.ready) await document.fonts.ready
-  } catch (_) {}
+  } catch (_) { }
 
   // ── Helper: auto-shrink text to fit width ──
   function drawFittedText(text, x, y, maxW, baseFontSize, fontWeight = 'bold', fillStyle = '#FFFFFF', fontFamily = '"Arial", "Montserrat", sans-serif') {
@@ -154,38 +154,38 @@ export async function generateBreakoutLanyard({
   const slotTopicSize = Math.round(W * 0.028)
   const slotSpeakerSize = Math.round(W * 0.021)
 
-  sessions.forEach((s, i) => {
-    const baseY = slotStartY + i * slotGap
+  // sessions.forEach((s, i) => {
+  //   const baseY = slotStartY + i * slotGap
 
-    // Session label (e.g. "SESSION 1") — dim gold
-    ctx.font = `bold ${slotLabelSize}px "Arial", sans-serif`
-    ctx.fillStyle = 'rgba(254, 216, 0, 0.65)'
-    ctx.shadowColor = 'rgba(0,0,0,0.7)'
-    ctx.shadowBlur = 3
-    ctx.fillText(s.label, textX, baseY)
+  //   // Session label (e.g. "SESSION 1") — dim gold
+  //   ctx.font = `bold ${slotLabelSize}px "Arial", sans-serif`
+  //   ctx.fillStyle = 'rgba(254, 216, 0, 0.65)'
+  //   ctx.shadowColor = 'rgba(0,0,0,0.7)'
+  //   ctx.shadowBlur = 3
+  //   ctx.fillText(s.label, textX, baseY)
 
-    // Topic title — white bold
-    if (s.topic) {
-      drawFittedText(
-        s.topic,
-        textX,
-        baseY + Math.round(H * 0.022),
-        maxTextW,
-        slotTopicSize,
-        'bold',
-        '#FFFFFF',
-        '"Arial", "Montserrat", sans-serif'
-      )
-    }
+  //   // Topic title — white bold
+  //   if (s.topic) {
+  //     drawFittedText(
+  //       s.topic,
+  //       textX,
+  //       baseY + Math.round(H * 0.022),
+  //       maxTextW,
+  //       slotTopicSize,
+  //       'bold',
+  //       '#FFFFFF',
+  //       '"Arial", "Montserrat", sans-serif'
+  //     )
+  //   }
 
-    // Speaker — white/60
-    if (s.speaker) {
-      ctx.font = `${slotSpeakerSize}px "Arial", sans-serif`
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)'
-      ctx.shadowBlur = 2
-      ctx.fillText(s.speaker, textX, baseY + Math.round(H * 0.041))
-    }
-  })
+  //   // Speaker — white/60
+  //   if (s.speaker) {
+  //     ctx.font = `${slotSpeakerSize}px "Arial", sans-serif`
+  //     ctx.fillStyle = 'rgba(255, 255, 255, 0.65)'
+  //     ctx.shadowBlur = 2
+  //     ctx.fillText(s.speaker, textX, baseY + Math.round(H * 0.041))
+  //   }
+  // })
 
   ctx.shadowBlur = 0
 
