@@ -4,18 +4,16 @@ const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
 const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
 
-// const SEATS_URL           = 'https://effie.convexinteractive.com/api/seats-data'
-// const BOOK_URL            = 'https://a732-103-197-46-226.ngrok-free.app/api/book-seat'
-// const BOOK_CORPORATE_URL  = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate'
-// const ALLOCATE_URL        = 'https://a732-103-197-46-226.ngrok-free.app/api/book-corporate/allocate'
-const SEATS_URL = ' https://e5b6-103-197-46-226.ngrok-free.app/api/seats-data'
-const BOOK_URL = ' https://e5b6-103-197-46-226.ngrok-free.app/api/book-seat'
-const BOOK_CORPORATE_URL = ' https://e5b6-103-197-46-226.ngrok-free.app/api/book-corporate'
-const ALLOCATE_URL = ' https://e5b6-103-197-46-226.ngrok-free.app/api/book-corporate/allocate'
-const BOOKING_DATA_URL = ' https://e5b6-103-197-46-226.ngrok-free.app/api/booking-data'
-const ADD_BOOKING_URL = ' https://e5b6-103-197-46-226.ngrok-free.app/api/booking-add'
-const GET_BOOKINGS_URL = ' https://e5b6-103-197-46-226.ngrok-free.app/api/bookings'
-const UPDATE_BOOKING_URL = ' https://e5b6-103-197-46-226.ngrok-free.app/api/booking-update'
+const NGROK_BASE = 'https://e5b6-103-197-46-226.ngrok-free.app'
+
+const SEATS_URL = `${NGROK_BASE}/api/seats-data`
+const BOOK_URL = `${NGROK_BASE}/api/book-seat`
+const BOOK_CORPORATE_URL = `${NGROK_BASE}/api/book-corporate`
+const ALLOCATE_URL = `${NGROK_BASE}/api/book-corporate/allocate`
+const BOOKING_DATA_URL = `${NGROK_BASE}/api/booking-data`
+const ADD_BOOKING_URL = `${NGROK_BASE}/api/booking-add`
+const GET_BOOKINGS_URL = `${NGROK_BASE}/api/bookings`
+const UPDATE_BOOKING_URL = `${NGROK_BASE}/api/booking-update`
 const CHECK_TOKEN_URL = 'https://local/api/check-token'
 const SAVE_TOKEN_URL = 'https://local/api/save-token'
 const RESERVED_EMAIL_URL = 'https://local/api/send-reserved-email'
@@ -31,12 +29,14 @@ const LOGIN_PASSWORD = 'Agent@12'
 
 const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1787225469897-40511096.jpg'
 
+const NGROK_HEADERS = {
+  'ngrok-skip-browser-warning': 'true',
+}
+
 export async function fetchSeatsData() {
   const res = await axios.get(SEATS_URL, {
+    headers: { ...NGROK_HEADERS },
     withCredentials: false,
-    // headers: {
-    //   'ngrok-skip-browser-warning': 'true',
-    // },
   })
   const data = res.data
   return Array.isArray(data) ? data : data.seats
@@ -45,7 +45,7 @@ export async function fetchSeatsData() {
 /* Individual booking: { seatNumber, phone, flow_token } */
 export async function bookSeats(payload) {
   const res = await axios.post(BOOK_URL, payload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }
@@ -55,7 +55,7 @@ export async function bookSeats(payload) {
    Returns: { key: mongoId, bookingsLeft } */
 export async function bookCorporate(payload) {
   const res = await axios.post(BOOK_CORPORATE_URL, payload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }
@@ -65,7 +65,7 @@ export async function bookCorporate(payload) {
    Returns: { seatNumber } */
 export async function allocateCorporateSeat(payload) {
   const res = await axios.post(ALLOCATE_URL, payload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }
@@ -175,7 +175,7 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
 
 export async function getBookingData(userId) {
   const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }
@@ -199,7 +199,7 @@ export async function saveToken(token, userId) {
    using secretariat@pas.org.pk SMTP credentials. */
 export async function createBooking(payload) {
   const res = await axios.post(ADD_BOOKING_URL, payload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }
@@ -226,13 +226,15 @@ export async function sendBreakoutLink({ contactNumber, link }) {
 }
 
 export async function getAllBookings() {
-  const res = await axios.get(GET_BOOKINGS_URL)
+  const res = await axios.get(GET_BOOKINGS_URL, {
+    headers: { ...NGROK_HEADERS },
+  })
   return res.data?.data || res.data || []
 }
 
 export async function updateBooking(bookingId, payload) {
   const res = await axios.patch(`${UPDATE_BOOKING_URL}/${bookingId}`, payload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }
@@ -248,5 +250,3 @@ export async function sendReservedEmail({ toEmail, name, seatNumber, lanyardUrl 
   })
   return res.data
 }
-
-
