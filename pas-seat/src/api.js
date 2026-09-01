@@ -61,12 +61,12 @@ export async function checkToken(token) { return validateToken(token) }
 export async function saveToken(token, userId) { return true }
 
 /* Get booking data for profile display */
-export async function getBookingData(userId) {
-  const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
+// export async function getBookingData(userId) {
+//   const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
+//     headers: { 'Content-Type': 'application/json' },
+//   })
+//   return res.data
+// }
 
 async function getAccessToken() {
   const res = await axios.post(LOGIN_URL, { email: LOGIN_EMAIL, password: LOGIN_PASSWORD })
