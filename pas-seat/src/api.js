@@ -14,7 +14,7 @@ const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
 const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
 
-const NGROK_BASE = 'https://e5b6-103-197-46-226.ngrok-free.app'
+const NGROK_BASE = 'https://fa08-103-197-46-226.ngrok-free.app'
 
 const SEATS_URL = `${NGROK_BASE}/api/seats-data`
 const BOOK_URL = `${NGROK_BASE}/api/book-seat`
