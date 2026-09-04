@@ -14,7 +14,7 @@ const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
 const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
 
-const NGROK_BASE = 'https://fa08-103-197-46-226.ngrok-free.app'
+const NGROK_BASE = 'http://localhost:8000'
 
 const SEATS_URL = `${NGROK_BASE}/api/seats-data`
 const BOOK_URL = `${NGROK_BASE}/api/book-seat`
@@ -27,6 +27,10 @@ const UPDATE_BOOKING_URL = `${NGROK_BASE}/api/booking-update`
 const CHECK_TOKEN_URL = 'https://local/api/check-token'
 const SAVE_TOKEN_URL = 'https://local/api/save-token'
 const RESERVED_EMAIL_URL = 'https://local/api/send-reserved-email'
+
+const BREAKOUT_CAPACITIES_URL = `${NGROK_BASE}/api/breakout-capacities`
+const CHECK_BREAKOUT_TOKEN_URL = `${NGROK_BASE}/api/check-breakout-token`
+const SAVE_BREAKOUT_TOKEN_URL = `${NGROK_BASE}/api/save-breakout-token`
 
 const LINK_TEMPLATE_ID = '2439716791418701'  // update to your text/link template ID
 const BREAKOUT_LINK_TEMPLATE_ID = '1015900957923860'
@@ -257,6 +261,27 @@ export async function sendReservedEmail({ toEmail, name, seatNumber, lanyardUrl 
     lanyardUrl,
   }, {
     headers: { 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+
+export async function getBreakoutCapacities() {
+  const res = await axios.get(BREAKOUT_CAPACITIES_URL, {
+    headers: { ...NGROK_HEADERS },
+  })
+  return res.data?.data || {}
+}
+
+export async function checkBreakoutToken(token) {
+  const res = await axios.post(CHECK_BREAKOUT_TOKEN_URL, { token }, {
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
+  })
+  return res.data
+}
+
+export async function saveBreakoutToken(payload) {
+  const res = await axios.post(SAVE_BREAKOUT_TOKEN_URL, payload, {
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }

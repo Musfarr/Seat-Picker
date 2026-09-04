@@ -1,6 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
-import { updateBooking, createBooking, uploadFile, sendLanyardWhatsapp, sendLanyardWhatsapp2 } from '../api'
+import {
+  updateBooking,
+  createBooking,
+  uploadFile,
+  sendLanyardWhatsapp2,
+  getBreakoutCapacities,
+  checkBreakoutToken,
+  saveBreakoutToken,
+} from '../api'
 import { generateBreakoutLanyard } from '../generateBreakoutLanyard'
 import { breakoutSessions } from '../data/breakoutSessions'
 
@@ -10,6 +18,7 @@ export default function BreakoutForm({ userData = {} }) {
     phone = '',
     companyName = '',
     bookingId = '',
+    token = '',
   } = userData
 
   const [selectedTopics, setSelectedTopics] = useState({
@@ -17,45 +26,97 @@ export default function BreakoutForm({ userData = {} }) {
     'session-2': null,
     'session-3': null,
   })
-  const [sessionErrors, setSessionErrors] = useState({})
+  const [capacities, setCapacities] = useState({})
   const [step, setStep] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [lanyardUrl, setLanyardUrl] = useState(null)
   const [error, setError] = useState('')
 
-  function pickTopic(sessionId, topicId) {
-    setSelectedTopics(prev => ({ ...prev, [sessionId]: topicId }))
-    if (sessionErrors[sessionId]) {
-      setSessionErrors(prev => ({ ...prev, [sessionId]: '' }))
+  // Load live capacities from DB
+  useEffect(() => {
+    let isMounted = true
+    getBreakoutCapacities()
+      .then(data => {
+        if (isMounted && data) {
+          setCapacities(data)
+        }
+      })
+      .catch(err => console.error('Failed to load breakout capacities:', err))
+
+    return () => {
+      isMounted = false
     }
+  }, [])
+
+  // Toggle selection: Clicking selected topic deselects it; clicking another selects it
+  function toggleTopic(sessionId, topicId) {
+    const cap = capacities[topicId]
+    const isSoldOut = cap && (cap.availableSeats ?? 35) <= 0
+    if (isSoldOut) return
+
+    setSelectedTopics(prev => {
+      const isAlreadySelected = prev[sessionId] === topicId
+      return {
+        ...prev,
+        [sessionId]: isAlreadySelected ? null : topicId,
+      }
+    })
+    setError('')
   }
 
+  // Validate: At least 1 session must be selected out of 3
   function validate() {
-    const errs = {}
-    breakoutSessions.forEach(s => {
-      if (!selectedTopics[s.id]) errs[s.id] = `Please select a topic from ${s.title}`
-    })
-    return errs
+    const hasAtLeastOne = Object.values(selectedTopics).some(Boolean)
+    if (!hasAtLeastOne) {
+      return 'Please select at least 1 session topic to continue.'
+    }
+    return null
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
 
-    const errs = validate()
-    if (Object.keys(errs).length > 0) {
-      setSessionErrors(errs)
+    const valError = validate()
+    if (valError) {
+      setError(valError)
       return
+    }
+
+    const chosenTopicIds = Object.values(selectedTopics).filter(Boolean)
+
+    // Check if any selected topic is sold out
+    for (const tid of chosenTopicIds) {
+      const cap = capacities[tid]
+      if (cap && (cap.availableSeats ?? 35) <= 0) {
+        setError(`"${cap.title || tid}" is fully booked. Please select another topic.`)
+        return
+      }
     }
 
     setSubmitting(true)
     try {
+      // 0. Double-check token if present
+      if (token) {
+        setStep('Verifying your session link...')
+        try {
+          const checkRes = await checkBreakoutToken(token)
+          if (checkRes?.exists) {
+            setError('This session link has already been used. You cannot register again.')
+            setSubmitting(false)
+            return
+          }
+        } catch (tokenErr) {
+          console.warn('Token check error:', tokenErr)
+        }
+      }
+
       // Resolve selected topic objects
       const sel = {}
       breakoutSessions.forEach(s => {
         const topic = s.topics.find(t => t.id === selectedTopics[s.id])
-        sel[s.id] = topic
+        sel[s.id] = topic || null
       })
 
       const session1 = sel['session-1']
@@ -63,13 +124,14 @@ export default function BreakoutForm({ userData = {} }) {
       const session3 = sel['session-3']
 
       const sessionPayload = {
-        session1: session1?.title,
-        session1Speaker: session1?.speaker,
-        session2: session2?.title,
-        session2Speaker: session2?.speaker,
-        session3: session3?.title,
-        session3Speaker: session3?.speaker,
+        session1: session1?.title || null,
+        session1Speaker: session1?.speaker || null,
+        session2: session2?.title || null,
+        session2Speaker: session2?.speaker || null,
+        session3: session3?.title || null,
+        session3Speaker: session3?.speaker || null,
         breakoutRegistered: true,
+        breakoutTopics: chosenTopicIds,
       }
 
       let activeBookingId = bookingId
@@ -120,7 +182,24 @@ export default function BreakoutForm({ userData = {} }) {
         updateBooking(activeBookingId, { lanyardUrl: uploadedLanyardUrl }).catch(() => { })
       }
 
-      // 6. Send pass via WhatsApp to the attendee's phone
+      // 6. Save breakout token to database to prevent re-use and decrement DB counts atomically
+      if (token) {
+        setStep('Finalizing registration...')
+        try {
+          await saveBreakoutToken({
+            token,
+            bookingId: activeBookingId,
+            phone,
+            name,
+            selectedTopics: chosenTopicIds,
+            lanyardUrl: uploadedLanyardUrl,
+          })
+        } catch (saveTokErr) {
+          console.error('Failed to save breakout token:', saveTokErr)
+        }
+      }
+
+      // 7. Send pass via WhatsApp to the attendee's phone
       if (phone) {
         setStep('Sending your pass via WhatsApp...')
         try {
@@ -186,17 +265,16 @@ export default function BreakoutForm({ userData = {} }) {
       {/* Section header */}
       <div className="bo-section-header">
         <h2 className="bo-section-title">Select Your Sessions</h2>
-        <p className="bo-section-sub">Choose one topic from each session below</p>
+        <p className="bo-section-sub">Choose at least 1 session below (pick any topic from 1, 2, or all 3 sessions)</p>
       </div>
 
       {/* Session pickers */}
       {breakoutSessions.map(session => {
         const sessionKey = session.id
         const selected = selectedTopics[sessionKey]
-        const hasErr = sessionErrors[sessionKey]
 
         return (
-          <div key={sessionKey} className={`bo-session${hasErr ? ' bo-session--err' : ''}`}>
+          <div key={sessionKey} className="bo-session">
             <div className="bo-session-header">
               <h3 className="bo-session-title">{session.title}</h3>
               <span className="bo-session-time">{session.time}</span>
@@ -206,23 +284,33 @@ export default function BreakoutForm({ userData = {} }) {
               {session.topics.map(topic => {
                 const isSelected = selected === topic.id
                 const isDimmed = selected && selected !== topic.id
+                const topicCap = capacities[topic.id]
+                const seatsLeft = topicCap !== undefined ? (topicCap.availableSeats ?? 35) : 35
+                const isSoldOut = seatsLeft <= 0
 
                 return (
-                  <label
+                  <div
                     key={topic.id}
-                    className={`bo-topic${isSelected ? ' bo-topic--active' : ''}${isDimmed ? ' bo-topic--dim' : ''}`}
-                    onClick={() => pickTopic(sessionKey, topic.id)}
+                    className={`bo-topic${isSelected ? ' bo-topic--active' : ''}${isDimmed ? ' bo-topic--dim' : ''}${isSoldOut ? ' bo-topic--soldout' : ''}`}
+                    onClick={() => toggleTopic(sessionKey, topic.id)}
+                    role="button"
+                    tabIndex={isSoldOut ? -1 : 0}
                   >
                     <input
-                      type="radio"
-                      name={sessionKey}
-                      value={topic.id}
+                      type="checkbox"
                       checked={isSelected}
-                      onChange={() => pickTopic(sessionKey, topic.id)}
+                      readOnly
                       className="bo-topic-radio"
+                      style={{ pointerEvents: 'none' }}
+                      tabIndex={-1}
                     />
                     <div className="bo-topic-body">
-                      <div className="bo-topic-title">{topic.title}</div>
+                      <div className="bo-topic-header-row">
+                        <div className="bo-topic-title">{topic.title}</div>
+                        <span className={`bo-topic-seats${isSoldOut ? ' bo-topic-seats--soldout' : seatsLeft <= 5 ? ' bo-topic-seats--low' : ''}`}>
+                          {isSoldOut ? 'Sold Out' : `${seatsLeft} seats left`}
+                        </span>
+                      </div>
                       <div className="bo-topic-speaker">
                         <span className="bo-topic-speaker-label">Speaker: </span>
                         {topic.speaker}
@@ -230,12 +318,10 @@ export default function BreakoutForm({ userData = {} }) {
                       <div className="bo-topic-desc">{topic.description}</div>
                     </div>
                     {isSelected && <div className="bo-topic-check">✓</div>}
-                  </label>
+                  </div>
                 )
               })}
             </div>
-
-            {hasErr && <p className="bo-session-error">{hasErr}</p>}
           </div>
         )
       })}

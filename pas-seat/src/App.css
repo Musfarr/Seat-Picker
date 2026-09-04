@@ -1996,8 +1996,49 @@ body {
 }
 
 .bo-topic--dim {
-  opacity: 0.38;
-  pointer-events: none;
+  opacity: 0.65;
+}
+
+.bo-topic-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.bo-topic-seats {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  background: rgba(254, 216, 0, 0.12);
+  color: #FED800;
+  border: 1px solid rgba(254, 216, 0, 0.25);
+  white-space: nowrap;
+}
+
+.bo-topic-seats--low {
+  background: rgba(255, 170, 0, 0.15);
+  color: #ffaa00;
+  border-color: rgba(255, 170, 0, 0.35);
+}
+
+.bo-topic-seats--soldout {
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff5555;
+  border-color: rgba(255, 68, 68, 0.35);
+}
+
+.bo-topic--soldout {
+  opacity: 0.45 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(0, 0, 0, 0.2) !important;
 }
 
 .bo-topic-radio {

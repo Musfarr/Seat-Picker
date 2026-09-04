@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { decryptParams } from '../utils/Decrypt'
+import { checkBreakoutToken } from '../api'
 import BreakoutForm from './BreakoutForm'
 
 export default function BreakoutPage() {
@@ -8,6 +9,8 @@ export default function BreakoutPage() {
   const [userData, setUserData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [alreadyUsed, setAlreadyUsed] = useState(false)
+  const [tokenRecord, setTokenRecord] = useState(null)
 
   useEffect(() => {
     async function loadParams() {
@@ -22,11 +25,26 @@ export default function BreakoutPage() {
             phone: '',
             companyName: '',
             bookingId: '',
+            token: '',
           })
           setLoading(false)
           return
         }
 
+        // 1. Check if token already used in DB
+        try {
+          const tokenRes = await checkBreakoutToken(encryptedData)
+          if (tokenRes?.exists) {
+            setAlreadyUsed(true)
+            setTokenRecord(tokenRes.data)
+            setLoading(false)
+            return
+          }
+        } catch (tokenErr) {
+          console.warn('Token check error:', tokenErr)
+        }
+
+        // 2. Decrypt params
         const decrypted = await decryptParams(encryptedData)
         console.log('Decrypted breakout params:', decrypted)
 
@@ -35,6 +53,7 @@ export default function BreakoutPage() {
           phone: decrypted.phone || decrypted.phone_number || '',
           companyName: decrypted.companyName || decrypted.Company_Name || '',
           bookingId: decrypted.bookingId || decrypted._id || decrypted.id || '',
+          token: encryptedData,
         }
 
         setUserData(normalized)
@@ -67,7 +86,9 @@ export default function BreakoutPage() {
           Book Your <span className="bo-header-highlight">Breakout Sessions</span>
         </h1>
         <p className="bo-header-sub">
-          {userData?.name && userData.name !== 'Attendee' ? (
+          {alreadyUsed ? (
+            'Your breakout session registration is complete.'
+          ) : userData?.name && userData.name !== 'Attendee' ? (
             <>Welcome <strong>{userData.name}</strong>! Select your breakout topics below.</>
           ) : (
             'Choose expert-led sessions on creative strategy, business leadership, and digital transformation.'
@@ -82,6 +103,27 @@ export default function BreakoutPage() {
             <div className="bo-loading" style={{ padding: '3rem 0' }}>
               <div className="bo-spinner" />
               <span className="bo-loading-text">Loading your session details...</span>
+            </div>
+          ) : alreadyUsed ? (
+            <div className="bo-done">
+              <div className="bo-done-check">✓</div>
+              <h2 className="bo-done-title">Link Already Used</h2>
+              <p className="bo-done-sub">
+                This invitation link has already been used and your breakout session pass has been generated.
+              </p>
+              {tokenRecord?.phone && (
+                <p className="bo-done-sub">
+                  Pass was sent to WhatsApp number: <strong>{tokenRecord.phone}</strong>
+                </p>
+              )}
+              {tokenRecord?.lanyardUrl && (
+                <div className="bo-done-pass">
+                  <img src={tokenRecord.lanyardUrl} alt="Breakout Pass" className="bo-done-img" />
+                  <a href={tokenRecord.lanyardUrl} download="breakout-pass.png" className="bo-done-dl">
+                    ⬇ Download Your Pass
+                  </a>
+                </div>
+              )}
             </div>
           ) : error ? (
             <div className="bo-error-card">

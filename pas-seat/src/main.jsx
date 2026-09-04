@@ -15,7 +15,7 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/form/:id" element={<CorporateForm />} />
+        <Route path="/form" element={<CorporateForm />} />
         <Route path="/breakout" element={<BreakoutPage />} />
         <Route path="/bo-broadcast" element={<BreakoutBroadcast />} />
         <Route path="/Profile/:id" element={<Profile />} />
