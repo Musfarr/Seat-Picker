@@ -200,7 +200,7 @@ export default function App() {
         setProcessStep('Sending your pass via WhatsApp...')
 
         try {
-          await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl })
+          await sendLanyardWhatsapp({ contactNumber: paramData.phone_number, lanyardUrl, name: paramData.Full_Name })
         } catch (whatsappErr) {
           console.error('WhatsApp send failed:', whatsappErr)
           setWhatsappError('WhatsApp delivery failed. Please download your pass below.')

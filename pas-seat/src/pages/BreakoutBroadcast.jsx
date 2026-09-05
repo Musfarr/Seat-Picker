@@ -64,6 +64,7 @@ export default function BreakoutBroadcast() {
       await sendBreakoutLink({
         contactNumber: booking.phone,
         link,
+        name: booking.name || ''
       })
       setStatuses(prev => ({ ...prev, [id]: 'sent' }))
     } catch (err) {

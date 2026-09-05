@@ -10,8 +10,8 @@ axios.interceptors.request.use((config) => {
   return config
 })
 
-const LOGIN_URL = 'https://qaomni.convexinteractive.com/api/auth/client/login'
-const BROADCAST_URL = 'https://qaomni.convexinteractive.com/api/broadcast/send'
+const LOGIN_URL = 'https://portal.berrytalks.com/api/auth/client/login'
+const BROADCAST_URL = 'https://broadcast.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
 
 const NGROK_BASE = 'http://localhost:8000'
@@ -33,13 +33,14 @@ const CHECK_BREAKOUT_TOKEN_URL = `${NGROK_BASE}/api/check-breakout-token`
 const SAVE_BREAKOUT_TOKEN_URL = `${NGROK_BASE}/api/save-breakout-token`
 
 const LINK_TEMPLATE_ID = '2439716791418701'  // update to your text/link template ID
-const BREAKOUT_LINK_TEMPLATE_ID = '1015900957923860'
+const BREAKOUT_LINK_TEMPLATE_ID = '1399548372121724'
+// const BREAKOUT_LINK_TEMPLATE_ID = '1015900957923860'
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
 
-const LOGIN_EMAIL = 'newtestuser@google.com'
-const LOGIN_PASSWORD = 'Agent@12'
+const LOGIN_EMAIL = 'apipasnew@yopmail.com'
+const LOGIN_PASSWORD = 'Admin@321'
 
 const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1787225469897-40511096.jpg'
 
@@ -92,21 +93,28 @@ async function getAccessToken() {
 }
 
 /* Send lanyard image via WhatsApp */
-export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl }) {
+export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl, name }) {
   const accessToken = await getAccessToken()
   await axios.post(
     BROADCAST_URL,
     {
       to: contactNumber,
-      templateId: '2215703832410519',
+      templateId: '1732526118876194',
       param: [
         {
-          parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image' }],
+          parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image', mediaId: null }],
           componentType: 'header',
           buttonType: null,
           index: null,
         },
+        {
+          parameters: [{ value: name, type: "text", mediaId: null }],
+          componentType: "body",
+          buttonType: null,
+          index: null
+        }
       ],
+      flowToken: null
     },
     { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
   )
@@ -219,7 +227,7 @@ export async function createBooking(payload) {
 }
 
 /* Send breakout session invite link via WhatsApp (Template 1015900957923860 - 1 text param) */
-export async function sendBreakoutLink({ contactNumber, link }) {
+export async function sendBreakoutLink({ contactNumber, link, name }) {
   const accessToken = await getAccessToken()
   await axios.post(
     BROADCAST_URL,
@@ -228,7 +236,7 @@ export async function sendBreakoutLink({ contactNumber, link }) {
       templateId: BREAKOUT_LINK_TEMPLATE_ID,
       param: [
         {
-          parameters: [{ value: link, type: 'text' }],
+          parameters: [{ value: ' ' + name, type: "text", mediaId: null }, { value: link, type: 'text' }],
           componentType: 'body',
           buttonType: null,
           index: null,

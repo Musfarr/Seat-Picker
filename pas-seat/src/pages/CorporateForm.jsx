@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
 import { allocateCorporateSeat, createBooking, uploadFile, sendLanyardWhatsapp } from '../api'
@@ -8,11 +8,11 @@ import { generateLanyard } from '../generateLanyard'
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
 
 const FIELDS = [
-  { name: 'Full_Name',    label: 'Full Name',       type: 'text',  required: true,  placeholder: 'John Doe' },
-  { name: 'CNIC_Number',  label: 'CNIC Number',     type: 'text',  required: true,  placeholder: '41323-1393332-4' },
-  { name: 'phone_number', label: 'Phone Number',    type: 'tel',   required: true,  placeholder: '923344342234' },
-  { name: 'Company_Name', label: 'Company Name',    type: 'text',  required: true,  placeholder: 'Acme Corp' },
-  { name: 'Designation',  label: 'Designation',     type: 'text',  required: true,  placeholder: 'Engineer' },
+  { name: 'Full_Name', label: 'Full Name', type: 'text', required: true, placeholder: 'John Doe' },
+  { name: 'CNIC_Number', label: 'CNIC Number', type: 'text', required: true, placeholder: '41323-1393332-4' },
+  { name: 'phone_number', label: 'Phone Number', type: 'tel', required: true, placeholder: '923344342234' },
+  { name: 'Company_Name', label: 'Company Name', type: 'text', required: true, placeholder: 'Acme Corp' },
+  { name: 'Designation', label: 'Designation', type: 'text', required: true, placeholder: 'Engineer' },
 ]
 
 function validateForm(form) {
@@ -151,7 +151,7 @@ export default function CorporateForm() {
 
       setStep('Sending your pass via WhatsApp...')
       try {
-        await sendLanyardWhatsapp({ contactNumber: form.phone_number, lanyardUrl })
+        await sendLanyardWhatsapp({ contactNumber: form.phone_number, lanyardUrl, name: form.Full_Name })
       } catch (whatsappErr) {
         console.error('WhatsApp send failed:', whatsappErr)
         setError('WhatsApp delivery failed. Please download your pass below.')
@@ -203,7 +203,7 @@ export default function CorporateForm() {
     <div className="corp-page">
 
       <div className='toplogo'>
-        <img style = {{ width:'120px'}} src='/logo.png'  />
+        <img style={{ width: '120px' }} src='/logo.png' />
       </div>
 
       <div className="corp-card">

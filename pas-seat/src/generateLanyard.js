@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1787225469897-40511096.jpg'
+const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1788528883475-16966852.png'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -12,9 +12,6 @@ function loadImage(src) {
 
 export async function generateLanyard({
   name,
-  cnic,
-  seatNumber,
-  seatNumbers,
   imageUrl,
   image,
   designation,
@@ -41,10 +38,10 @@ export async function generateLanyard({
   // Draw template image as background
   ctx.drawImage(template, 0, 0, W, H)
 
-  // ── Profile photo (top-mid left circle) ──
-  const photoCX = Math.round(W * 0.32)
-  const photoCY = Math.round(H * 0.34)
-  const photoR = Math.round(W * 0.175)
+  // ── Profile photo (top center circle) ──
+  const photoCX = Math.round(W * 0.5)
+  const photoCY = Math.round(H * 0.312)
+  const photoR = Math.round(W * 0.2435)
 
   if (userPhoto) {
     try {
@@ -76,11 +73,11 @@ export async function generateLanyard({
       ctx.save()
       ctx.beginPath()
       ctx.arc(photoCX, photoCY, photoR, 0, Math.PI * 2)
-      ctx.lineWidth = Math.round(W * 0.007)
+      ctx.lineWidth = Math.round(W * 0.009)
       ctx.strokeStyle = '#FED800'
       ctx.stroke()
       ctx.restore()
-    } catch (_) {
+    } catch {
       // photo failed to load — skip
     }
   }
@@ -89,14 +86,16 @@ export async function generateLanyard({
     if (document.fonts?.ready) {
       await document.fonts.ready
     }
-  } catch (_) { }
+  } catch {
+    // fonts ready check failed — proceed
+  }
 
-  // ── Text Left Alignment ──
-  ctx.textAlign = 'left'
+  // ── Text Centered Alignment under image ──
+  ctx.textAlign = 'center'
   ctx.shadowColor = 'rgba(0,0,0,0.85)'
   ctx.shadowBlur = 4
-  const textX = Math.round(W * 0.08)
-  const maxTextW = Math.round(W * 0.48)
+  const textX = Math.round(W * 0.5)
+  const maxTextW = Math.round(W * 0.82)
 
   // Helper for auto-scaling text to fit container
   function drawFittedText(
@@ -120,60 +119,73 @@ export async function generateLanyard({
     return fontSize
   }
 
-  // ── Name below photo (Yellow with varsity/octagonal font) ──
-  const nameY = Math.round(H * 0.555)
-  if (name) {
+  // ── Name & Designation below photo ──
+  const hasName = Boolean(name && name.trim())
+  const hasDesig = Boolean(designation && designation.trim())
+  const hasCompany = Boolean(companyName && companyName.trim())
+  const totalLines = (hasName ? 1 : 0) + (hasDesig ? 1 : 0) + (hasCompany ? 1 : 0)
+
+  let startY
+  if (totalLines === 3) {
+    startY = Math.round(H * 0.540)
+  } else if (totalLines === 2) {
+    startY = Math.round(H * 0.555)
+  } else {
+    startY = Math.round(H * 0.575)
+  }
+
+  let currentY = startY
+
+  if (hasName) {
     drawFittedText(
-      name.toUpperCase(),
+      name.trim().toUpperCase(),
       textX,
-      nameY,
+      currentY,
       maxTextW,
-      Math.round(W * 0.056),
+      Math.round(W * 0.054),
       'bold',
       '#FED800',
       '"Jersey 25", "Chakra Petch", "Graduate", "Arial Black", sans-serif'
     )
+    currentY += Math.round(H * 0.038)
   }
 
-  // ── Designation (White) ──
-  const desigY = nameY + Math.round(H * 0.038)
-  if (designation) {
+  if (hasDesig) {
     drawFittedText(
-      designation,
+      designation.trim(),
       textX,
-      desigY,
+      currentY,
       maxTextW,
-      Math.round(W * 0.038),
+      Math.round(W * 0.035),
       'bold',
       '#FFFFFF',
-      '"Arial", "Montserrat", sans-serif'
+      '"Montserrat", "Arial", sans-serif'
     )
+    currentY += Math.round(H * 0.033)
   }
 
-  // ── Company below Designation (White) ──
-  const companyY = desigY + Math.round(H * 0.032)
-  if (companyName) {
+  if (hasCompany) {
     drawFittedText(
-      companyName,
+      companyName.trim(),
       textX,
-      companyY,
+      currentY,
       maxTextW,
-      Math.round(W * 0.034),
+      Math.round(W * 0.031),
       '500',
-      'rgba(255, 255, 255, 0.95)',
-      '"Arial", "Montserrat", sans-serif'
+      'rgba(255, 255, 255, 0.92)',
+      '"Montserrat", "Arial", sans-serif'
     )
   }
 
   ctx.shadowBlur = 0
 
-  // ── QR Code (Bottom Left: Yellow + Transparent + Yellow Border) ──
+  // ── QR Code (Bottom Left: Yellow + Transparent + Yellow Border, on left of 'THE MADNESS AWAITS') ──
   if (lanyardQrUrl) {
     try {
       const qrImg = await loadImage(lanyardQrUrl)
-      const qrX = Math.round(W * 0.078)
-      const qrY = Math.round(H * 0.842)
-      const qrSize = Math.round(W * 0.145)
+      const qrSize = Math.round(W * 0.165)
+      const qrX = Math.round(W * 0.058)
+      const qrY = Math.round(H * 0.828)
 
       // Transform QR image to yellow modules with transparent background
       const qrCanvas = document.createElement('canvas')
@@ -223,7 +235,7 @@ export async function generateLanyard({
       }
       ctx.stroke()
       ctx.restore()
-    } catch (_) {
+    } catch {
       // QR failed to load — skip
     }
   }
