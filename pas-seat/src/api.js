@@ -14,7 +14,7 @@ const LOGIN_URL = 'https://portal.berrytalks.com/api/auth/client/login'
 const BROADCAST_URL = 'https://broadcast.convexinteractive.com/api/broadcast/send'
 const TEMPLATE_ID = '1349276167308607'
 
-const NGROK_BASE = 'http://localhost:8000'
+const NGROK_BASE = 'https://madsemble.convexinteractive.com'
 
 const SEATS_URL = `${NGROK_BASE}/api/seats-data`
 const BOOK_URL = `${NGROK_BASE}/api/book-seat`
