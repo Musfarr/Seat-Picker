@@ -201,7 +201,7 @@ export default function ReservedBooking() {
         image: PAS_LOGO_URL,
       })
 
-      const profileUrl = `https://effie.convexinteractive.com/Profile/${booking}`
+      const profileUrl = window.location.origin + `/Profile/${booking}`
       const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
       const qrBlob = await (await fetch(qrDataUrl)).blob()
       const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${booking}.png`)
@@ -272,7 +272,7 @@ export default function ReservedBooking() {
         Designation: designation.trim() || undefined,
       })
 
-      const formLink = `https://effie.convexinteractive.com/form/${key}`
+      const formLink = window.location.origin + `/form/${key}`
 
       setStep('Generating QR code...')
       const qrDataUrl = await QRCode.toDataURL(formLink, { width: 512, margin: 5 })
@@ -441,7 +441,7 @@ export default function ReservedBooking() {
 
           <FormField
             label="Phone Number" value={phone} onChange={setPhone}
-            placeholder="923XXXXXXXXX" 
+            placeholder="923XXXXXXXXX"
           />
 
           {flow === 'individual' && (

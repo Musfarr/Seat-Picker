@@ -88,7 +88,7 @@ export default function BulkInviteGenerator() {
       })
 
       setCurOp(`[${i + 1}/${total}] Generating QR for ${seat}...`)
-      const profileUrl = `https://effie.convexinteractive.com/Profile/${booking}`
+      const profileUrl = window.location.origin + `/Profile/${booking}`
       const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
       const qrBlob = await (await fetch(qrDataUrl)).blob()
       const { url: lanyardQrUrl } = await uploadFile(qrBlob, `bqr-${booking}.png`)

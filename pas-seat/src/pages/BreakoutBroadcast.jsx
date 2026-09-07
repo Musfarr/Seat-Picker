@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getAllBookings, sendBreakoutLink } from '../api'
 import { encryptParams } from '../utils/Encrypt'
 
-const BASE_BREAKOUT_URL = 'https://effie.convexinteractive.com/breakout'
+const BASE_BREAKOUT_URL = window.location.origin + '/breakout'
 
 export default function BreakoutBroadcast() {
   const [bookings, setBookings] = useState([])

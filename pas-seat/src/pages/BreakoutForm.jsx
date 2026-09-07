@@ -153,7 +153,7 @@ export default function BreakoutForm({ userData = {} }) {
 
       // 2. Generate QR code
       setStep('Generating QR code...')
-      const profileUrl = `https://effie.convexinteractive.com/Profile/${activeBookingId}`
+      const profileUrl = window.location.origin + `/Profile/${activeBookingId}`
       const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
       const qrBlob = await (await fetch(qrDataUrl)).blob()
       const { url: lanyardQrUrl } = await uploadFile(qrBlob, `breakout-qr-${activeBookingId}.png`)

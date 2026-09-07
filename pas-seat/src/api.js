@@ -24,9 +24,9 @@ const BOOKING_DATA_URL = `${NGROK_BASE}/api/booking-data`
 const ADD_BOOKING_URL = `${NGROK_BASE}/api/booking-add`
 const GET_BOOKINGS_URL = `${NGROK_BASE}/api/bookings`
 const UPDATE_BOOKING_URL = `${NGROK_BASE}/api/booking-update`
-const CHECK_TOKEN_URL = 'https://local/api/check-token'
-const SAVE_TOKEN_URL = 'https://local/api/save-token'
-const RESERVED_EMAIL_URL = 'https://local/api/send-reserved-email'
+const CHECK_TOKEN_URL = `${NGROK_BASE}/api/check-token`
+const SAVE_TOKEN_URL = `${NGROK_BASE}/api/save-token`
+const RESERVED_EMAIL_URL = `${NGROK_BASE}/api/send-reserved-email`
 
 const BREAKOUT_CAPACITIES_URL = `${NGROK_BASE}/api/breakout-capacities`
 const CHECK_BREAKOUT_TOKEN_URL = `${NGROK_BASE}/api/check-breakout-token`
@@ -196,22 +196,36 @@ export async function uploadFile(blob, fileName = 'lanyard.png') {
 }
 
 export async function getBookingData(userId) {
-  const res = await axios.post(BOOKING_DATA_URL, { UserId: userId }, {
+  try {
+    const res = await axios.post(BOOKING_DATA_URL, { UserId: userId, id: userId }, {
+      headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
+    })
+    return res.data?.data || res.data?.booking || res.data
+  } catch (err) {
+    try {
+      const getRes = await axios.get(`${BOOKING_DATA_URL}/${userId}`, {
+        headers: { ...NGROK_HEADERS },
+      })
+      return getRes.data?.data || getRes.data?.booking || getRes.data
+    } catch {
+      throw err
+    }
+  }
+}
+
+export async function checkToken(token) {
+  const res = await axios.post(CHECK_TOKEN_URL, { token }, {
     headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }
 
-export async function checkToken(token) {
-  const res = await axios.post(CHECK_TOKEN_URL, { token }, {
-    headers: { 'Content-Type': 'application/json' },
-  })
-  return res.data
-}
-
-export async function saveToken(token, userId) {
-  const res = await axios.post(SAVE_TOKEN_URL, { token, userId }, {
-    headers: { 'Content-Type': 'application/json' },
+export async function saveToken(payloadOrToken, userId) {
+  const payload = typeof payloadOrToken === 'string'
+    ? { token: payloadOrToken, userId }
+    : payloadOrToken
+  const res = await axios.post(SAVE_TOKEN_URL, payload, {
+    headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
 }

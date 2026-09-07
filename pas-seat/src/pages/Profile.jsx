@@ -6,35 +6,57 @@ import '../App.css'
 export default function Profile() {
   const { id } = useParams()
   const [booking, setBooking] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(Boolean(id))
+  const [error, setError] = useState(id ? '' : 'No pass ID provided')
 
   useEffect(() => {
     if (!id) return
-    setLoading(true)
-    getBookingData(id)
-      .then(data => {
+
+    let isMounted = true
+
+    async function fetchProfile() {
+      try {
+        const res = await getBookingData(id)
+        if (!isMounted) return
+
+        let data = res?.data?.data || res?.data?.booking || res?.data || res?.booking || res
         if (Array.isArray(data) && data.length > 0) {
-          setBooking(data[0])
-        } else if (data && !Array.isArray(data)) {
+          data = data[0]
+        }
+
+        if (data && typeof data === 'object' && (data._id || data.name || data.phone || data.corporateId)) {
           setBooking(data)
         } else {
-          setError('No booking found')
+          setError('No pass record found for this QR code')
         }
-      })
-      .catch(err => {
+      } catch (err) {
+        if (!isMounted) return
         console.error('Failed to load booking:', err)
-        setError(err?.response?.data?.message || err.message || 'Failed to load booking')
-      })
-      .finally(() => setLoading(false))
+        setError(err?.response?.data?.message || err.message || 'Failed to load booking details')
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchProfile()
+
+    return () => {
+      isMounted = false
+    }
   }, [id])
 
   if (loading) {
     return (
-      <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner-card">
-          <div className="spinner" />
-          <p className="spinner-step">Loading profile...</p>
+      <div className="profile-page">
+        <div className="profile-header" style={{ marginBottom: '1.5rem' }}>
+          <img src="/logo.png" alt="PAS Logo" className="profile-logo" />
+        </div>
+        <div className="corp-card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+          <div className="corp-spinner" style={{ margin: '0 auto 1rem' }} />
+          <h2 className="corp-title" style={{ fontSize: '1.2rem' }}>Verifying Attendee Pass...</h2>
+          <p className="corp-subtitle" style={{ margin: 0 }}>Scanning registration record</p>
         </div>
       </div>
     )
@@ -42,150 +64,178 @@ export default function Profile() {
 
   if (error || !booking) {
     return (
-      <div className="app-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-        <div className="confirm-content" style={{ maxWidth: 400 }}>
-          <h2 className="confirm-title" style={{ color: '#fca5a5' }}>Not Found</h2>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: '1rem 0' }}>
-            {error || 'Booking not found'}
-          </p>
+      <div className="profile-page">
+        <div className="profile-container">
+          <div className="profile-header">
+            <img src="/logo.png" alt="PAS Logo" className="profile-logo" />
+            <h1 className="profile-event-title">MADSEMBLE 2026</h1>
+            <p className="profile-event-sub">PAS Marketing Summit</p>
+          </div>
+
+          <div className="profile-card" style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <div className="corp-exhausted-icon" style={{ margin: '0 auto 1rem' }}>✕</div>
+            <h2 className="corp-title" style={{ color: '#ff6b9d' }}>Pass Not Found</h2>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', marginTop: '0.5rem', lineHeight: 1.6 }}>
+              {error || 'No booking record found for this QR code.'}
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '1.25rem' }}>
+              Please check the QR code or verify with the Madsemble event desk.
+            </p>
+          </div>
         </div>
       </div>
     )
   }
 
+  const formattedDate = booking.createdAt
+    ? new Date(booking.createdAt).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+    : null
+
+  const passTypeLabel = booking.type
+    ? `${booking.type.toUpperCase()} DELEGATE`
+    : 'OFFICIAL DELEGATE'
+
   return (
-    <div className="app-bg" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
-      <div style={{ maxWidth: 500, margin: '0 auto' }}>
+    <div className="profile-page">
+      <div className="profile-container">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ color: 'rgb(254, 242, 194)', fontSize: '1.8rem', fontWeight: 'bold', margin: '0 0 0.5rem' }}>
-            EFFIE AWARDS
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', margin: 0 }}>
-            Gala Night 2026
-          </p>
+        <div className="profile-header">
+          <img src="/logo.png" alt="PAS Logo" className="profile-logo" />
+          <h1 className="profile-event-title">MADSEMBLE 2026</h1>
+          {/* <p className="profile-event-sub">PAS Marketing Summit • Presented by EBM</p> */}
         </div>
 
-        {/* Profile Card */}
-        <div className="confirm-content" style={{ padding: '2rem' }}>
-          {/* Profile Image */}
-          {booking.image && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-              <img 
-                src={booking.image} 
-                alt={booking.name || 'Profile'} 
-                style={{ 
-                  width: 120, 
-                  height: 120, 
-                  borderRadius: '50%', 
-                  objectFit: 'cover',
-                  border: '3px solid rgb(254, 242, 194)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                }} 
-              />
-            </div>
-          )}
+        {/* Main Pass Card */}
+        <div className="profile-card">
+          {/* Active Verified Badge */}
+          <div className="profile-status-badge">
+            <span className="profile-status-dot" />
+            VERIFIED DIGITAL PASS
+          </div>
 
-          {/* Name */}
-          <h2 style={{ 
-            color: 'rgb(254, 242, 194)', 
-            fontSize: '1.5rem', 
-            fontWeight: 'bold', 
-            textAlign: 'center',
-            margin: '0 0 0.5rem',
-            textTransform: 'uppercase'
-          }}>
-            {booking.name || 'Guest'}
+          {/* Profile Photo */}
+          <div className="profile-avatar-wrap">
+            {booking.image ? (
+              <img
+                src={booking.image}
+                alt={booking.name || 'Attendee'}
+                className="profile-avatar"
+              />
+            ) : (
+              <div className="profile-avatar-placeholder">
+                {(booking.name || 'A').charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+
+          {/* Attendee Name */}
+          <h2 className="profile-name">
+            {booking.name || 'ATTENDEE'}
           </h2>
 
-          {/* Company Name */}
+          {/* Designation */}
+          {booking.designation && (
+            <p className="profile-designation">
+              {booking.designation}
+            </p>
+          )}
+
+          {/* Company */}
           {booking.companyName && (
-            <p style={{ 
-              color: 'rgba(255,255,255,0.75)', 
-              fontSize: '0.95rem', 
-              textAlign: 'center',
-              margin: '0 0 2rem'
-            }}>
+            <p className="profile-company">
               {booking.companyName}
             </p>
           )}
 
-          {/* Info Grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Seat Number */}
-            <div style={{ 
-              background: 'rgba(254, 242, 194, 0.1)', 
-              borderRadius: 8, 
-              padding: '1rem',
-              border: '1px solid rgba(254, 242, 194, 0.2)'
-            }}>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', margin: '0 0 0.25rem', letterSpacing: '0.05em' }}>
-                SEAT NUMBER
-              </p>
-              <p style={{ color: 'rgb(254, 242, 194)', fontSize: '1.3rem', fontWeight: 'bold', margin: 0 }}>
-                {booking.seatNumber || 'N/A'}
-              </p>
-            </div>
+          {/* Pass Type Badge */}
+          {/* <div className="profile-type-tag">
+            {passTypeLabel}
+          </div> */}
 
-            {/* CNIC */}
-            {booking.cnic && (
-              <div style={{ 
-                background: 'rgba(255,255,255,0.05)', 
-                borderRadius: 8, 
-                padding: '0.875rem 1rem',
-                border: '1px solid rgba(255,255,255,0.1)'
-              }}>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', margin: '0 0 0.25rem', letterSpacing: '0.05em' }}>
-                  CNIC NUMBER
-                </p>
-                <p style={{ color: '#fff', fontSize: '1rem', margin: 0 }}>
-                  {booking.cnic}
-                </p>
+          {/* Details Grid */}
+          <div className="profile-grid">
+            {/* Seat Number or Access */}
+            {/* <div className={`profile-grid-item ${booking.seatNumber ? 'profile-grid-highlight' : ''}`}>
+              <span className="profile-item-label">
+                {booking.seatNumber ? 'Seat Number' : 'Access Level'}
+              </span>
+              <span className={`profile-item-val ${booking.seatNumber ? 'profile-item-val-highlight' : ''}`}>
+                {booking.seatNumber || 'All Access Pass'}
+              </span>
+            </div> */}
+
+            {/* Company Name */}
+            {booking.companyName && (
+              <div className="profile-grid-item">
+                <span className="profile-item-label">Organization</span>
+                <span className="profile-item-val">{booking.companyName}</span>
               </div>
             )}
 
             {/* Phone */}
             {booking.phone && (
-              <div style={{ 
-                background: 'rgba(255,255,255,0.05)', 
-                borderRadius: 8, 
-                padding: '0.875rem 1rem',
-                border: '1px solid rgba(255,255,255,0.1)'
-              }}>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', margin: '0 0 0.25rem', letterSpacing: '0.05em' }}>
-                  PHONE NUMBER
-                </p>
-                <p style={{ color: '#fff', fontSize: '1rem', margin: 0 }}>
-                  {booking.phone}
-                </p>
+              <div className="profile-grid-item">
+                <span className="profile-item-label">Contact</span>
+                <span className="profile-item-val">{booking.phone}</span>
               </div>
             )}
 
-            {/* Type Badge */}
-            {booking.type && (
-              <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
-                <span style={{
-                  display: 'inline-block',
-                  background: 'rgba(251,191,36,0.15)',
-                  color: 'rgb(251,191,36)',
-                  padding: '0.5rem 1.25rem',
-                  borderRadius: 20,
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                  letterSpacing: '0.05em',
-                  border: '1px solid rgba(251,191,36,0.3)'
-                }}>
-                  {booking.type.toUpperCase()}
+            {/* CNIC */}
+            {/* {booking.cnic && (
+              <div className="profile-grid-item">
+                <span className="profile-item-label">CNIC / ID</span>
+                <span className="profile-item-val">{booking.cnic}</span>
+              </div>
+            )} */}
+
+            {/* Pass ID */}
+            {/* {booking._id && (
+              <div className="profile-grid-item">
+                <span className="profile-item-label">Pass Ref #</span>
+                <span className="profile-item-val" style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                  {String(booking._id).slice(-8).toUpperCase()}
                 </span>
+              </div>
+            )} */}
+
+            {/* Registration Date */}
+            {formattedDate && (
+              <div className="profile-grid-item">
+                <span className="profile-item-label">Issued On</span>
+                <span className="profile-item-val">{formattedDate}</span>
               </div>
             )}
           </div>
+
+          {/* Lanyard Download Action */}
+          {booking.lanyardUrl && (
+            <div className="profile-lanyard-action">
+              <a
+                href={booking.lanyardUrl}
+                target="_blank"
+                rel="noreferrer"
+                download="madsemble-pass.png"
+                className="profile-pass-btn"
+              >
+                📥 View / Download Lanyard Pass
+              </a>
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: '2rem', color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>
-          <p style={{ margin: 0 }}>SATURDAY, 5PM • 25TH APRIL 2026</p>
-          <p style={{ margin: '0.25rem 0 0' }}>EXPO CENTER KARACHI</p>
+        {/* Event Details Footer */}
+        <div className="profile-footer">
+          <p style={{ margin: 0, fontWeight: 700 }}>THE MADNESS AWAITS</p>
+          <p style={{ margin: '0.25rem 0' }}>
+            <strong>7TH &amp; 8TH OCTOBER 2026</strong> • THE NISHAT HOTEL, LAHORE
+          </p>
+          <p style={{ margin: 0, fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)' }}>
+            Pakistan Advertisers Society • Official Event Verification
+          </p>
         </div>
       </div>
     </div>

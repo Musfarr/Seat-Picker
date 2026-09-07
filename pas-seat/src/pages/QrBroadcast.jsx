@@ -85,7 +85,7 @@ export default function QrBroadcast() {
               type="url"
               value={url}
               onChange={e => { setUrl(e.target.value); setErrors(p => ({ ...p, url: '' })) }}
-              placeholder="https://effie.convexinteractive.com/form/..."
+              placeholder={window.location.origin + '/form/...'}
               style={{ ...INPUT_STYLE, border: errors.url ? '1px solid #fca5a5' : INPUT_STYLE.border }}
             />
             {errors.url && <span style={{ color: '#fca5a5', fontSize: '0.75rem', marginTop: 4 }}>{errors.url}</span>}

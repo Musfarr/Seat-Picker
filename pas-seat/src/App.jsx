@@ -172,7 +172,7 @@ export default function App() {
 
         // create profile url
         // const profile_Url = window.location.origin + "/Profile/" + booking;
-        const profile_Url = "https://effie.convexinteractive.com" + "/Profile/" + booking;
+        const profile_Url = window.location.origin + "/Profile/" + booking;
 
 
         // create qr of Profile URL for Lanyard
@@ -229,7 +229,7 @@ export default function App() {
         })
 
         // const formLink = `${window.location.origin}/form/${key}`
-        const formLink = `https://effie.convexinteractive.com/form/${key}`
+        const formLink = `${window.location.origin}/form/${key}`
 
         setProcessStep('Generating QR code...')
         const qrDataUrl = await QRCode.toDataURL(formLink, { width: 512, margin: 5 })

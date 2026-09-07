@@ -1790,6 +1790,339 @@ body {
   border-color: #e9145c;
 }
 
+.corp-quota-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(237, 187, 58, 0.08);
+  border: 1px solid rgba(237, 187, 58, 0.25);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.corp-quota-badge strong {
+  color: #fed800;
+}
+
+.corp-quota-tag {
+  background: rgba(233, 20, 92, 0.2);
+  border: 1px solid rgba(233, 20, 92, 0.4);
+  color: #ff85af;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.corp-next-btn {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #fed800;
+  border-radius: 6px;
+  background: rgba(254, 216, 0, 0.12);
+  color: #fed800;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.18s, transform 0.15s;
+}
+
+.corp-next-btn:hover {
+  background: rgba(254, 216, 0, 0.22);
+  transform: scale(1.01);
+}
+
+.corp-exhausted-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(233, 20, 92, 0.12);
+  border: 2px solid #e9145c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: #e9145c;
+  margin-bottom: 0.25rem;
+}
+
+.corp-input-readonly {
+  background: #161616 !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  cursor: not-allowed;
+}
+
+/* ════════════════════════════════════════════
+   MADSEMBLE VERIFIED PROFILE / PASS PAGE
+════════════════════════════════════════════ */
+
+.profile-page {
+  min-height: 100vh;
+  width: 100%;
+  /* background: radial-gradient(circle at 50% 10%, #0a1435 0%, #030712 70%); */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.profile-container {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.profile-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-logo {
+  width: 110px;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+.profile-event-title {
+  color: #fed800;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.profile-event-sub {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.82rem;
+  margin: 0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.profile-card {
+  /* background: #090e1f; */
+  border: 1px solid rgba(254, 216, 0, 0.25);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  box-shadow:
+    0 0 0 1px rgba(254, 216, 0, 0.08),
+    0 30px 60px rgba(0, 0, 0, 0.75),
+    0 0 35px rgba(233, 20, 92, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #e9145c, #fed800, #00d2ff);
+}
+
+.profile-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.profile-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: pulse 2s infinite;
+}
+
+.profile-avatar-wrap {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(135deg, #fed800, #e9145c);
+  margin-bottom: 1.25rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #111;
+  display: block;
+}
+
+.profile-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #111b33;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #fed800;
+}
+
+.profile-name {
+  color: #fed800;
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-align: center;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: "Chakra Petch", "Graduate", sans-serif, -apple-system;
+}
+
+.profile-designation {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  margin: 0 0 0.2rem;
+}
+
+.profile-company {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.88rem;
+  text-align: center;
+  margin: 0 0 1rem;
+}
+
+.profile-type-tag {
+  background: rgba(254, 216, 0, 0.1);
+  border: 1px solid rgba(254, 216, 0, 0.3);
+  color: #fed800;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.profile-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-grid-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-grid-highlight {
+  background: rgba(254, 216, 0, 0.07);
+  border: 1px solid rgba(254, 216, 0, 0.3);
+}
+
+.profile-item-label {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.profile-item-val {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-all;
+}
+
+.profile-item-val-highlight {
+  color: #fed800;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.profile-lanyard-action {
+  margin-top: 1.25rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-pass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e9145c, #fed800);
+  color: #000;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(233, 20, 92, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.profile-pass-btn:hover {
+  transform: scale(1.015);
+  box-shadow: 0 6px 22px rgba(233, 20, 92, 0.5);
+}
+
+.profile-footer {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+}
+
+.profile-footer strong {
+  color: #fed800;
+}
+
 
 /* ════════════════════════════════════════════
    BREAKOUT SESSION PAGE
