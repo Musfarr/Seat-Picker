@@ -233,9 +233,9 @@ export default function Profile() {
           <p style={{ margin: '0.25rem 0' }}>
             <strong>7TH &amp; 8TH OCTOBER 2026</strong> • THE NISHAT HOTEL, LAHORE
           </p>
-          <p style={{ margin: 0, fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)' }}>
+          {/* <p style={{ margin: 0, fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)' }}>
             Pakistan Advertisers Society • Official Event Verification
-          </p>
+          </p> */}
         </div>
       </div>
     </div>

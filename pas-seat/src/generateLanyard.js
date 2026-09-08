@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1788528883475-16966852.png'
+const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1788777860499-362886397.jpg'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -40,8 +40,8 @@ export async function generateLanyard({
 
   // ── Profile photo (top center circle) ──
   const photoCX = Math.round(W * 0.5)
-  const photoCY = Math.round(H * 0.312)
-  const photoR = Math.round(W * 0.2435)
+  const photoCY = Math.round(H * 0.249)
+  const photoR = Math.round(W * 0.250)
 
   if (userPhoto) {
     try {
@@ -69,12 +69,12 @@ export async function generateLanyard({
       ctx.drawImage(photo, drawX, drawY, drawW, drawH)
       ctx.restore()
 
-      // Yellow border ring matching theme
+      // Teal / mint border ring matching template theme (#31B786)
       ctx.save()
       ctx.beginPath()
       ctx.arc(photoCX, photoCY, photoR, 0, Math.PI * 2)
-      ctx.lineWidth = Math.round(W * 0.009)
-      ctx.strokeStyle = '#FED800'
+      ctx.lineWidth = Math.round(W * 0.008)
+      ctx.strokeStyle = '#31B786'
       ctx.stroke()
       ctx.restore()
     } catch {
@@ -92,10 +92,11 @@ export async function generateLanyard({
 
   // ── Text Centered Alignment under image ──
   ctx.textAlign = 'center'
-  ctx.shadowColor = 'rgba(0,0,0,0.85)'
+  ctx.textBaseline = 'middle'
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'
   ctx.shadowBlur = 4
   const textX = Math.round(W * 0.5)
-  const maxTextW = Math.round(W * 0.82)
+  const maxTextW = Math.round(W * 0.84)
 
   // Helper for auto-scaling text to fit container
   function drawFittedText(
@@ -106,7 +107,7 @@ export async function generateLanyard({
     baseFontSize,
     fontWeight = 'bold',
     fillStyle = '#FFFFFF',
-    fontFamily = '"Arial", "Montserrat", sans-serif'
+    fontFamily = '"Montserrat", "Arial", sans-serif'
   ) {
     let fontSize = baseFontSize
     ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
@@ -127,11 +128,11 @@ export async function generateLanyard({
 
   let startY
   if (totalLines === 3) {
-    startY = Math.round(H * 0.540)
+    startY = Math.round(H * 0.435)
   } else if (totalLines === 2) {
-    startY = Math.round(H * 0.555)
+    startY = Math.round(H * 0.455)
   } else {
-    startY = Math.round(H * 0.575)
+    startY = Math.round(H * 0.475)
   }
 
   let currentY = startY
@@ -145,9 +146,9 @@ export async function generateLanyard({
       Math.round(W * 0.054),
       'bold',
       '#FED800',
-      '"Jersey 25", "Chakra Petch", "Graduate", "Arial Black", sans-serif'
+      '"Montserrat", "Chakra Petch", "Arial", sans-serif'
     )
-    currentY += Math.round(H * 0.038)
+    currentY += Math.round(H * 0.040)
   }
 
   if (hasDesig) {
@@ -157,11 +158,11 @@ export async function generateLanyard({
       currentY,
       maxTextW,
       Math.round(W * 0.035),
-      'bold',
+      '500',
       '#FFFFFF',
       '"Montserrat", "Arial", sans-serif'
     )
-    currentY += Math.round(H * 0.033)
+    currentY += Math.round(H * 0.040)
   }
 
   if (hasCompany) {
@@ -170,24 +171,38 @@ export async function generateLanyard({
       textX,
       currentY,
       maxTextW,
-      Math.round(W * 0.031),
-      '500',
-      'rgba(255, 255, 255, 0.92)',
+      Math.round(W * 0.039),
+      'bold',
+      '#FFFFFF',
       '"Montserrat", "Arial", sans-serif'
     )
   }
 
   ctx.shadowBlur = 0
 
-  // ── QR Code (Bottom Left: Yellow + Transparent + Yellow Border, on left of 'THE MADNESS AWAITS') ──
+  // ── QR Code (Bottom Right inside white card, next to 'DON\'T FORGET TO REGISTER FOR THE BREAKOUTS') ──
   if (lanyardQrUrl) {
     try {
       const qrImg = await loadImage(lanyardQrUrl)
-      const qrSize = Math.round(W * 0.165)
-      const qrX = Math.round(W * 0.058)
-      const qrY = Math.round(H * 0.828)
+      const qrSize = Math.round(W * 0.235)
+      const qrX = Math.round(W * 0.655)
+      const qrY = Math.round(H * 0.794)
 
-      // Transform QR image to yellow modules with transparent background
+      // Crisp white backing pad for high contrast & reliable scanning
+      const pad = Math.round(qrSize * 0.03)
+      const borderRadius = Math.round(qrSize * 0.04)
+      ctx.save()
+      ctx.fillStyle = '#FFFFFF'
+      ctx.beginPath()
+      if (ctx.roundRect) {
+        ctx.roundRect(qrX - pad, qrY - pad, qrSize + pad * 2, qrSize + pad * 2, borderRadius)
+      } else {
+        ctx.rect(qrX - pad, qrY - pad, qrSize + pad * 2, qrSize + pad * 2)
+      }
+      ctx.fill()
+      ctx.restore()
+
+      // Normalize QR modules to crisp black on white
       const qrCanvas = document.createElement('canvas')
       const qW = qrImg.naturalWidth || qrImg.width || 512
       const qH = qrImg.naturalHeight || qrImg.height || 512
@@ -205,36 +220,22 @@ export async function generateLanyard({
         const a = data[i + 3]
 
         const brightness = (r + g + b) / 3
-        // If dark module / QR pattern
-        if (brightness < 128 && a > 50) {
-          data[i] = 254     // R (#FED800 yellow)
-          data[i + 1] = 216 // G
-          data[i + 2] = 0   // B
-          data[i + 3] = 255 // A
+        if (brightness < 160 && a > 50) {
+          data[i] = 10     // R
+          data[i + 1] = 10 // G
+          data[i + 2] = 10 // B
+          data[i + 3] = 255
         } else {
-          // Transparent background
-          data[i + 3] = 0
+          data[i] = 255     // White
+          data[i + 1] = 255
+          data[i + 2] = 255
+          data[i + 3] = 255
         }
       }
       qrCtx.putImageData(imgData, 0, 0)
 
-      // Draw tinted QR on main canvas
+      // Draw crisp QR on main canvas
       ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize)
-
-      // Draw yellow rounded border matching mockup
-      const pad = Math.round(qrSize * 0.05)
-      const borderRadius = Math.round(qrSize * 0.08)
-      ctx.save()
-      ctx.strokeStyle = '#FED800'
-      ctx.lineWidth = Math.max(2, Math.round(W * 0.0035))
-      ctx.beginPath()
-      if (ctx.roundRect) {
-        ctx.roundRect(qrX - pad, qrY - pad, qrSize + pad * 2, qrSize + pad * 2, borderRadius)
-      } else {
-        ctx.rect(qrX - pad, qrY - pad, qrSize + pad * 2, qrSize + pad * 2)
-      }
-      ctx.stroke()
-      ctx.restore()
     } catch {
       // QR failed to load — skip
     }

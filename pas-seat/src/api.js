@@ -108,7 +108,7 @@ export async function sendLanyardWhatsapp({ contactNumber, lanyardUrl, name }) {
           index: null,
         },
         {
-          parameters: [{ value: name, type: "text", mediaId: null }],
+          parameters: [{ value: " " + name, type: "text", mediaId: null }],
           componentType: "body",
           buttonType: null,
           index: null
