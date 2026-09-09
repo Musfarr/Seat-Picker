@@ -358,8 +358,7 @@ export async function generateBreakoutLanyard({
       const startY = sessionYPositions[idx]
       let currentY = startY
 
-      // const title = s.title || 'Breakout session'
-      const title = 'Show me the Impact , Stop Chasing Vanity , Start Driving Real Value'
+      const title = s.title || 'Breakout session'
       const { lines, fontSize } = wrapTitleToLines(title, sessionMaxW, titleBaseFontSize)
       const lineHeight = Math.round(fontSize * 1.25) // ~23px
 
