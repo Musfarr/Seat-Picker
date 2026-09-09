@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { decryptParams } from '../utils/Decrypt'
-import { checkBreakoutToken } from '../api'
+import { checkBreakoutToken, getBookingData } from '../api'
 import BreakoutForm from './BreakoutForm'
 
 export default function BreakoutPage() {
@@ -52,8 +52,29 @@ export default function BreakoutPage() {
           name: decrypted.name || decrypted.Full_Name || 'Attendee',
           phone: decrypted.phone || decrypted.phone_number || '',
           companyName: decrypted.companyName || decrypted.Company_Name || '',
+          designation: decrypted.designation || decrypted.Designation || '',
+          imageUrl: decrypted.imageUrl || decrypted.Image || decrypted.image || '',
+          image: decrypted.imageUrl || decrypted.Image || decrypted.image || '',
           bookingId: decrypted.bookingId || decrypted._id || decrypted.id || '',
           token: encryptedData,
+        }
+
+        // If bookingId is present and designation or image is missing, try fetching from booking API
+        if (normalized.bookingId && (!normalized.imageUrl || !normalized.designation)) {
+          try {
+            const bData = await getBookingData(normalized.bookingId)
+            if (bData) {
+              if (!normalized.name || normalized.name === 'Attendee') normalized.name = bData.Full_Name || bData.name || normalized.name
+              if (!normalized.companyName) normalized.companyName = bData.Company_Name || bData.companyName || normalized.companyName
+              if (!normalized.designation) normalized.designation = bData.Designation || bData.designation || ''
+              if (!normalized.imageUrl) {
+                normalized.imageUrl = bData.Image || bData.image || bData.imageUrl || ''
+                normalized.image = normalized.imageUrl
+              }
+            }
+          } catch {
+            // fetch fallback failed — proceed
+          }
         }
 
         setUserData(normalized)

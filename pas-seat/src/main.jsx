@@ -16,8 +16,8 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/form" element={<CorporateForm />} />
-        {/* <Route path="/breakout" element={<BreakoutPage />} /> */}
-        {/* <Route path="/bo-broadcast" element={<BreakoutBroadcast />} /> */}
+        <Route path="/breakout" element={<BreakoutPage />} />
+        <Route path="/bo-broadcast" element={<BreakoutBroadcast />} />
         <Route path="/Profile/:id" element={<Profile />} />
         {/* <Route path="/profile/:id" element={<Profile />} /> */}
         {/* <Route path="/reserved" element={<ReservedBooking />} /> */}

@@ -43,6 +43,9 @@ export default function BreakoutBroadcast() {
       name: booking.name || 'Attendee',
       phone: booking.phone || '',
       companyName: booking.companyName || '',
+      designation: booking.designation || '',
+      imageUrl: booking.image || booking.imageUrl || '',
+      image: booking.image || booking.imageUrl || '',
       bookingId: booking._id,
     }
     const encrypted = await encryptParams(payload)

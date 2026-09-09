@@ -17,14 +17,19 @@ export default function BreakoutForm({ userData = {} }) {
     name = 'Attendee',
     phone = '',
     companyName = '',
+    designation = '',
+    imageUrl = '',
+    image = '',
     bookingId = '',
     token = '',
   } = userData
 
-  const [selectedTopics, setSelectedTopics] = useState({
-    'session-1': null,
-    'session-2': null,
-    'session-3': null,
+  const [selectedTopics, setSelectedTopics] = useState(() => {
+    const init = {}
+    breakoutSessions.forEach(s => {
+      init[s.id] = null
+    })
+    return init
   })
   const [capacities, setCapacities] = useState({})
   const [step, setStep] = useState('')
@@ -139,16 +144,32 @@ export default function BreakoutForm({ userData = {} }) {
       // 1. Update existing booking if bookingId is provided, else create new
       setStep('Saving your sessions...')
       if (activeBookingId) {
-        await updateBooking(activeBookingId, sessionPayload)
+        try {
+          await updateBooking(activeBookingId, sessionPayload)
+        } catch (updateErr) {
+          console.warn('updateBooking failed, attempting createBooking fallback:', updateErr)
+          const bookingRes = await createBooking({
+            phone: phone || '923000000000',
+            name,
+            companyName,
+            designation,
+            image: imageUrl || image,
+            type: 'Breakout',
+            ...sessionPayload,
+          })
+          activeBookingId = bookingRes?.bookingId || bookingRes?.booking || bookingRes?.data?._id || activeBookingId
+        }
       } else {
         const bookingRes = await createBooking({
           phone: phone || '923000000000',
           name,
           companyName,
+          designation,
+          image: imageUrl || image,
           type: 'Breakout',
           ...sessionPayload,
         })
-        activeBookingId = bookingRes?.bookingId || bookingRes?.booking || 'breakout'
+        activeBookingId = bookingRes?.bookingId || bookingRes?.booking || bookingRes?.data?._id || 'breakout'
       }
 
       // 2. Generate QR code
@@ -162,13 +183,22 @@ export default function BreakoutForm({ userData = {} }) {
       setStep('Generating your pass...')
       const { blob } = await generateBreakoutLanyard({
         name,
+        designation,
         companyName,
+        imageUrl: imageUrl || image,
+        image: imageUrl || image,
         session1: session1?.title,
         session1Speaker: session1?.speaker,
+        session1Venue: session1?.venue,
+        session1Description: session1?.description,
         session2: session2?.title,
         session2Speaker: session2?.speaker,
+        session2Venue: session2?.venue,
+        session2Description: session2?.description,
         session3: session3?.title,
         session3Speaker: session3?.speaker,
+        session3Venue: session3?.venue,
+        session3Description: session3?.description,
         lanyardQrUrl,
       })
 

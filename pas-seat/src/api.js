@@ -125,7 +125,7 @@ export async function sendLanyardWhatsapp2({ contactNumber, lanyardUrl }) {
     BROADCAST_URL,
     {
       to: contactNumber,
-      templateId: '1383598440372006',
+      templateId: '1557999088595623',
       param: [
         {
           parameters: [{ value: lanyardUrl || TEMPLATE_IMAGE_URL, type: 'image' }],
@@ -269,7 +269,12 @@ export async function getAllBookings() {
 }
 
 export async function updateBooking(bookingId, payload) {
-  const res = await axios.patch(`${UPDATE_BOOKING_URL}/${bookingId}`, payload, {
+  const cleanId = String(bookingId || '').trim()
+  const res = await axios.patch(`${UPDATE_BOOKING_URL}/${cleanId}`, {
+    id: cleanId,
+    bookingId: cleanId,
+    ...payload,
+  }, {
     headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
   })
   return res.data
