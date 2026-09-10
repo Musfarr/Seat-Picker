@@ -91,17 +91,15 @@ export default function BreakoutPage() {
 
   return (
     <div className="bo-page">
-      {/* Logo */}
-      <div className="toplogo">
-        <img style={{ width: '120px' }} src="/logo.png" alt="Logo" />
-      </div>
-
       {/* Decorative blobs */}
       <div className="bo-blob bo-blob--top" />
       <div className="bo-blob bo-blob--bottom" />
 
       {/* Header */}
       <header className="bo-header">
+        <div className="bo-logo-wrap" style={{ marginBottom: '1.5rem' }}>
+          <img style={{ width: '120px', maxWidth: '100%', height: 'auto' }} src="/logo.png" alt="Logo" />
+        </div>
         <p className="bo-header-eyebrow">MADsemble 2025</p>
         <h1 className="bo-header-title">
           Book Your <span className="bo-header-highlight">Breakout Sessions</span>
