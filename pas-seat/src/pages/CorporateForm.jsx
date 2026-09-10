@@ -1,7 +1,7 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { createBooking, uploadFile, sendLanyardWhatsapp, checkToken, saveToken } from '../api'
+import { createBooking, uploadFile, sendLanyardWhatsapp, checkToken, saveToken, getAllBookings } from '../api'
 import { generateLanyard } from '../generateLanyard'
 import { decryptParams } from '../utils/Decrypt'
 
@@ -231,6 +231,25 @@ export default function CorporateForm() {
 
     setUploading(true)
     try {
+      setStep('Checking phone number...')
+      const allBookings = await getAllBookings()
+      const cleanPhone = String(form.phone_number || '').trim()
+      const isDuplicate = Array.isArray(allBookings) && allBookings.some(b => {
+        const bPhone = String(b.phone || b.phone_number || '').trim()
+        return bPhone && bPhone === cleanPhone
+      })
+
+      if (isDuplicate) {
+        setError('This phone number has already been used for a booking. Please use a different phone number.')
+        setFieldErrors(prev => ({
+          ...prev,
+          phone_number: 'This phone number is already registered.',
+        }))
+        setUploading(false)
+        setStep('')
+        return
+      }
+
       setStep('Uploading your photo...')
       const { url: imageUrl } = await uploadFile(imageFile, imageFile.name)
 
