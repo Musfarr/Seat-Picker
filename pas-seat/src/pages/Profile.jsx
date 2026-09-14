@@ -1,7 +1,86 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getBookingData } from '../api'
+import { breakoutSessions } from '../data/breakoutSessions'
 import '../App.css'
+
+function extractBreakoutSessions(booking) {
+  if (!booking) return []
+
+  // Case 1: Structured array in booking.breakoutSessions
+  if (Array.isArray(booking.breakoutSessions) && booking.breakoutSessions.length > 0) {
+    return booking.breakoutSessions
+      .map((s, idx) => ({
+        slotTitle: s.slotTitle || s.slot || `Slot ${idx + 1}`,
+        time: s.time || '',
+        topicTitle: s.title || s.topicTitle || '',
+        speaker: s.speaker || '',
+        venue: s.venue || 'Imperial Ballroom A',
+        description: s.description || '',
+      }))
+      .filter(s => Boolean(s.topicTitle))
+  }
+
+  // Case 2: Array of topic IDs in booking.breakoutTopics
+  if (Array.isArray(booking.breakoutTopics) && booking.breakoutTopics.length > 0) {
+    const list = []
+    breakoutSessions.forEach(session => {
+      const topic = session.topics.find(t => booking.breakoutTopics.includes(t.id))
+      if (topic) {
+        list.push({
+          slotTitle: session.title,
+          time: session.time,
+          topicTitle: topic.title,
+          speaker: topic.speaker,
+          venue: topic.venue || 'Imperial Ballroom A',
+          description: topic.description,
+        })
+      }
+    })
+    if (list.length > 0) return list
+  }
+
+  // Case 3: Flat fields session1, session2, session3
+  const list = []
+  if (booking.session1) {
+    const s1 = breakoutSessions.find(s => s.id === 'session-1')
+    const match1 = s1?.topics.find(t => t.title?.toLowerCase() === booking.session1?.toLowerCase())
+    list.push({
+      slotTitle: s1?.title || 'Slot 1: Creative Strategy & Innovation',
+      time: s1?.time || '9:30 AM – 10:30 AM',
+      topicTitle: booking.session1,
+      speaker: booking.session1Speaker || match1?.speaker || '',
+      venue: booking.session1Venue || match1?.venue || 'Imperial Ballroom A',
+      description: match1?.description || '',
+    })
+  }
+
+  if (booking.session2) {
+    const s2 = breakoutSessions.find(s => s.id === 'session-2')
+    const match2 = s2?.topics.find(t => t.title?.toLowerCase() === booking.session2?.toLowerCase())
+    list.push({
+      slotTitle: s2?.title || 'Slot 2: Leadership & Business Growth',
+      time: s2?.time || '10:45 AM – 11:45 AM',
+      topicTitle: booking.session2,
+      speaker: booking.session2Speaker || match2?.speaker || '',
+      venue: booking.session2Venue || match2?.venue || 'Imperial Ballroom A',
+      description: match2?.description || '',
+    })
+  }
+
+  if (booking.session3) {
+    list.push({
+      slotTitle: 'Slot 3: Breakout Session',
+      time: '',
+      topicTitle: booking.session3,
+      speaker: booking.session3Speaker || '',
+      venue: booking.session3Venue || 'Imperial Ballroom A',
+      description: '',
+    })
+  }
+
+  return list
+}
 
 export default function Profile() {
   const { id } = useParams()
@@ -98,6 +177,8 @@ export default function Profile() {
   const passTypeLabel = booking.type
     ? `${booking.type.toUpperCase()} DELEGATE`
     : 'OFFICIAL DELEGATE'
+
+  const confirmedBreakouts = extractBreakoutSessions(booking)
 
   return (
     <div className="profile-page">
@@ -210,6 +291,56 @@ export default function Profile() {
               </div>
             )}
           </div>
+
+          {/* Confirmed Breakout Sessions */}
+          {confirmedBreakouts.length > 0 && (
+            <div className="profile-breakout-section">
+              <div className="profile-breakout-badge">
+                <span className="profile-breakout-dot" />
+                CONFIRMED BREAKOUT SESSIONS
+              </div>
+
+              <div className="profile-breakout-list">
+                {confirmedBreakouts.map((session, idx) => (
+                  <div key={idx} className="profile-breakout-card">
+                    <div className="profile-breakout-card-header">
+                      <span className="profile-breakout-slot-badge">
+                        {session.slotTitle ? session.slotTitle.split(':')[0] : `Slot ${idx + 1}`}
+                      </span>
+                      {session.time && (
+                        <span className="profile-breakout-time-tag">
+                          {session.time}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="profile-breakout-topic-title">
+                      {session.topicTitle}
+                    </h4>
+
+                    <div className="profile-breakout-details">
+                      {session.speaker && (
+                        <div className="profile-breakout-detail-row">
+                          <span className="profile-breakout-detail-label">Speaker</span>
+                          <span className="profile-breakout-detail-val profile-breakout-speaker-val">
+                            {session.speaker}
+                          </span>
+                        </div>
+                      )}
+                      {session.venue && (
+                        <div className="profile-breakout-detail-row">
+                          <span className="profile-breakout-detail-label">Room</span>
+                          <span className="profile-breakout-detail-val">
+                            {session.venue}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Lanyard Download Action */}
           {booking.lanyardUrl && (

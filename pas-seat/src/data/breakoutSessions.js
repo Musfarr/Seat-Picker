@@ -25,6 +25,13 @@ export const breakoutSessions = [
         description: 'What defines award-winning creative work and how to achieve it',
         venue: "Imperial Ballroom A"
       },
+      {
+        id: 's3-t1',
+        title: 'Sustainability in Marketing',
+        speaker: 'Thomas Kolster',
+        description: 'Where marketing, business and sustainability intersect',
+        venue: "Imperial Ballroom A"
+      },
     ],
   },
   {
@@ -53,20 +60,6 @@ export const breakoutSessions = [
         description: 'How to lead marketing teams and drive business impact',
         venue: "Imperial Ballroom A"
       },
-    ],
-  },
-  {
-    id: 'session-3',
-    title: 'Session 3: Digital Transformation & Future Trends',
-    time: '2:30 PM – 4:00 PM',
-    topics: [
-      {
-        id: 's3-t1',
-        title: 'Sustainability in Marketing',
-        speaker: 'Thomas Kolster',
-        description: 'Where marketing, business and sustainability intersect',
-        venue: "Imperial Ballroom A"
-      },
       {
         id: 's3-t2',
         title: 'E-commerce & Digital Ecosystems',
@@ -74,13 +67,7 @@ export const breakoutSessions = [
         description: 'Building and scaling digital platforms for the future',
         venue: "Imperial Ballroom A"
       },
-      {
-        id: 's3-t3',
-        title: 'Digital Marketing Mastery',
-        speaker: 'Faisal Sheikh',
-        description: 'Cutting-edge digital strategies and emerging technologies',
-        venue: "Imperial Ballroom A"
-      },
     ],
   },
+
 ]

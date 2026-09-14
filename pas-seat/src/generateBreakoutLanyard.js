@@ -349,7 +349,7 @@ export async function generateBreakoutLanyard({
     if (availableSessions.length >= 3) {
       sessionYPositions = [1355, 1455, 1555]
     } else if (availableSessions.length === 2) {
-      sessionYPositions = [1390, 1510]
+      sessionYPositions = [1385, 1515]
     } else {
       sessionYPositions = [1450]
     }
@@ -377,11 +377,12 @@ export async function generateBreakoutLanyard({
         currentY += lineHeight
       })
 
-      // Draw Room line immediately below title
-      const rawVenue = (s.venue || s.speaker || s.description || 'Imperial Ballroom A').trim()
+      // Draw Room & Speaker line immediately below title
+      const rawVenue = (s.venue || 'Imperial Ballroom A').trim()
       const cleanVenue = rawVenue.replace(/^Room:\s*/i, '').replace(/^Venue:\s*/i, '').trim() || 'Imperial Ballroom A'
+      const venueAndSpeaker = s.speaker ? `${cleanVenue} • ${s.speaker}` : cleanVenue
 
-      const roomFontSize = Math.round(W * 0.028) // ~16px
+      const roomFontSize = Math.round(W * 0.026) // ~16px
       const roomLabel = 'Room: '
 
       ctx.font = `bold ${roomFontSize}px ${titleFontFamily}`
@@ -392,7 +393,7 @@ export async function generateBreakoutLanyard({
       const maxVenueW = sessionMaxW - labelW
 
       drawFittedText(
-        cleanVenue,
+        venueAndSpeaker,
         sessionLeftX + labelW,
         currentY,
         maxVenueW,

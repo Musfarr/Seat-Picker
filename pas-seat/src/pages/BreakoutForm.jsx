@@ -70,11 +70,14 @@ export default function BreakoutForm({ userData = {} }) {
     setError('')
   }
 
-  // Validate: At least 1 session must be selected out of 3
+  // Validate: User can select 1 topic from each session
   function validate() {
-    const hasAtLeastOne = Object.values(selectedTopics).some(Boolean)
-    if (!hasAtLeastOne) {
-      return 'Please select at least 1 session topic to continue.'
+    const unselected = breakoutSessions.filter(s => !selectedTopics[s.id])
+    if (unselected.length > 0) {
+      if (unselected.length === breakoutSessions.length) {
+        return 'Please select 1 topic from each session to continue.'
+      }
+      return `Please select a topic for ${unselected.map(s => s.title.split(':')[0].trim()).join(' and ')} to continue.`
     }
     return null
   }
@@ -119,24 +122,41 @@ export default function BreakoutForm({ userData = {} }) {
 
       // Resolve selected topic objects
       const sel = {}
+      const activeSessionsList = []
       breakoutSessions.forEach(s => {
         const topic = s.topics.find(t => t.id === selectedTopics[s.id])
         sel[s.id] = topic || null
+        if (topic) {
+          activeSessionsList.push({
+            id: s.id,
+            slotTitle: s.title,
+            time: s.time,
+            topicId: topic.id,
+            title: topic.title,
+            speaker: topic.speaker,
+            venue: topic.venue || 'Imperial Ballroom A',
+            description: topic.description,
+          })
+        }
       })
 
       const session1 = sel['session-1']
       const session2 = sel['session-2']
-      const session3 = sel['session-3']
+      const session3 = sel['session-3'] || null
 
       const sessionPayload = {
         session1: session1?.title || null,
         session1Speaker: session1?.speaker || null,
+        session1Venue: session1?.venue || null,
         session2: session2?.title || null,
         session2Speaker: session2?.speaker || null,
+        session2Venue: session2?.venue || null,
         session3: session3?.title || null,
         session3Speaker: session3?.speaker || null,
+        session3Venue: session3?.venue || null,
         breakoutRegistered: true,
         breakoutTopics: chosenTopicIds,
+        breakoutSessions: activeSessionsList,
       }
 
       let activeBookingId = bookingId
@@ -199,6 +219,7 @@ export default function BreakoutForm({ userData = {} }) {
         session3Speaker: session3?.speaker,
         session3Venue: session3?.venue,
         session3Description: session3?.description,
+        sessions: activeSessionsList,
         lanyardQrUrl,
       })
 
@@ -295,7 +316,7 @@ export default function BreakoutForm({ userData = {} }) {
       {/* Section header */}
       <div className="bo-section-header">
         <h2 className="bo-section-title">Select Your Sessions</h2>
-        <p className="bo-section-sub">Choose at least 1 session below (pick any topic from 1, 2, or all 3 sessions)</p>
+        <p className="bo-section-sub">Choose 1 topic from each session below (Slot 1 and Slot 2)</p>
       </div>
 
       {/* Session pickers */}
