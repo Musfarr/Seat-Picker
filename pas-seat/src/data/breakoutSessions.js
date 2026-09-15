@@ -69,5 +69,40 @@ export const breakoutSessions = [
       },
     ],
   },
+  {
+    id: 'session-3',
+    title: 'Slot 2: Leadership & Business Growth',
+    time: '10:45 AM – 11:45 AM',
+    topics: [
+      {
+        id: 's2-t1',
+        title: 'Leading Through Change',
+        speaker: 'Nathalie Roos',
+        description: 'Executive leadership strategies for transforming organizations',
+        venue: "Imperial Ballroom A"
+      },
+      {
+        id: 's2-t2',
+        title: 'Entrepreneurship & Investment',
+        speaker: 'Junaid Iqbal',
+        description: 'Building scalable startups and navigating the investment landscape',
+        venue: "Imperial Ballroom A"
+      },
+      {
+        id: 's2-t3',
+        title: 'Strategic Marketing Leadership',
+        speaker: 'Farheen Salman',
+        description: 'How to lead marketing teams and drive business impact',
+        venue: "Imperial Ballroom A"
+      },
+      {
+        id: 's3-t2',
+        title: 'E-commerce & Digital Ecosystems',
+        speaker: 'Hamza Jawaid',
+        description: 'Building and scaling digital platforms for the future',
+        venue: "Imperial Ballroom A"
+      },
+    ],
+  },
 
 ]
