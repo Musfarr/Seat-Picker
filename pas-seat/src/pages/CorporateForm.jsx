@@ -140,10 +140,10 @@ export default function CorporateForm() {
         // Pre-fill form from decrypted data
         setForm({
           Company_Name: company,
-          Full_Name: decrypted?.Full_Name || '',
-          CNIC_Number: decrypted?.CNIC_Number || '',
-          phone_number: decrypted?.phone_number || '',
-          Designation: decrypted?.Designation || '',
+          // Full_Name: decrypted?.Full_Name || '',
+          // CNIC_Number: decrypted?.CNIC_Number || '',
+          // phone_number: decrypted?.phone_number || '',
+          // Designation: decrypted?.Designation || '',
         })
 
         if (company) {
