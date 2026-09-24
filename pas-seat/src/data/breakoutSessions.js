@@ -1,108 +1,103 @@
 export const breakoutSessions = [
   {
     id: 'session-1',
-    title: 'Slot 1: Creative Strategy & Innovation',
+    title: 'MAKE IT MATTER',
     time: '9:30 AM – 10:30 AM',
     topics: [
       {
         id: 's1-t1',
-        title: 'Behavioral Science in Marketing',
-        speaker: 'Rory Sutherland',
-        description: 'How behavioral insights are transforming modern marketing strategies',
-        venue: "Imperial Ballroom A"
+        title: 'STEAL the BEST',
+        speaker: 'Tatiana Vivienne Jouanneau',
+        designation: 'Global Chief Brand and Marketing Transformation Office, Senior Vice-President, Allwyn, Switzerland',
+        description: 'The Brand-Building Secrets from History That Set the Rules for Today',
+        venue: 'Imperial Ballroom A',
       },
       {
         id: 's1-t2',
-        title: 'Brand Building in Digital Age',
-        speaker: 'Atiya Zaidi',
-        description: 'Creating enduring brands through integrated digital experiences',
-        venue: "Imperial Ballroom A"
+        title: 'How to Be Unreasonable!',
+        speaker: 'Jack of Digital',
+        designation: 'by Ahmad Chagla, Creative Lead, Jack of Digital & Salman Abedin, Chief Strategy Officer, Jack of Digital',
+        description: 'Your brand has been adapting to the feed. In 45 minutes, that changes.',
+        venue: 'Imperial Ballroom A',
       },
       {
         id: 's1-t3',
-        title: 'Creative Excellence & Awards',
-        speaker: 'Ali Rez',
-        description: 'What defines award-winning creative work and how to achieve it',
-        venue: "Imperial Ballroom A"
+        title: 'The Fast & The Curious',
+        speaker: 'Khalid Ahmed Farid',
+        designation: 'Founder & CEO, AdKraft AI',
+        description: 'Fuel your ads with AI',
+        venue: 'Imperial Ballroom A',
       },
       {
-        id: 's3-t1',
-        title: 'Sustainability in Marketing',
-        speaker: 'Thomas Kolster',
-        description: 'Where marketing, business and sustainability intersect',
-        venue: "Imperial Ballroom A"
+        id: 's1-t4',
+        title: 'Catch Me If You Can',
+        speaker: 'Sebastian Op het Veld',
+        designation: 'Co-Founder & Head of Programmatic, MyAdbooker | Amsterdam, Netherlands',
+        description: 'Planning for Audiences on the Move',
+        venue: 'Imperial Ballroom A',
       },
     ],
   },
   {
     id: 'session-2',
-    title: 'Slot 2: Leadership & Business Growth',
+    title: 'BEYOND THE BREIF',
     time: '10:45 AM – 11:45 AM',
     topics: [
       {
         id: 's2-t1',
-        title: 'Leading Through Change',
-        speaker: 'Nathalie Roos',
-        description: 'Executive leadership strategies for transforming organizations',
-        venue: "Imperial Ballroom A"
+        title: 'Letting Go of Logic',
+        speaker: 'Chris Rawlinson',
+        designation: 'CEO & Co-Founder, 42Courses',
+        description: 'A practical workshop for entrepreneurs and business leaders to help them discover what’s holding them back and how to identify their next successful strategy',
+        venue: 'Imperial Ballroom A',
       },
       {
         id: 's2-t2',
-        title: 'Entrepreneurship & Investment',
-        speaker: 'Junaid Iqbal',
-        description: 'Building scalable startups and navigating the investment landscape',
-        venue: "Imperial Ballroom A"
+        title: "The Audience You're Paying For!",
+        speaker: 'Dr. Saad Liaquat',
+        designation: 'Chief Technology Officer, Boltlike Solutions & Sheheryar Zakaria, VP Emerging Technologies, Boltlike Solutions',
+        description: 'Television, digital and streaming each hide your audience differently. Forty-five minutes on how to see each one',
+        venue: 'Imperial Ballroom A',
       },
       {
         id: 's2-t3',
-        title: 'Strategic Marketing Leadership',
-        speaker: 'Farheen Salman',
-        description: 'How to lead marketing teams and drive business impact',
-        venue: "Imperial Ballroom A"
-      },
-      {
-        id: 's3-t2',
-        title: 'E-commerce & Digital Ecosystems',
-        speaker: 'Hamza Jawaid',
-        description: 'Building and scaling digital platforms for the future',
-        venue: "Imperial Ballroom A"
+        title: 'Pakistan Got Influenced',
+        speaker: 'Syed Noaman Asr',
+        designation: 'CEO, Oula',
+        description: 'The Good, the Bad & the Sponsored',
+        venue: 'Imperial Ballroom A',
       },
     ],
   },
   {
     id: 'session-3',
-    title: 'Slot 2: Leadership & Business Growth',
-    time: '10:45 AM – 11:45 AM',
+    title: 'THE IDEA ENGINE',
+    time: '12:00 PM – 1:00 PM',
     topics: [
       {
-        id: 's2-t1',
-        title: 'Leading Through Change',
-        speaker: 'Nathalie Roos',
-        description: 'Executive leadership strategies for transforming organizations',
-        venue: "Imperial Ballroom A"
-      },
-      {
-        id: 's2-t2',
-        title: 'Entrepreneurship & Investment',
-        speaker: 'Junaid Iqbal',
-        description: 'Building scalable startups and navigating the investment landscape',
-        venue: "Imperial Ballroom A"
-      },
-      {
-        id: 's2-t3',
-        title: 'Strategic Marketing Leadership',
-        speaker: 'Farheen Salman',
-        description: 'How to lead marketing teams and drive business impact',
-        venue: "Imperial Ballroom A"
+        id: 's3-t1',
+        title: 'COLLIDE',
+        speaker: 'Tay Guan Hin',
+        designation: 'APAC Regional Director for The One Club for Creativity',
+        description: 'Turn Tension into Breakthrough Ideas\nAn interactive, hands-on masterclass',
+        venue: 'Imperial Ballroom A',
       },
       {
         id: 's3-t2',
-        title: 'E-commerce & Digital Ecosystems',
-        speaker: 'Hamza Jawaid',
-        description: 'Building and scaling digital platforms for the future',
-        venue: "Imperial Ballroom A"
+        title: 'Man vs Human',
+        speaker: 'Affair x Symmetry Group',
+        designation: 'Adil Ahmed | Saraq Mouqim | Mehak Zafar',
+        description: 'Who Owns the Idea\nHuman creativity head to head with AI. Take part in this Live Experiement and see where it takes you!',
+        venue: 'Imperial Ballroom A',
+      },
+      {
+        id: 's3-t3',
+        title: 'TBC',
+        speaker: 'WPP Media',
+        designation: 'WPP Media',
+        description: 'TBC',
+        venue: 'Imperial Ballroom A',
       },
     ],
   },
-
 ]

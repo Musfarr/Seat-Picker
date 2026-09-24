@@ -134,6 +134,7 @@ export default function BreakoutForm({ userData = {} }) {
             topicId: topic.id,
             title: topic.title,
             speaker: topic.speaker,
+            designation: topic.designation || '',
             venue: topic.venue || 'Imperial Ballroom A',
             description: topic.description,
           })
@@ -147,12 +148,15 @@ export default function BreakoutForm({ userData = {} }) {
       const sessionPayload = {
         session1: session1?.title || null,
         session1Speaker: session1?.speaker || null,
+        session1Designation: session1?.designation || null,
         session1Venue: session1?.venue || null,
         session2: session2?.title || null,
         session2Speaker: session2?.speaker || null,
+        session2Designation: session2?.designation || null,
         session2Venue: session2?.venue || null,
         session3: session3?.title || null,
         session3Speaker: session3?.speaker || null,
+        session3Designation: session3?.designation || null,
         session3Venue: session3?.venue || null,
         breakoutRegistered: true,
         breakoutTopics: chosenTopicIds,
@@ -316,7 +320,7 @@ export default function BreakoutForm({ userData = {} }) {
       {/* Section header */}
       <div className="bo-section-header">
         <h2 className="bo-section-title">Select Your Sessions</h2>
-        <p className="bo-section-sub">Choose 1 topic from each session below (Slot 1 and Slot 2)</p>
+        <p className="bo-section-sub">Choose 1 topic from each session below</p>
       </div>
 
       {/* Session pickers */}
@@ -364,7 +368,10 @@ export default function BreakoutForm({ userData = {} }) {
                       </div>
                       <div className="bo-topic-speaker">
                         <span className="bo-topic-speaker-label">Speaker: </span>
-                        {topic.speaker}
+                        <span className="bo-topic-speaker-name">{topic.speaker}</span>
+                        {topic.designation && (
+                          <div className="bo-topic-designation">{topic.designation}</div>
+                        )}
                       </div>
                       <div className="bo-topic-desc">{topic.description}</div>
                     </div>

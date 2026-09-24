@@ -15,6 +15,7 @@ function extractBreakoutSessions(booking) {
         time: s.time || '',
         topicTitle: s.title || s.topicTitle || '',
         speaker: s.speaker || '',
+        designation: s.designation || '',
         venue: s.venue || 'Imperial Ballroom A',
         description: s.description || '',
       }))
@@ -32,6 +33,7 @@ function extractBreakoutSessions(booking) {
           time: session.time,
           topicTitle: topic.title,
           speaker: topic.speaker,
+          designation: topic.designation || '',
           venue: topic.venue || 'Imperial Ballroom A',
           description: topic.description,
         })
@@ -46,10 +48,11 @@ function extractBreakoutSessions(booking) {
     const s1 = breakoutSessions.find(s => s.id === 'session-1')
     const match1 = s1?.topics.find(t => t.title?.toLowerCase() === booking.session1?.toLowerCase())
     list.push({
-      slotTitle: s1?.title || 'Slot 1: Creative Strategy & Innovation',
+      slotTitle: s1?.title || 'Track 1',
       time: s1?.time || '9:30 AM – 10:30 AM',
       topicTitle: booking.session1,
       speaker: booking.session1Speaker || match1?.speaker || '',
+      designation: booking.session1Designation || match1?.designation || '',
       venue: booking.session1Venue || match1?.venue || 'Imperial Ballroom A',
       description: match1?.description || '',
     })
@@ -59,23 +62,27 @@ function extractBreakoutSessions(booking) {
     const s2 = breakoutSessions.find(s => s.id === 'session-2')
     const match2 = s2?.topics.find(t => t.title?.toLowerCase() === booking.session2?.toLowerCase())
     list.push({
-      slotTitle: s2?.title || 'Slot 2: Leadership & Business Growth',
+      slotTitle: s2?.title || 'Track 2',
       time: s2?.time || '10:45 AM – 11:45 AM',
       topicTitle: booking.session2,
       speaker: booking.session2Speaker || match2?.speaker || '',
+      designation: booking.session2Designation || match2?.designation || '',
       venue: booking.session2Venue || match2?.venue || 'Imperial Ballroom A',
       description: match2?.description || '',
     })
   }
 
   if (booking.session3) {
+    const s3 = breakoutSessions.find(s => s.id === 'session-3')
+    const match3 = s3?.topics.find(t => t.title?.toLowerCase() === booking.session3?.toLowerCase())
     list.push({
-      slotTitle: 'Slot 3: Breakout Session',
-      time: '',
+      slotTitle: s3?.title || 'Track 3',
+      time: s3?.time || '12:00 PM – 1:00 PM',
       topicTitle: booking.session3,
-      speaker: booking.session3Speaker || '',
-      venue: booking.session3Venue || 'Imperial Ballroom A',
-      description: '',
+      speaker: booking.session3Speaker || match3?.speaker || '',
+      designation: booking.session3Designation || match3?.designation || '',
+      venue: booking.session3Venue || match3?.venue || 'Imperial Ballroom A',
+      description: match3?.description || '',
     })
   }
 
@@ -323,7 +330,10 @@ export default function Profile() {
                         <div className="profile-breakout-detail-row">
                           <span className="profile-breakout-detail-label">Speaker</span>
                           <span className="profile-breakout-detail-val profile-breakout-speaker-val">
-                            {session.speaker}
+                            <span className="profile-breakout-speaker-name">{session.speaker}</span>
+                            {session.designation && (
+                              <span className="profile-breakout-speaker-desig">{session.designation}</span>
+                            )}
                           </span>
                         </div>
                       )}
