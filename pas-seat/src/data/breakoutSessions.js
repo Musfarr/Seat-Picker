@@ -1,8 +1,8 @@
 export const breakoutSessions = [
   {
     id: 'session-1',
-    title: 'MAKE IT MATTER',
-    time: '9:30 AM – 10:30 AM',
+    title: 'Session I: MAKE IT MATTER',
+    time: '9:30 AM	11:00 AM',
     topics: [
       {
         id: 's1-t1',
@@ -40,8 +40,8 @@ export const breakoutSessions = [
   },
   {
     id: 'session-2',
-    title: 'BEYOND THE BREIF',
-    time: '10:45 AM – 11:45 AM',
+    title: 'Session II: BEYOND THE BRIEF',
+    time: '11:00 AM	- 12:30 PM',
     topics: [
       {
         id: 's2-t1',
@@ -71,8 +71,8 @@ export const breakoutSessions = [
   },
   {
     id: 'session-3',
-    title: 'THE IDEA ENGINE',
-    time: '12:00 PM – 1:00 PM',
+    title: 'Session III: THE IDEA ENGINE',
+    time: '12:30 PM - 2:00 PM',
     topics: [
       {
         id: 's3-t1',
