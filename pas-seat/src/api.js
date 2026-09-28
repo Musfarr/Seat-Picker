@@ -35,6 +35,7 @@ const SAVE_BREAKOUT_TOKEN_URL = `${NGROK_BASE}/api/save-breakout-token`
 const LINK_TEMPLATE_ID = '2439716791418701'  // update to your text/link template ID
 const BREAKOUT_LINK_TEMPLATE_ID = '1399548372121724'
 // const BREAKOUT_LINK_TEMPLATE_ID = '1015900957923860'
+const COMPANY_BROADCAST_TEMPLATE_ID = '3467400370105290'
 
 const UPLOAD_API_URL = 'https://mediaupload.convexinteractive.com/api/upload'
 const BASE_URL = 'https://mediaupload.convexinteractive.com'
@@ -161,6 +162,51 @@ export async function sendLinkWhatsapp({ contactNumber, link, qrImageUrl }) {
           index: null,
         },
       ],
+    },
+    { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
+  )
+}
+
+/* Send company POC broadcast via WhatsApp (Template 3467400370105290 - QR image header + name & link body) */
+export async function sendCompanyBroadcast({ contactNumber, name, link, qrImageUrl }) {
+  const accessToken = await getAccessToken()
+  await axios.post(
+    BROADCAST_URL,
+    {
+      to: contactNumber,
+      templateId: COMPANY_BROADCAST_TEMPLATE_ID,
+      param: [
+        {
+          parameters: [
+            {
+              value: qrImageUrl,
+              type: 'image',
+              mediaId: null,
+            },
+          ],
+          componentType: 'header',
+          buttonType: null,
+          index: null,
+        },
+        {
+          parameters: [
+            {
+              value: name,
+              type: 'text',
+              mediaId: null,
+            },
+            {
+              value: link,
+              type: 'text',
+              mediaId: null,
+            },
+          ],
+          componentType: 'body',
+          buttonType: null,
+          index: null,
+        },
+      ],
+      flowToken: null,
     },
     { headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
   )
