@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 import {
   createBooking,
   uploadFile,
-  sendLanyardWhatsapp,
+  sendLanyardWhatsapp2,
   checkToken,
   saveToken,
   getAllBookings,
@@ -415,7 +415,7 @@ export default function CorporateForm() {
 
       setStep('Sending your pass via WhatsApp...')
       try {
-        await sendLanyardWhatsapp({ contactNumber: form.phone_number, lanyardUrl: generatedLanyardUrl, name: form.Full_Name })
+        await sendLanyardWhatsapp2({ contactNumber: form.phone_number, lanyardUrl: generatedLanyardUrl })
       } catch (whatsappErr) {
         console.error('WhatsApp send failed:', whatsappErr)
         setError('WhatsApp delivery failed. Please download your pass below.')
