@@ -43,7 +43,7 @@ const BASE_URL = 'https://mediaupload.convexinteractive.com'
 const LOGIN_EMAIL = 'apipasnew@yopmail.com'
 const LOGIN_PASSWORD = 'Admin@321'
 
-const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1787225469897-40511096.jpg'
+const TEMPLATE_IMAGE_URL = 'https://mediaupload.convexinteractive.com/api/file/1790693224714-113208070.png'
 
 const NGROK_HEADERS = {
   // 'ngrok-skip-browser-warning': '69420',

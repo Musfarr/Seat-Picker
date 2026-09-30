@@ -1,4 +1,4 @@
-const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1788777860499-362886397.jpg'
+const TEMPLATE_URL = 'https://mediaupload.convexinteractive.com/api/file/1790693224714-113208070.png'
 
 function loadImage(src) {
   return new Promise((resolve, reject) => {
@@ -17,12 +17,19 @@ export async function generateLanyard({
   designation,
   companyName,
   lanyardQrUrl,
+  session1,
+  session1Speaker,
+  session2,
+  session2Speaker,
+  session3,
+  session3Speaker,
+  sessions: customSessions,
 }) {
   const userPhoto = imageUrl || image
   const template = await loadImage(TEMPLATE_URL)
   const MAX_WIDTH = 1400
-  let W = template.naturalWidth || 1024
-  let H = template.naturalHeight || 1536
+  let W = template.naturalWidth || 900
+  let H = template.naturalHeight || 1500
 
   if (W > MAX_WIDTH) {
     const scale = MAX_WIDTH / W
@@ -35,13 +42,13 @@ export async function generateLanyard({
   canvas.height = H
   const ctx = canvas.getContext('2d')
 
-  // Draw template image as background
+  // 1. Draw template background
   ctx.drawImage(template, 0, 0, W, H)
 
-  // ── Profile photo (top center circle) ──
-  const photoCX = Math.round(W * 0.5)
-  const photoCY = Math.round(H * 0.249)
-  const photoR = Math.round(W * 0.250)
+  // 2. Profile photo (top center circle fitting inside template yellow ring)
+  const photoCX = Math.round(W * 0.508)
+  const photoCY = Math.round(H * 0.266)
+  const photoR = Math.round(W * 0.248)
 
   if (userPhoto) {
     try {
@@ -69,12 +76,12 @@ export async function generateLanyard({
       ctx.drawImage(photo, drawX, drawY, drawW, drawH)
       ctx.restore()
 
-      // Teal / mint border ring matching template theme (#31B786)
+      // Subtle yellow accent ring around clipped photo to ensure clean edge
       ctx.save()
       ctx.beginPath()
       ctx.arc(photoCX, photoCY, photoR, 0, Math.PI * 2)
-      ctx.lineWidth = Math.round(W * 0.008)
-      ctx.strokeStyle = '#31B786'
+      ctx.lineWidth = Math.max(2, Math.round(W * 0.005))
+      ctx.strokeStyle = '#FED800'
       ctx.stroke()
       ctx.restore()
     } catch {
@@ -90,15 +97,7 @@ export async function generateLanyard({
     // fonts ready check failed — proceed
   }
 
-  // ── Text Centered Alignment under image ──
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.shadowColor = 'rgba(0,0,0,0.5)'
-  ctx.shadowBlur = 4
-  const textX = Math.round(W * 0.5)
-  const maxTextW = Math.round(W * 0.84)
-
-  // Helper for auto-scaling text to fit container
+  // 3. Helper for auto-scaling text to fit container
   function drawFittedText(
     text,
     x,
@@ -111,7 +110,7 @@ export async function generateLanyard({
   ) {
     let fontSize = baseFontSize
     ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
-    while (ctx.measureText(text).width > maxW && fontSize > 16) {
+    while (ctx.measureText(text).width > maxW && fontSize > 13) {
       fontSize -= 1
       ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`
     }
@@ -120,7 +119,14 @@ export async function generateLanyard({
     return fontSize
   }
 
-  // ── Name & Designation below photo ──
+  // 4. Attendee Name, Designation, and Company (centered in blue area below photo)
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.shadowColor = 'rgba(0,0,0,0.55)'
+  ctx.shadowBlur = 4
+  const textX = Math.round(W * 0.5)
+  const maxTextW = Math.round(W * 0.84)
+
   const hasName = Boolean(name && name.trim())
   const hasDesig = Boolean(designation && designation.trim())
   const hasCompany = Boolean(companyName && companyName.trim())
@@ -128,11 +134,11 @@ export async function generateLanyard({
 
   let startY
   if (totalLines === 3) {
-    startY = Math.round(H * 0.435)
+    startY = Math.round(H * 0.472)
   } else if (totalLines === 2) {
-    startY = Math.round(H * 0.455)
+    startY = Math.round(H * 0.485)
   } else {
-    startY = Math.round(H * 0.475)
+    startY = Math.round(H * 0.500)
   }
 
   let currentY = startY
@@ -143,12 +149,12 @@ export async function generateLanyard({
       textX,
       currentY,
       maxTextW,
-      Math.round(W * 0.054),
+      Math.round(W * 0.051),
       'bold',
       '#FED800',
       '"Montserrat", "Chakra Petch", "Arial", sans-serif'
     )
-    currentY += Math.round(H * 0.040)
+    currentY += Math.round(H * 0.033)
   }
 
   if (hasDesig) {
@@ -157,12 +163,12 @@ export async function generateLanyard({
       textX,
       currentY,
       maxTextW,
-      Math.round(W * 0.035),
+      Math.round(W * 0.031),
       '500',
       '#FFFFFF',
       '"Montserrat", "Arial", sans-serif'
     )
-    currentY += Math.round(H * 0.040)
+    currentY += Math.round(H * 0.030)
   }
 
   if (hasCompany) {
@@ -171,7 +177,7 @@ export async function generateLanyard({
       textX,
       currentY,
       maxTextW,
-      Math.round(W * 0.039),
+      Math.round(W * 0.036),
       'bold',
       '#FFFFFF',
       '"Montserrat", "Arial", sans-serif'
@@ -180,13 +186,17 @@ export async function generateLanyard({
 
   ctx.shadowBlur = 0
 
-  // ── QR Code (Bottom Right inside white card, next to 'DON\'T FORGET TO REGISTER FOR THE BREAKOUTS') ──
+  // 5. White card contents
+  const sessionLeftX = Math.round(W * 0.08)
+  const sessionMaxW = Math.round(W * 0.58)
+
+  // 5a. QR Code on right side of card
   if (lanyardQrUrl) {
     try {
       const qrImg = await loadImage(lanyardQrUrl)
-      const qrSize = Math.round(W * 0.235)
-      const qrX = Math.round(W * 0.655)
-      const qrY = Math.round(H * 0.794)
+      const qrSize = Math.round(W * 0.22)
+      const qrX = Math.round(W * 0.69)
+      const qrY = Math.round(H * 0.69)
 
       // Crisp white backing pad for high contrast & reliable scanning
       const pad = Math.round(qrSize * 0.03)
@@ -221,24 +231,168 @@ export async function generateLanyard({
 
         const brightness = (r + g + b) / 3
         if (brightness < 160 && a > 50) {
-          data[i] = 10     // R
-          data[i + 1] = 10 // G
-          data[i + 2] = 10 // B
+          data[i] = 10
+          data[i + 1] = 10
+          data[i + 2] = 10
           data[i + 3] = 255
         } else {
-          data[i] = 255     // White
+          data[i] = 255
           data[i + 1] = 255
           data[i + 2] = 255
           data[i + 3] = 255
         }
       }
       qrCtx.putImageData(imgData, 0, 0)
-
-      // Draw crisp QR on main canvas
       ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize)
     } catch {
       // QR failed to load — skip
     }
+  }
+
+  // 5b. Breakout Sessions or Default Notice on left side of card
+  const rawSessions = (Array.isArray(customSessions) && customSessions.length > 0)
+    ? customSessions
+    : [
+      { title: session1, speaker: session1Speaker },
+      { title: session2, speaker: session2Speaker },
+      { title: session3, speaker: session3Speaker },
+    ]
+
+  const availableSessions = rawSessions
+    .map((s, idx) => {
+      if (!s) return null
+      if (typeof s === 'string') {
+        return { title: s.trim(), speaker: '', id: idx + 1 }
+      }
+      return {
+        title: (s.title || s.topic || '').trim(),
+        speaker: (s.speaker || '').trim(),
+        id: s.id || idx + 1,
+      }
+    })
+    .filter(s => Boolean(s && s.title))
+
+  if (availableSessions.length > 0) {
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+    ctx.shadowBlur = 0
+
+    // Header: BREAKOUT REGISTRATIONS
+    const headerFontSize = Math.round(W * 0.026)
+    ctx.font = `bold ${headerFontSize}px "Montserrat", "Arial", sans-serif`
+    ctx.fillStyle = '#2B3594'
+    const headerY = Math.round(H * 0.608)
+    ctx.fillText('BREAKOUT REGISTRATIONS', sessionLeftX, headerY)
+
+    // Divider line under header
+    ctx.fillStyle = '#E2E8F0'
+    ctx.fillRect(sessionLeftX, headerY + Math.round(headerFontSize * 1.35), sessionMaxW, 1.5)
+
+    const titleFontFamily = '"Montserrat", "Arial", sans-serif'
+    const titleBaseFontSize = Math.round(W * 0.024)
+    const speakerFontSize = Math.round(W * 0.020)
+
+    function wrapTitleToLines(text, maxW, baseSize) {
+      let size = baseSize
+      function testLines(sz) {
+        ctx.font = `bold ${sz}px ${titleFontFamily}`
+        const words = text.trim().split(/\s+/)
+        const lines = []
+        let current = ''
+        for (const w of words) {
+          const test = current ? `${current} ${w}` : w
+          if (ctx.measureText(test).width <= maxW) {
+            current = test
+          } else {
+            if (current) lines.push(current)
+            current = w
+          }
+        }
+        if (current) lines.push(current)
+        return lines
+      }
+
+      let lines = testLines(size)
+      while (lines.length > 2 && size > 13) {
+        size -= 1
+        lines = testLines(size)
+      }
+      if (lines.length > 2) {
+        lines = [lines[0], lines.slice(1).join(' ')]
+      }
+      return { lines, fontSize: size }
+    }
+
+    let sessionYPositions = []
+    if (availableSessions.length >= 3) {
+      sessionYPositions = [955, 1100, 1245]
+    } else if (availableSessions.length === 2) {
+      sessionYPositions = [1005, 1165]
+    } else {
+      sessionYPositions = [1085]
+    }
+
+    availableSessions.slice(0, 3).forEach((s, idx) => {
+      let curY = sessionYPositions[idx]
+      const title = s.title || 'Breakout Session'
+      const { lines, fontSize } = wrapTitleToLines(title, sessionMaxW, titleBaseFontSize)
+      const lineHeight = Math.round(fontSize * 1.22)
+
+      // Title line(s)
+      lines.forEach((line) => {
+        drawFittedText(
+          line,
+          sessionLeftX,
+          curY,
+          sessionMaxW,
+          fontSize,
+          'bold',
+          '#2B3594',
+          titleFontFamily
+        )
+        curY += lineHeight
+      })
+
+      // Speaker Name
+      if (s.speaker) {
+        const cleanSpeaker = s.speaker.replace(/^Speaker:\s*/i, '').trim()
+        const speakerText = `Speaker: ${cleanSpeaker}`
+        drawFittedText(
+          speakerText,
+          sessionLeftX,
+          curY + 2,
+          sessionMaxW,
+          speakerFontSize,
+          '500',
+          '#444444',
+          titleFontFamily
+        )
+      }
+    })
+  } else {
+    // If no breakout sessions selected, show reminder text
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    ctx.shadowBlur = 0
+
+    const reminderLines = ["DON'T FORGET TO", 'REGISTER FOR', 'THE BREAKOUTS']
+    const reminderFontSize = Math.round(W * 0.038)
+    const lineSpacing = Math.round(reminderFontSize * 1.35)
+    let remY = Math.round(H * 0.760) - Math.round(lineSpacing * 1.1)
+
+    reminderLines.forEach(line => {
+      drawFittedText(
+        line,
+        sessionLeftX,
+        remY,
+        sessionMaxW,
+        reminderFontSize,
+        '900',
+        '#2B3594',
+        '"Montserrat", "Arial", sans-serif'
+      )
+      remY += lineSpacing
+    })
   }
 
   return new Promise((resolve) => {
@@ -251,4 +405,3 @@ export async function generateLanyard({
     )
   })
 }
-

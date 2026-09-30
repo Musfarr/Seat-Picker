@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { createBooking, uploadFile, sendLanyardWhatsapp, checkToken, saveToken, getAllBookings } from '../api'
+import {
+  createBooking,
+  uploadFile,
+  sendLanyardWhatsapp,
+  checkToken,
+  saveToken,
+  getAllBookings,
+  getBreakoutCapacities,
+  updateBooking,
+} from '../api'
 import { generateLanyard } from '../generateLanyard'
 import { decryptParams } from '../utils/Decrypt'
+import { breakoutSessions } from '../data/breakoutSessions'
 
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
 
@@ -71,6 +81,28 @@ export default function CorporateForm() {
   const [lanyardUrl, setLanyardUrl] = useState(null)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
+
+  // Breakout sessions state
+  const [selectedTopics, setSelectedTopics] = useState({
+    'session-1': null,
+    'session-2': null,
+    'session-3': null,
+  })
+  const [capacities, setCapacities] = useState({})
+  const [bookedSessions, setBookedSessions] = useState([])
+
+  // Load breakout capacities
+  useEffect(() => {
+    getBreakoutCapacities()
+      .then(cap => {
+        if (cap && typeof cap === 'object') {
+          setCapacities(cap)
+        }
+      })
+      .catch(err => {
+        console.warn('Could not load breakout capacities:', err)
+      })
+  }, [])
 
   // Load and verify encrypted token on mount
   useEffect(() => {
@@ -140,10 +172,6 @@ export default function CorporateForm() {
         // Pre-fill form from decrypted data
         setForm({
           Company_Name: company,
-          // Full_Name: decrypted?.Full_Name || '',
-          // CNIC_Number: decrypted?.CNIC_Number || '',
-          // phone_number: decrypted?.phone_number || '',
-          // Designation: decrypted?.Designation || '',
         })
 
         if (company) {
@@ -192,6 +220,22 @@ export default function CorporateForm() {
     setImagePreview(URL.createObjectURL(file))
   }
 
+  // Toggle selection: Clicking selected topic deselects it; clicking another selects it
+  function toggleTopic(sessionId, topicId) {
+    const cap = capacities[topicId]
+    const isSoldOut = cap && (cap.availableSeats ?? 35) <= 0
+    if (isSoldOut) return
+
+    setSelectedTopics(prev => {
+      const isAlreadySelected = prev[sessionId] === topicId
+      return {
+        ...prev,
+        [sessionId]: isAlreadySelected ? null : topicId,
+      }
+    })
+    setError('')
+  }
+
   function handleBookNext() {
     setDone(false)
     setLanyardUrl(null)
@@ -199,6 +243,12 @@ export default function CorporateForm() {
     setImagePreview(null)
     setError('')
     setFieldErrors({})
+    setSelectedTopics({
+      'session-1': null,
+      'session-2': null,
+      'session-3': null,
+    })
+    setBookedSessions([])
     setForm(prev => ({
       Company_Name: prev.Company_Name,
       Full_Name: '',
@@ -229,6 +279,16 @@ export default function CorporateForm() {
       return
     }
 
+    // Check if any selected breakout topic is sold out
+    const chosenTopicIds = Object.values(selectedTopics).filter(Boolean)
+    for (const tid of chosenTopicIds) {
+      const cap = capacities[tid]
+      if (cap && (cap.availableSeats ?? 35) <= 0) {
+        setError(`"${cap.title || tid}" is fully booked. Please select another topic.`)
+        return
+      }
+    }
+
     setUploading(true)
     try {
       setStep('Checking phone number...')
@@ -253,6 +313,31 @@ export default function CorporateForm() {
       setStep('Uploading your photo...')
       const { url: imageUrl } = await uploadFile(imageFile, imageFile.name)
 
+      // Map chosen breakout topics
+      const session1 = breakoutSessions[0]?.topics.find(t => t.id === selectedTopics['session-1'])
+      const session2 = breakoutSessions[1]?.topics.find(t => t.id === selectedTopics['session-2'])
+      const session3 = breakoutSessions[2]?.topics.find(t => t.id === selectedTopics['session-3'])
+      const activeSessionsList = [session1, session2, session3].filter(Boolean)
+      setBookedSessions(activeSessionsList)
+
+      const sessionPayload = {
+        session1: session1?.title || null,
+        session1Speaker: session1?.speaker || null,
+        session1Designation: session1?.designation || null,
+        session1Venue: session1?.venue || null,
+        session2: session2?.title || null,
+        session2Speaker: session2?.speaker || null,
+        session2Designation: session2?.designation || null,
+        session2Venue: session2?.venue || null,
+        session3: session3?.title || null,
+        session3Speaker: session3?.speaker || null,
+        session3Designation: session3?.designation || null,
+        session3Venue: session3?.venue || null,
+        breakoutRegistered: chosenTopicIds.length > 0,
+        breakoutTopics: chosenTopicIds,
+        breakoutSessions: activeSessionsList,
+      }
+
       setStep('Saving your booking...')
       const corporateId = routeCorporateId || form.Company_Name
 
@@ -266,6 +351,7 @@ export default function CorporateForm() {
         companyName: form.Company_Name,
         type: 'Corporate',
         token: encryptedData,
+        ...sessionPayload,
       })
 
       const bookingId = bookingRes?.bookingId || bookingRes?.booking || bookingRes?._id || 'corporate'
@@ -301,6 +387,7 @@ export default function CorporateForm() {
       const qrBlob = await (await fetch(lanyardQrDataUrl)).blob()
       const { url: lanyardQrUrl } = await uploadFile(qrBlob, `lanyard-qr-${bookingId}.png`)
 
+      // Generate unified lanyard with profile info and selected breakout sessions
       setStep('Generating your pass...')
       const { blob } = await generateLanyard({
         name: form.Full_Name,
@@ -308,11 +395,23 @@ export default function CorporateForm() {
         designation: form.Designation,
         companyName: form.Company_Name,
         lanyardQrUrl,
+        sessions: activeSessionsList,
+        session1: session1?.title,
+        session1Speaker: session1?.speaker,
+        session2: session2?.title,
+        session2Speaker: session2?.speaker,
+        session3: session3?.title,
+        session3Speaker: session3?.speaker,
       })
 
       setStep('Uploading your pass...')
       const { url: generatedLanyardUrl } = await uploadFile(blob, `lanyard-${form.phone_number}.png`)
       setLanyardUrl(generatedLanyardUrl)
+
+      // Persist lanyard URL and breakout session details to the booking record
+      if (bookingId && bookingId !== 'corporate') {
+        updateBooking(bookingId, { lanyardUrl: generatedLanyardUrl, ...sessionPayload }).catch(() => {})
+      }
 
       setStep('Sending your pass via WhatsApp...')
       try {
@@ -336,7 +435,7 @@ export default function CorporateForm() {
   if (pageLoading) {
     return (
       <div className="corp-page">
-        <div className="corp-card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+        <div className="corp-card corp-card-sm" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
           <div className="corp-spinner" style={{ margin: '0 auto 1rem' }} />
           <h2 className="corp-title" style={{ fontSize: '1.2rem' }}>Verifying Registration Link...</h2>
           <p className="corp-subtitle" style={{ margin: 0 }}>Please wait a moment.</p>
@@ -352,7 +451,7 @@ export default function CorporateForm() {
         <div className="toplogo">
           <img style={{ width: '120px' }} src="/logo.png" alt="Logo" />
         </div>
-        <div className="corp-card" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
+        <div className="corp-card corp-card-sm" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
           <div className="corp-exhausted-icon" style={{ margin: '0 auto 1rem' }}>✕</div>
           <h2 className="corp-title" style={{ color: '#ff6b9d' }}>Registration Link Error</h2>
           <p className="corp-subtitle" style={{ marginTop: '0.5rem', color: 'rgba(255,255,255,0.7)' }}>
@@ -371,7 +470,7 @@ export default function CorporateForm() {
         <div className="toplogo">
           <img style={{ width: '120px' }} src="/logo.png" alt="Logo" />
         </div>
-        <div className="corp-card" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
+        <div className="corp-card corp-card-sm" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
           <div className="corp-exhausted-icon" style={{ margin: '0 auto 1rem' }}>✓</div>
           <h2 className="corp-title">
             {isMulti ? 'All Passes Booked' : 'Link Already Used'}
@@ -417,6 +516,28 @@ export default function CorporateForm() {
             </div>
           )}
 
+          {/* Registered Breakout Sessions Summary */}
+          {bookedSessions.length > 0 && (
+            <div className="corp-breakout-summary">
+              <h3 className="corp-breakout-summary-title">Registered Breakout Sessions</h3>
+              <div className="corp-breakout-summary-list">
+                {bookedSessions.map((s, idx) => (
+                  <div key={idx} className="corp-breakout-summary-item">
+                    <span className="corp-breakout-summary-bullet">✦</span>
+                    <div>
+                      <strong>{s.title}</strong>
+                      {s.speaker && (
+                        <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.15rem' }}>
+                          Speaker: {s.speaker}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {lanyardUrl && (
             <div className="corp-lanyard-wrap">
               <img src={lanyardUrl} alt="Your Pass" className="corp-lanyard-img" />
@@ -441,7 +562,7 @@ export default function CorporateForm() {
     )
   }
 
-  // 5. Active Registration Form view
+  // 5. Active Unified Registration Form view
   return (
     <div className="corp-page">
       <div className="toplogo">
@@ -450,7 +571,7 @@ export default function CorporateForm() {
 
       <div className="corp-card">
         <h2 className="corp-title">Complete Your Booking</h2>
-        <p className="corp-subtitle">Fill in details to receive your seat pass</p>
+        <p className="corp-subtitle">Fill in details and select your breakout sessions</p>
 
         {/* Multi-ticket allocation banner */}
         {tokenStatus?.hasMultipleTickets && (
@@ -512,15 +633,87 @@ export default function CorporateForm() {
             )
           })}
 
+          {/* ── Breakout Sessions Section (Optional) ── */}
+          <div className="bo-section-header" style={{ marginTop: '1.5rem' }}>
+            <h2 className="bo-section-title" style={{ fontSize: '1.25rem', color: '#FED800' }}>
+              Breakout Sessions <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: 'rgba(255,255,255,0.6)' }}>(Optional)</span>
+            </h2>
+            <p className="bo-section-sub">
+              Choose up to 1 topic from any session below, or leave unselected to skip.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '0.5rem' }}>
+            {breakoutSessions.map(session => {
+              const sessionKey = session.id
+              const selected = selectedTopics[sessionKey]
+
+              return (
+                <div key={sessionKey} className="bo-session">
+                  <div className="bo-session-header">
+                    <h3 className="bo-session-title">{session.title}</h3>
+                    <span className="bo-session-time">{session.time}</span>
+                  </div>
+
+                  <div className="bo-topics">
+                    {session.topics.map(topic => {
+                      const isSelected = selected === topic.id
+                      const isDimmed = selected && selected !== topic.id
+                      const topicCap = capacities[topic.id]
+                      const seatsLeft = topicCap !== undefined ? (topicCap.availableSeats ?? 35) : 35
+                      const isSoldOut = seatsLeft <= 0
+
+                      return (
+                        <div
+                          key={topic.id}
+                          className={`bo-topic${isSelected ? ' bo-topic--active' : ''}${isDimmed ? ' bo-topic--dim' : ''}${isSoldOut ? ' bo-topic--soldout' : ''}`}
+                          onClick={() => toggleTopic(sessionKey, topic.id)}
+                          role="button"
+                          tabIndex={isSoldOut ? -1 : 0}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            readOnly
+                            className="bo-topic-radio"
+                            style={{ pointerEvents: 'none' }}
+                            tabIndex={-1}
+                          />
+                          <div className="bo-topic-body">
+                            <div className="bo-topic-header-row">
+                              <div className="bo-topic-title">{topic.title}</div>
+                              <span className={`bo-topic-seats${isSoldOut ? ' bo-topic-seats--soldout' : seatsLeft <= 5 ? ' bo-topic-seats--low' : ''}`}>
+                                {isSoldOut ? 'Sold Out' : `${seatsLeft} seats left`}
+                              </span>
+                            </div>
+                            <div className="bo-topic-speaker">
+                              <span className="bo-topic-speaker-label">Speaker: </span>
+                              <span className="bo-topic-speaker-name">{topic.speaker}</span>
+                              {topic.designation && (
+                                <div className="bo-topic-designation">{topic.designation}</div>
+                              )}
+                            </div>
+                            <div className="bo-topic-desc">{topic.description}</div>
+                          </div>
+                          {isSelected && <div className="bo-topic-check">✓</div>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
           {error && <p className="corp-error">{error}</p>}
 
           {uploading ? (
-            <div className="corp-uploading-row">
+            <div className="corp-uploading-row" style={{ marginTop: '1.5rem' }}>
               <div className="corp-spinner" />
               <span className="corp-uploading-text">{step}</span>
             </div>
           ) : (
-            <button type="submit" className="corp-submit-btn">
+            <button type="submit" className="corp-submit-btn" style={{ marginTop: '1.5rem' }}>
               Submit &amp; Get My Pass
             </button>
           )}
@@ -529,4 +722,3 @@ export default function CorporateForm() {
     </div>
   )
 }
-
