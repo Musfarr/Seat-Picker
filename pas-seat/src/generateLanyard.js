@@ -196,7 +196,8 @@ export async function generateLanyard({
       const qrImg = await loadImage(lanyardQrUrl)
       const qrSize = Math.round(W * 0.22)
       const qrX = Math.round(W * 0.69)
-      const qrY = Math.round(H * 0.69)
+      // Vertically center QR in card (card is y: 873 to 1312)
+      const qrY = Math.round(1092 - qrSize / 2)
 
       // Crisp white backing pad for high contrast & reliable scanning
       const pad = Math.round(qrSize * 0.03)
@@ -278,19 +279,19 @@ export async function generateLanyard({
     ctx.shadowBlur = 0
 
     // Header: BREAKOUT REGISTRATIONS
-    const headerFontSize = Math.round(W * 0.026)
+    const headerFontSize = Math.round(W * 0.031) // ~28px
     ctx.font = `bold ${headerFontSize}px "Montserrat", "Arial", sans-serif`
     ctx.fillStyle = '#2B3594'
-    const headerY = Math.round(H * 0.608)
+    const headerY = 905
     ctx.fillText('BREAKOUT REGISTRATIONS', sessionLeftX, headerY)
 
     // Divider line under header
-    ctx.fillStyle = '#E2E8F0'
-    ctx.fillRect(sessionLeftX, headerY + Math.round(headerFontSize * 1.35), sessionMaxW, 1.5)
+    ctx.fillStyle = '#CBD5E1'
+    ctx.fillRect(sessionLeftX, 938, sessionMaxW, 1.5)
 
     const titleFontFamily = '"Montserrat", "Arial", sans-serif'
-    const titleBaseFontSize = Math.round(W * 0.024)
-    const speakerFontSize = Math.round(W * 0.020)
+    const titleBaseFontSize = Math.round(W * 0.028) // ~25px
+    const speakerFontSize = Math.round(W * 0.021)   // ~19px
 
     function wrapTitleToLines(text, maxW, baseSize) {
       let size = baseSize
@@ -323,51 +324,67 @@ export async function generateLanyard({
       return { lines, fontSize: size }
     }
 
-    let sessionYPositions = []
-    if (availableSessions.length >= 3) {
-      sessionYPositions = [955, 1100, 1245]
-    } else if (availableSessions.length === 2) {
-      sessionYPositions = [1005, 1165]
-    } else {
-      sessionYPositions = [1085]
-    }
-
-    availableSessions.slice(0, 3).forEach((s, idx) => {
-      let curY = sessionYPositions[idx]
+    // Pre-calculate heights to distribute spacing evenly and prevent bottom overflow
+    const preparedSessions = availableSessions.slice(0, 3).map(s => {
       const title = s.title || 'Breakout Session'
       const { lines, fontSize } = wrapTitleToLines(title, sessionMaxW, titleBaseFontSize)
-      const lineHeight = Math.round(fontSize * 1.22)
+      const lineHeight = Math.round(fontSize * 1.2)
+      const titleH = lines.length * lineHeight
+      const hasSpeaker = Boolean(s.speaker)
+      const speakerH = hasSpeaker ? Math.round(speakerFontSize * 1.2) : 0
+      const totalH = titleH + (hasSpeaker ? 4 + speakerH : 0)
+      return {
+        ...s,
+        title,
+        lines,
+        fontSize,
+        lineHeight,
+        totalH,
+      }
+    })
 
-      // Title line(s)
-      lines.forEach((line) => {
+    const count = preparedSessions.length
+    const startY = count === 1 ? 1075 : (count === 2 ? 985 : 955)
+    const availableH = 1285 - startY
+    const sumH = preparedSessions.reduce((acc, item) => acc + item.totalH, 0)
+    const gap = count > 1 ? Math.min(48, Math.max(16, Math.round((availableH - sumH) / (count - 1)))) : 0
+
+    let curY = startY
+    preparedSessions.forEach((s) => {
+      let textY = curY
+
+      // Draw title lines
+      s.lines.forEach((line) => {
         drawFittedText(
           line,
           sessionLeftX,
-          curY,
+          textY,
           sessionMaxW,
-          fontSize,
+          s.fontSize,
           'bold',
           '#2B3594',
           titleFontFamily
         )
-        curY += lineHeight
+        textY += s.lineHeight
       })
 
-      // Speaker Name
+      // Draw speaker
       if (s.speaker) {
         const cleanSpeaker = s.speaker.replace(/^Speaker:\s*/i, '').trim()
         const speakerText = `Speaker: ${cleanSpeaker}`
         drawFittedText(
           speakerText,
           sessionLeftX,
-          curY + 2,
+          textY + 4,
           sessionMaxW,
           speakerFontSize,
-          '500',
-          '#444444',
+          '600',
+          '#4B5563',
           titleFontFamily
         )
       }
+
+      curY += s.totalH + gap
     })
   } else {
     // If no breakout sessions selected, show reminder text
@@ -376,9 +393,9 @@ export async function generateLanyard({
     ctx.shadowBlur = 0
 
     const reminderLines = ["DON'T FORGET TO", 'REGISTER FOR', 'THE BREAKOUTS']
-    const reminderFontSize = Math.round(W * 0.038)
+    const reminderFontSize = Math.round(W * 0.034)
     const lineSpacing = Math.round(reminderFontSize * 1.35)
-    let remY = Math.round(H * 0.760) - Math.round(lineSpacing * 1.1)
+    let remY = 1045
 
     reminderLines.forEach(line => {
       drawFittedText(
