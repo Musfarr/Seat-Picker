@@ -24,9 +24,24 @@ export default function BreakoutBroadcast() {
     setError('')
     try {
       const data = await getAllBookings()
-      setBookings(data)
+
+      // Cutoff: 30 September 2026, 2:00 PM PKT (UTC+5 -> 09:00:00 UTC)
+      const cutoffTime = new Date('2026-09-30T14:00:00+05:00').getTime()
+
+      const filtered = (Array.isArray(data) ? data : []).filter(b => {
+        // 1. breakoutRegistered key is false (or not set / falsy)
+        const isNotBreakoutRegistered = !b.breakoutRegistered
+
+        // 2. createdAt date is before 30 September 2:00 PM PKT
+        const createdTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        const isBeforeCutoff = createdTime > 0 && createdTime < cutoffTime
+
+        return isNotBreakoutRegistered && isBeforeCutoff
+      })
+
+      setBookings(filtered)
       const initialStatuses = {}
-      data.forEach(b => {
+      filtered.forEach(b => {
         initialStatuses[b._id] = b.breakoutInviteSent ? 'sent' : 'pending'
       })
       setStatuses(initialStatuses)
