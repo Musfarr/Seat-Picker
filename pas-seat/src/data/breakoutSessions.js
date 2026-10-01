@@ -55,7 +55,7 @@ export const breakoutSessions = [
       {
         id: 's2-t2',
         title: "The Audience You're Paying For!",
-        speaker: 'Dr. Saad Liaquat',
+        speaker: 'Dr. Saad Liaquat | Sheheryar Zakaria',
         designation: 'Chief Technology Officer, Boltlike Solutions & Sheheryar Zakaria, VP Emerging Technologies, Boltlike Solutions',
         description: 'Television, digital and streaming each hide your audience differently. Forty-five minutes on how to see each one',
         venue: 'Imperial Ballroom A',
