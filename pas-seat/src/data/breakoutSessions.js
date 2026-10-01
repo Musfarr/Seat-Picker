@@ -13,10 +13,11 @@ export const breakoutSessions = [
         venue: 'Imperial Ballroom A',
       },
       {
+
         id: 's1-t2',
         title: 'How to Be Unreasonable!',
-        speaker: 'Jack of Digital',
-        designation: 'by Ahmad Chagla, Creative Lead, Jack of Digital & Salman Abedin, Chief Strategy Officer, Jack of Digital',
+        speaker: 'Ahmad Chagla | Salman Abedin',
+        designation: 'Ahmad Chagla, Creative Lead, Jack of Digital & Salman Abedin, Chief Strategy Officer, Jack of Digital',
         description: 'Your brand has been adapting to the feed. In 45 minutes, that changes.',
         venue: 'Imperial Ballroom A',
       },
@@ -83,10 +84,12 @@ export const breakoutSessions = [
         venue: 'Imperial Ballroom A',
       },
       {
+
+
         id: 's3-t2',
         title: 'Man vs Human',
-        speaker: 'Affair x Symmetry Group',
-        designation: 'Adil Ahmed | Saraq Mouqim | Mehak Zafar',
+        speaker: 'Saraq Mouqim | Mehak Zafar Sangi',
+        designation: 'Saraq Mouqim, Chief Content Officer, Symmetry Group & Mehak Zafar Sangi, Co-founder & Chief of Business - Strategic Affairs, Affair Studio Ai',
         description: 'Who Owns the Idea\nHuman creativity head to head with AI. Take part in this Live Experiement and see where it takes you!',
         venue: 'Imperial Ballroom A',
       },
