@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { getBookingData } from '../api'
+import { getBookingData, recordAttendance } from '../api'
 import { breakoutSessions } from '../data/breakoutSessions'
 import '../App.css'
 
@@ -132,6 +132,11 @@ export default function Profile() {
       isMounted = false
     }
   }, [id])
+
+  useEffect(() => {
+    if (!booking?._id) return
+    recordAttendance(booking._id)
+  }, [booking?._id])
 
   if (loading) {
     return (

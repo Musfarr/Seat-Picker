@@ -31,6 +31,7 @@ const RESERVED_EMAIL_URL = `${NGROK_BASE}/api/send-reserved-email`
 const BREAKOUT_CAPACITIES_URL = `${NGROK_BASE}/api/breakout-capacities`
 const CHECK_BREAKOUT_TOKEN_URL = `${NGROK_BASE}/api/check-breakout-token`
 const SAVE_BREAKOUT_TOKEN_URL = `${NGROK_BASE}/api/save-breakout-token`
+const RECORD_ATTENDANCE_URL = `${NGROK_BASE}/api/record-attendance`
 
 const LINK_TEMPLATE_ID = '2439716791418701'  // update to your text/link template ID
 const BREAKOUT_LINK_TEMPLATE_ID = '1399548372121724'
@@ -358,3 +359,21 @@ export async function saveBreakoutToken(payload) {
   })
   return res.data
 }
+
+export async function recordAttendance(bookingId) {
+  try {
+    const cleanId = String(bookingId || '').trim()
+    if (!cleanId) return null
+    const res = await axios.post(`${RECORD_ATTENDANCE_URL}/${cleanId}`, {
+      bookingId: cleanId,
+      id: cleanId,
+    }, {
+      headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
+    })
+    return res.data
+  } catch (err) {
+    console.warn('Attendance recording failed (non-blocking):', err?.message)
+    return null
+  }
+}
+
