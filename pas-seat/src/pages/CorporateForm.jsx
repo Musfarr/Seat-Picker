@@ -410,7 +410,7 @@ export default function CorporateForm() {
 
       // Persist lanyard URL and breakout session details to the booking record
       if (bookingId && bookingId !== 'corporate') {
-        updateBooking(bookingId, { lanyardUrl: generatedLanyardUrl, ...sessionPayload }).catch(() => {})
+        updateBooking(bookingId, { lanyardUrl: generatedLanyardUrl, ...sessionPayload }).catch(() => { })
       }
 
       setStep('Sending your pass via WhatsApp...')

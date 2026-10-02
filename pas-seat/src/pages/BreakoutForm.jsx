@@ -9,7 +9,7 @@ import {
   checkBreakoutToken,
   saveBreakoutToken,
 } from '../api'
-import { generateBreakoutLanyard } from '../generateBreakoutLanyard'
+import { generateLanyard } from '../generateLanyard'
 import { breakoutSessions } from '../data/breakoutSessions'
 
 export default function BreakoutForm({ userData = {} }) {
@@ -205,7 +205,7 @@ export default function BreakoutForm({ userData = {} }) {
 
       // 3. Generate lanyard pass
       setStep('Generating your pass...')
-      const { blob } = await generateBreakoutLanyard({
+      const { blob } = await generateLanyard({
         name,
         designation,
         companyName,
