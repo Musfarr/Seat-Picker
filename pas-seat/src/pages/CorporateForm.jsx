@@ -10,6 +10,7 @@ import {
   getAllBookings,
   getBreakoutCapacities,
   updateBooking,
+  appendBookingToGoogleSheet,
 } from '../api'
 import { generateLanyard } from '../generateLanyard'
 import { decryptParams } from '../utils/Decrypt'
@@ -438,6 +439,19 @@ export default function CorporateForm() {
       } catch (whatsappErr) {
         console.error('WhatsApp send failed:', whatsappErr)
         setError('WhatsApp delivery failed. Please download your pass below.')
+      }
+
+      // Append booking data to Google Sheet in the background without notifying the user (keeps loading state)
+      try {
+        await appendBookingToGoogleSheet({
+          phoneNumber: form.phone_number,
+          name: form.Full_Name,
+          companyName: form.Company_Name,
+          designation: form.Designation,
+          inviteUrl: window.location.href,
+        })
+      } catch (sheetErr) {
+        console.warn('Google Sheet append error:', sheetErr)
       }
 
       setDone(true)

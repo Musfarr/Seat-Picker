@@ -377,3 +377,77 @@ export async function recordAttendance(bookingId) {
   }
 }
 
+const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbw8kFKZiTuVI51b7LH26uaaLQl8_Qyvt7b38gHXb4Jp3wFyobXaShfeRTUsdp_BiER0_g/exec'
+
+export async function appendBookingToGoogleSheet({
+  date,
+  phoneNumber,
+  name,
+  companyName,
+  designation,
+  inviteUrl,
+}) {
+  const formattedDate = date
+    ? (typeof date === 'string' ? date : new Date(date).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }))
+    : new Date().toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+
+  const payload = {
+    Date: formattedDate,
+    'Phone Number': String(phoneNumber || '').trim(),
+    Name: String(name || '').trim(),
+    'Company Name': String(companyName || '').trim(),
+    Designation: String(designation || '').trim(),
+    'Invite URL': String(inviteUrl || '').trim(),
+
+    // Extra aliases for Apps Script compatibility:
+    date: formattedDate,
+    phoneNumber: String(phoneNumber || '').trim(),
+    phone_number: String(phoneNumber || '').trim(),
+    name: String(name || '').trim(),
+    companyName: String(companyName || '').trim(),
+    company_name: String(companyName || '').trim(),
+    designation: String(designation || '').trim(),
+    inviteUrl: String(inviteUrl || '').trim(),
+    invite_url: String(inviteUrl || '').trim(),
+    row: [
+      formattedDate,
+      String(phoneNumber || '').trim(),
+      String(name || '').trim(),
+      String(companyName || '').trim(),
+      String(designation || '').trim(),
+      String(inviteUrl || '').trim(),
+    ],
+  }
+
+  const url = new URL(GOOGLE_SHEET_API_URL)
+  url.searchParams.append('Date', payload.Date)
+  url.searchParams.append('Phone Number', payload['Phone Number'])
+  url.searchParams.append('Name', payload.Name)
+  url.searchParams.append('Company Name', payload['Company Name'])
+  url.searchParams.append('Designation', payload.Designation)
+  url.searchParams.append('Invite URL', payload['Invite URL'])
+
+  return fetch(url.toString(), {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
+    body: JSON.stringify(payload),
+  })
+}
+
