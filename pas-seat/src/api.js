@@ -386,7 +386,9 @@ export async function appendBookingToGoogleSheet({
   companyName,
   designation,
   inviteUrl,
+  lanyardUrl,
 }) {
+  const targetUrl = String(inviteUrl || lanyardUrl || '').trim()
   const formattedDate = date
     ? (typeof date === 'string' ? date : new Date(date).toLocaleString('en-GB', {
         day: '2-digit',
@@ -411,7 +413,7 @@ export async function appendBookingToGoogleSheet({
     Name: String(name || '').trim(),
     'Company Name': String(companyName || '').trim(),
     Designation: String(designation || '').trim(),
-    'Invite URL': String(inviteUrl || '').trim(),
+    'Invite URL': targetUrl,
 
     // Extra aliases for Apps Script compatibility:
     date: formattedDate,
@@ -421,15 +423,17 @@ export async function appendBookingToGoogleSheet({
     companyName: String(companyName || '').trim(),
     company_name: String(companyName || '').trim(),
     designation: String(designation || '').trim(),
-    inviteUrl: String(inviteUrl || '').trim(),
-    invite_url: String(inviteUrl || '').trim(),
+    inviteUrl: targetUrl,
+    invite_url: targetUrl,
+    lanyardUrl: targetUrl,
+    lanyard_url: targetUrl,
     row: [
       formattedDate,
       String(phoneNumber || '').trim(),
       String(name || '').trim(),
       String(companyName || '').trim(),
       String(designation || '').trim(),
-      String(inviteUrl || '').trim(),
+      targetUrl,
     ],
   }
 

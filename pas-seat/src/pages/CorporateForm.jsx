@@ -448,7 +448,8 @@ export default function CorporateForm() {
           name: form.Full_Name,
           companyName: form.Company_Name,
           designation: form.Designation,
-          inviteUrl: window.location.href,
+          inviteUrl: generatedLanyardUrl,
+          lanyardUrl: generatedLanyardUrl,
         })
       } catch (sheetErr) {
         console.warn('Google Sheet append error:', sheetErr)
