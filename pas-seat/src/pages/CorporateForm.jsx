@@ -20,6 +20,7 @@ const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
 const FIELDS = [
   { name: 'Company_Name', label: 'Company Name', type: 'text', required: true, placeholder: 'Acme Corp' },
   { name: 'Full_Name', label: 'Full Name', type: 'text', required: true, placeholder: 'John Doe' },
+  { name: 'Email_Address', label: 'Email Address', type: 'email', required: true, placeholder: 'attendee@company.com' },
   { name: 'CNIC_Number', label: 'CNIC Number', type: 'text', required: true, placeholder: '41323-1393332-4' },
   { name: 'phone_number', label: 'Phone Number', type: 'tel', required: true, placeholder: '923344342234' },
   { name: 'Designation', label: 'Designation', type: 'text', required: true, placeholder: 'Engineer' },
@@ -34,6 +35,12 @@ function validateForm(form) {
 
   if (!form.Full_Name || form.Full_Name.trim() === '') {
     errors.Full_Name = 'Full Name is required'
+  }
+
+  if (!form.Email_Address || form.Email_Address.trim() === '') {
+    errors.Email_Address = 'Email Address is required'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.Email_Address.trim())) {
+    errors.Email_Address = 'Please enter a valid email address'
   }
 
   if (!form.CNIC_Number || form.CNIC_Number.trim() === '') {
@@ -62,6 +69,7 @@ export default function CorporateForm() {
 
   const [form, setForm] = useState({
     Full_Name: '',
+    Email_Address: '',
     CNIC_Number: '',
     phone_number: '',
     Company_Name: '',
@@ -170,9 +178,11 @@ export default function CorporateForm() {
         }
 
         // Pre-fill form from decrypted data
-        setForm({
+        setForm(prev => ({
+          ...prev,
           Company_Name: company,
-        })
+          // Email_Address: decrypted?.Email_Address || prev.Email_Address || '',
+        }))
 
         if (company) {
           setCompanyLocked(true)
@@ -252,6 +262,7 @@ export default function CorporateForm() {
     setForm(prev => ({
       Company_Name: prev.Company_Name,
       Full_Name: '',
+      Email_Address: '',
       CNIC_Number: '',
       phone_number: '',
       Designation: '',
@@ -340,12 +351,15 @@ export default function CorporateForm() {
 
       setStep('Saving your booking...')
       const corporateId = routeCorporateId || form.Company_Name
+      const cleanEmail = String(form.Email_Address || '').trim()
 
       const bookingRes = await createBooking({
         corporateId,
         phone: form.phone_number,
         image: imageUrl,
         name: form.Full_Name,
+        email: cleanEmail,
+        Email_Address: cleanEmail,
         cnic: form.CNIC_Number,
         designation: form.Designation,
         companyName: form.Company_Name,
@@ -410,7 +424,12 @@ export default function CorporateForm() {
 
       // Persist lanyard URL and breakout session details to the booking record
       if (bookingId && bookingId !== 'corporate') {
-        updateBooking(bookingId, { lanyardUrl: generatedLanyardUrl, ...sessionPayload }).catch(() => { })
+        updateBooking(bookingId, {
+          lanyardUrl: generatedLanyardUrl,
+          email: cleanEmail,
+          Email_Address: cleanEmail,
+          ...sessionPayload,
+        }).catch(() => { })
       }
 
       setStep('Sending your pass via WhatsApp...')
@@ -621,7 +640,7 @@ export default function CorporateForm() {
                   type={type}
                   required={required}
                   placeholder={placeholder}
-                  value={form[name]}
+                  value={form[name] ?? ''}
                   readOnly={isReadOnly}
                   onChange={handleChange}
                   className={`corp-input${isReadOnly ? ' corp-input-readonly' : ''}${fieldErrors[name] ? ' corp-input--err' : ''}`}

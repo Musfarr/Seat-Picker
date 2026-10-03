@@ -277,6 +277,14 @@ export default function Profile() {
               </div>
             )}
 
+            {/* Email */}
+            {(booking.email || booking.Email_Address) && (
+              <div className="profile-grid-item">
+                <span className="profile-item-label">Email</span>
+                <span className="profile-item-val">{booking.email || booking.Email_Address}</span>
+              </div>
+            )}
+
             {/* CNIC */}
             {/* {booking.cnic && (
               <div className="profile-grid-item">

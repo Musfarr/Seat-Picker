@@ -11,6 +11,7 @@ import ReservedBooking from './pages/ReservedBooking.jsx'
 import QrBroadcast from './pages/QrBroadcast.jsx'
 import BulkInviteGenerator from './pages/BulkInviteGenerator.jsx'
 import CompanyBroadcast from './pages/CompanyBroadcast.jsx'
+import AdminPanel from './pages/AdminPanel.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/breakout" element={<BreakoutPage />} />
         <Route path="/bo-broadcast" element={<BreakoutBroadcast />} />
         <Route path="/x9m3ej2p12l" element={<CompanyBroadcast />} />
+        {/* <Route path="/adm1n-p4n3l-x7k" element={<AdminPanel />} /> */}
         <Route path="/Profile/:id" element={<Profile />} />
         {/* <Route path="/profile/:id" element={<Profile />} /> */}
         {/* <Route path="/reserved" element={<ReservedBooking />} /> */}
