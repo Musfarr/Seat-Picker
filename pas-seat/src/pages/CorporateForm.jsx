@@ -234,7 +234,7 @@ export default function CorporateForm() {
   // Toggle selection: Clicking selected topic deselects it; clicking another selects it
   function toggleTopic(sessionId, topicId) {
     const cap = capacities[topicId]
-    const isSoldOut = cap && (cap.availableSeats ?? 35) <= 0
+    const isSoldOut = cap && (cap.availableSeats ?? 40) <= 0
     if (isSoldOut) return
 
     setSelectedTopics(prev => {
@@ -295,7 +295,7 @@ export default function CorporateForm() {
     const chosenTopicIds = Object.values(selectedTopics).filter(Boolean)
     for (const tid of chosenTopicIds) {
       const cap = capacities[tid]
-      if (cap && (cap.availableSeats ?? 35) <= 0) {
+      if (cap && (cap.availableSeats ?? 40) <= 0) {
         setError(`"${cap.title || tid}" is fully booked. Please select another topic.`)
         return
       }
