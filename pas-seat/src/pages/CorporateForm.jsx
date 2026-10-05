@@ -696,7 +696,7 @@ export default function CorporateForm() {
                       const isSelected = selected === topic.id
                       const isDimmed = selected && selected !== topic.id
                       const topicCap = capacities[topic.id]
-                      const seatsLeft = topicCap !== undefined ? (topicCap.availableSeats ?? 35) : 35
+                      const seatsLeft = topicCap !== undefined ? (topicCap.availableSeats ?? 40) : 40
                       const isSoldOut = seatsLeft <= 0
 
                       return (
