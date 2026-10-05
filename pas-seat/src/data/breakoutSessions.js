@@ -68,6 +68,14 @@ export const breakoutSessions = [
         description: 'The Good, the Bad & the Sponsored',
         venue: 'Imperial Ballroom A',
       },
+      {
+        id: 's2-t4',
+        title: 'Mastering AI in Creative Operations',
+        speaker: 'Zakria Amir',
+        designation: 'Head of Enterprise Solutions ImagineArt',
+        description: '',
+        venue: 'Imperial Ballroom A',
+      },
     ],
   },
   {
