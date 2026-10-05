@@ -383,12 +383,15 @@ export async function appendBookingToGoogleSheet({
   date,
   phoneNumber,
   name,
+  email,
+  emailAddress,
   companyName,
   designation,
   inviteUrl,
   lanyardUrl,
 }) {
   const targetUrl = String(inviteUrl || lanyardUrl || '').trim()
+  const targetEmail = String(email || emailAddress || '').trim()
   const formattedDate = date
     ? (typeof date === 'string' ? date : new Date(date).toLocaleString('en-GB', {
         day: '2-digit',
@@ -411,6 +414,8 @@ export async function appendBookingToGoogleSheet({
     Date: formattedDate,
     'Phone Number': String(phoneNumber || '').trim(),
     Name: String(name || '').trim(),
+    'Email Address': targetEmail,
+    Email: targetEmail,
     'Company Name': String(companyName || '').trim(),
     Designation: String(designation || '').trim(),
     'Invite URL': targetUrl,
@@ -420,6 +425,9 @@ export async function appendBookingToGoogleSheet({
     phoneNumber: String(phoneNumber || '').trim(),
     phone_number: String(phoneNumber || '').trim(),
     name: String(name || '').trim(),
+    email: targetEmail,
+    emailAddress: targetEmail,
+    email_address: targetEmail,
     companyName: String(companyName || '').trim(),
     company_name: String(companyName || '').trim(),
     designation: String(designation || '').trim(),
@@ -431,6 +439,7 @@ export async function appendBookingToGoogleSheet({
       formattedDate,
       String(phoneNumber || '').trim(),
       String(name || '').trim(),
+      targetEmail,
       String(companyName || '').trim(),
       String(designation || '').trim(),
       targetUrl,
@@ -441,6 +450,8 @@ export async function appendBookingToGoogleSheet({
   url.searchParams.append('Date', payload.Date)
   url.searchParams.append('Phone Number', payload['Phone Number'])
   url.searchParams.append('Name', payload.Name)
+  url.searchParams.append('Email Address', targetEmail)
+  url.searchParams.append('Email', targetEmail)
   url.searchParams.append('Company Name', payload['Company Name'])
   url.searchParams.append('Designation', payload.Designation)
   url.searchParams.append('Invite URL', payload['Invite URL'])
