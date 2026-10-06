@@ -446,8 +446,8 @@ export default function CorporateForm() {
         await appendBookingToGoogleSheet({
           phoneNumber: form.phone_number,
           name: form.Full_Name,
-          email: cleanEmail,
-          emailAddress: cleanEmail,
+          // email: cleanEmail,
+          // emailAddress: cleanEmail,
           companyName: form.Company_Name,
           designation: form.Designation,
           inviteUrl: generatedLanyardUrl,
