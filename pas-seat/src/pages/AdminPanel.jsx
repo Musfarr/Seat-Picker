@@ -141,7 +141,7 @@ export default function AdminPanel() {
 
     setRowStatus(id, 'generating', 'Generating QR code...')
     try {
-      const profileUrl = `${window.location.origin}/Profile/${id}`
+      const profileUrl = `https://seat-picker-git-madsemble-musfarrs-projects.vercel.app/Profile/${id}`
       const lanyardQrDataUrl = await QRCode.toDataURL(profileUrl, { width: 512, margin: 2 })
       const qrBlob = await (await fetch(lanyardQrDataUrl)).blob()
 
