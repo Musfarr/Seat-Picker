@@ -390,8 +390,8 @@ export async function appendBookingToGoogleSheet({
   // inviteUrl,
   lanyardUrl,
 }) {
-  const targetUrl = String(inviteUrl || lanyardUrl || '').trim()
-  const targetEmail = String(email || emailAddress || '').trim()
+  const targetUrl = String(lanyardUrl || '').trim()
+  const targetEmail = ''
   const formattedDate = date
     ? (typeof date === 'string' ? date : new Date(date).toLocaleString('en-GB', {
       day: '2-digit',
