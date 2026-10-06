@@ -383,32 +383,32 @@ export async function appendBookingToGoogleSheet({
   date,
   phoneNumber,
   name,
-  email,
-  emailAddress,
+  // email,
+  // emailAddress,
   companyName,
   designation,
-  inviteUrl,
+  // inviteUrl,
   lanyardUrl,
 }) {
   const targetUrl = String(inviteUrl || lanyardUrl || '').trim()
   const targetEmail = String(email || emailAddress || '').trim()
   const formattedDate = date
     ? (typeof date === 'string' ? date : new Date(date).toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      }))
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }))
     : new Date().toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      })
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
 
   const payload = {
     Date: formattedDate,

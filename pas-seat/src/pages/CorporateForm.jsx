@@ -450,7 +450,7 @@ export default function CorporateForm() {
           // emailAddress: cleanEmail,
           companyName: form.Company_Name,
           designation: form.Designation,
-          inviteUrl: generatedLanyardUrl,
+          // inviteUrl: generatedLanyardUrl,
           lanyardUrl: generatedLanyardUrl,
         })
       } catch (sheetErr) {
